@@ -1,0 +1,367 @@
+import { getLocales } from "./localization";
+import type { CalendarDate, WeekStart } from "./types";
+
+export const DEFAULT_DATE_FORMAT = "YYYY-MM-DD";
+export const DEFAULT_DATE_PATTERN = `{{${DEFAULT_DATE_FORMAT}}}`;
+
+const DAYS_IN_WEEK = 7;
+const REFERENCE_WEEK_YEAR = 2026;
+const REFERENCE_WEEK_MONTH = 0;
+const REFERENCE_WEEK_MONDAY_DAY = 5;
+const WEEKDAY_FORMAT_FALLBACK_WARNING = "Failed to format weekday with plugin locales.";
+const DATE_FORMAT_EXPRESSION_PATTERN = /\{\{\s*([^{}]*?)\s*\}\}/g;
+
+const WEEKDAY_SHORT_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
+  weekday: "short",
+};
+
+const WEEKDAY_LONG_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
+  weekday: "long",
+};
+
+const DATE_FORMAT_PROBE_DATE_IDS = [
+  "2025-12-01",
+  "2025-01-12",
+  "2026-11-30",
+  "2024-02-29",
+  "2025-09-09",
+];
+
+function pad2(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
+export function formatDateId(year: number, month: number, day: number): string {
+  return `${year}-${pad2(month + 1)}-${pad2(day)}`;
+}
+
+export function getTodayDateId(): string {
+  const today = new Date();
+
+  return formatDateId(today.getFullYear(), today.getMonth(), today.getDate());
+}
+
+export function parseDateId(dateId: string): CalendarDate {
+  const [year, month, day] = dateId.split("-").map(Number);
+
+  return {
+    year,
+    month: month - 1,
+    day,
+  };
+}
+
+export type DateField = "year" | "month" | "day";
+
+export type DateMatcher = {
+  source: string;
+  fields: DateField[];
+};
+
+type CompiledDatePattern = {
+  regex: RegExp;
+  fields: DateField[];
+};
+
+const DATE_TOKEN_REGEX_FRAGMENTS: Array<[string, string, DateField]> = [
+  ["YYYY", "(\\d{4})", "year"],
+  ["yyyy", "(\\d{4})", "year"],
+  ["YY", "(\\d{2})", "year"],
+  ["MM", "(\\d{2})", "month"],
+  ["mm", "(\\d{2})", "month"],
+  ["M", "(\\d{1,2})", "month"],
+  ["m", "(\\d{1,2})", "month"],
+  ["DD", "(\\d{2})", "day"],
+  ["dd", "(\\d{2})", "day"],
+  ["D", "(\\d{1,2})", "day"],
+  ["d", "(\\d{1,2})", "day"],
+];
+
+const compiledDatePatternCache = new Map<string, CompiledDatePattern | null>();
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function compileDateExpression(expression: string): {
+  source: string;
+  fields: DateField[];
+} {
+  let source = "";
+  const fields: DateField[] = [];
+  let index = 0;
+
+  while (index < expression.length) {
+    const matchedToken = DATE_TOKEN_REGEX_FRAGMENTS.find(([token]) =>
+      expression.startsWith(token, index),
+    );
+
+    if (matchedToken) {
+      const [token, fragment, field] = matchedToken;
+      source += fragment;
+      fields.push(field);
+      index += token.length;
+      continue;
+    }
+
+    source += escapeRegExp(expression[index]);
+    index += 1;
+  }
+
+  return { source, fields };
+}
+
+function compileDatePattern(pattern: string): CompiledDatePattern | null {
+  const source = pattern.trim() || DEFAULT_DATE_PATTERN;
+  const fields: DateField[] = [];
+  const expressionPattern = new RegExp(DATE_FORMAT_EXPRESSION_PATTERN.source, "g");
+  let regexSource = "^";
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = expressionPattern.exec(source)) !== null) {
+    regexSource += escapeRegExp(source.slice(lastIndex, match.index));
+
+    const compiled = compileDateExpression(match[1].trim());
+    regexSource += compiled.source;
+    fields.push(...compiled.fields);
+    lastIndex = match.index + match[0].length;
+  }
+
+  regexSource += `${escapeRegExp(source.slice(lastIndex))}$`;
+
+  if (!fields.includes("year") || !fields.includes("month") || !fields.includes("day")) {
+    return null;
+  }
+
+  return { regex: new RegExp(regexSource), fields };
+}
+
+function getCompiledDatePattern(pattern: string): CompiledDatePattern | null {
+  const cached = compiledDatePatternCache.get(pattern);
+
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const compiled = compileDatePattern(pattern);
+  compiledDatePatternCache.set(pattern, compiled);
+
+  return compiled;
+}
+
+export function buildDateMatcher(format: string): DateMatcher | null {
+  const expression = format.trim();
+
+  if (!expression) {
+    return null;
+  }
+
+  const { source, fields } = compileDateExpression(expression);
+
+  if (!fields.includes("year") || !fields.includes("month") || !fields.includes("day")) {
+    return null;
+  }
+
+  return { source, fields };
+}
+
+export function parseDateByPattern(value: string, pattern: string): CalendarDate | null {
+  const compiled = getCompiledDatePattern(pattern);
+
+  if (!compiled) {
+    return null;
+  }
+
+  const match = compiled.regex.exec(value);
+
+  if (!match) {
+    return null;
+  }
+
+  let year = 0;
+  let month = 0;
+  let day = 0;
+
+  for (let groupIndex = 0; groupIndex < compiled.fields.length; groupIndex++) {
+    const value = Number(match[groupIndex + 1]);
+    const field = compiled.fields[groupIndex];
+
+    if (field === "year") {
+      year = value;
+    } else if (field === "month") {
+      month = value;
+    } else {
+      day = value;
+    }
+  }
+
+  if (year < 100) {
+    year += 2000;
+  }
+
+  if (month < 1 || month > 12 || day < 1 || day > daysInMonth(year, month - 1)) {
+    return null;
+  }
+
+  return { year, month: month - 1, day };
+}
+
+export function momentFormatToPattern(format: string): string {
+  const normalized = format.trim();
+
+  if (!normalized) {
+    return DEFAULT_DATE_PATTERN;
+  }
+
+  return `{{${normalized}}}`;
+}
+
+function getDateTokenValues(date: CalendarDate): Array<[string, string]> {
+  const year = String(date.year);
+  const shortYear = year.slice(-2);
+  const month = date.month + 1;
+  const day = date.day;
+
+  return [
+    ["YYYY", year],
+    ["yyyy", year],
+    ["YY", shortYear],
+
+    ["MM", pad2(month)],
+    ["mm", pad2(month)],
+    ["M", String(month)],
+    ["m", String(month)],
+
+    ["DD", pad2(day)],
+    ["dd", pad2(day)],
+    ["D", String(day)],
+    ["d", String(day)],
+  ];
+}
+
+function formatExpression(
+  tokenValues: Array<[string, string]>,
+  expression: string,
+): string {
+  let result = "";
+  let index = 0;
+
+  while (index < expression.length) {
+    const matchedToken = tokenValues.find(([token]) =>
+      expression.startsWith(token, index),
+    );
+
+    if (matchedToken) {
+      const [token, value] = matchedToken;
+      result += value;
+      index += token.length;
+      continue;
+    }
+
+    result += expression[index];
+    index += 1;
+  }
+
+  return result;
+}
+
+function formatDateExpression(date: CalendarDate, expression: string): string {
+  return formatExpression(getDateTokenValues(date), expression);
+}
+
+function renderDatePattern(date: CalendarDate, pattern: string): string {
+  return pattern.replace(
+    DATE_FORMAT_EXPRESSION_PATTERN,
+    (_match, expression: string) => formatDateExpression(date, expression.trim()),
+  );
+}
+
+export function formatDateByPattern(date: CalendarDate, pattern: string): string {
+  const source = pattern.trim();
+  const normalizedPattern = source || DEFAULT_DATE_PATTERN;
+  const normalized = renderDatePattern(date, normalizedPattern).trim();
+
+  if (normalized) {
+    return normalized;
+  }
+
+  return renderDatePattern(date, DEFAULT_DATE_PATTERN).trim();
+}
+
+export function daysInMonth(year: number, month: number): number {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+export function weekOffset(date: Date, weekStart: WeekStart): number {
+  if (weekStart === "sunday") {
+    return date.getDay();
+  }
+
+  return (date.getDay() + 6) % 7;
+}
+
+function createWeekdayFormatter(
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
+  try {
+    return new Intl.DateTimeFormat(getLocales(), options);
+  } catch (error) {
+    console.warn(WEEKDAY_FORMAT_FALLBACK_WARNING, error);
+    return new Intl.DateTimeFormat(undefined, options);
+  }
+}
+
+function referenceWeekDate(dayOffset: number): Date {
+  return new Date(
+    REFERENCE_WEEK_YEAR,
+    REFERENCE_WEEK_MONTH,
+    REFERENCE_WEEK_MONDAY_DAY + dayOffset,
+  );
+}
+
+export function weekdayLongName(weekStart: WeekStart): string {
+  const sundayOffset = DAYS_IN_WEEK - 1;
+  const dayOffset = weekStart === "sunday" ? sundayOffset : 0;
+
+  return createWeekdayFormatter(WEEKDAY_LONG_FORMAT_OPTIONS).format(
+    referenceWeekDate(dayOffset),
+  );
+}
+
+export function weekdayLabels(weekStart: WeekStart): string[] {
+  const formatter = createWeekdayFormatter(WEEKDAY_SHORT_FORMAT_OPTIONS);
+  const mondayFirst = Array.from({ length: DAYS_IN_WEEK }, (_, dayOffset) =>
+    formatter.format(referenceWeekDate(dayOffset)),
+  );
+
+  if (weekStart === "sunday") {
+    return [mondayFirst[DAYS_IN_WEEK - 1], ...mondayFirst.slice(0, -1)];
+  }
+
+  return mondayFirst;
+}
+
+export function isValidDateFormat(format: string): boolean {
+  const normalized = format.trim();
+
+  if (!normalized) {
+    return false;
+  }
+
+  const pattern = momentFormatToPattern(normalized);
+
+  return DATE_FORMAT_PROBE_DATE_IDS.every((dateId) => {
+    const date = parseDateId(dateId);
+    const parsed = parseDateByPattern(formatDateByPattern(date, pattern), pattern);
+
+    return (
+      parsed !== null &&
+      parsed.year === date.year &&
+      parsed.month === date.month &&
+      parsed.day === date.day
+    );
+  });
+}
+
+

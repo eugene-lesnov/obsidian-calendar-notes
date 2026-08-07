@@ -1,0 +1,10 @@
+{
+	"id": "calendar-notes",
+	"name": "Calendar Notes",
+	"version": "0.1.0",
+	"minAppVersion": "1.8.7",
+	"description": "Sidebar calendar for dated Markdown notes, note-like tasks, and overdue follow-up.",
+	"author": "Eugene Lesnov",
+	"authorUrl": "https://github.com/eugene-lesnov",
+	"isDesktopOnly": false
+}

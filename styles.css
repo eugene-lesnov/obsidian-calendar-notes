@@ -1,0 +1,324 @@
+.calendar-notes-format-preview {
+  color: var(--text-muted);
+}
+
+.calendar-notes-format-error {
+  color: var(--text-error);
+}
+
+.calendar-notes-format-warning {
+  color: var(--text-warning);
+}
+
+.calendar-notes-root {
+  --calendar-day-height: 34px;
+  --calendar-note-marker-color: var(--text-faint);
+  --calendar-control-size: 32px;
+
+  box-sizing: border-box;
+  padding: 12px;
+  color: var(--text-normal);
+  font-family: var(--font-interface);
+  font-size: var(--font-ui-small);
+}
+
+.calendar-notes-root button {
+  touch-action: manipulation;
+  user-select: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.calendar-notes-root .calendar-header {
+  display: grid;
+  grid-template-columns: var(--calendar-control-size) minmax(0, 1fr) auto var(--calendar-control-size);
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.calendar-notes-root .calendar-month-label {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: var(--font-semibold);
+  text-overflow: ellipsis;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.calendar-notes-root .calendar-nav-button,
+.calendar-notes-root .calendar-today-button,
+.calendar-notes-root .calendar-day {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-normal);
+  box-shadow: none;
+}
+
+.calendar-notes-root .calendar-nav-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--calendar-control-size);
+  height: var(--calendar-control-size);
+  padding: 0;
+}
+
+.calendar-notes-root .calendar-today-button {
+  height: var(--calendar-control-size);
+  padding: 0 8px;
+  font-size: var(--font-ui-smaller);
+  white-space: nowrap;
+}
+
+.calendar-notes-root .calendar-weekdays,
+.calendar-notes-root .calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar-notes-root .calendar-weekdays {
+  margin-bottom: 4px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  text-align: center;
+}
+
+.calendar-notes-root .calendar-day {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--calendar-day-height);
+  padding: 0 0 5px;
+  text-align: center;
+}
+
+.calendar-notes-root .calendar-nav-button:hover,
+.calendar-notes-root .calendar-today-button:hover,
+.calendar-notes-root .calendar-day:not(.calendar-day-empty):hover {
+  background: var(--background-modifier-hover);
+}
+
+.calendar-notes-root .calendar-day-empty {
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+.calendar-notes-root .calendar-day.is-today {
+  outline: 1px solid var(--interactive-accent);
+  outline-offset: -1px;
+}
+
+.calendar-notes-root .calendar-day.is-selected {
+  background: var(--background-modifier-hover);
+  outline: 1px solid var(--text-muted);
+  outline-offset: -1px;
+}
+
+.calendar-notes-root .calendar-day-markers {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  display: flex;
+  gap: 3px;
+  transform: translateX(-50%);
+}
+
+.calendar-notes-root .calendar-day-marker {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  opacity: 0.75;
+}
+
+.calendar-notes-root .calendar-note-marker {
+  background: var(--calendar-note-marker-color);
+}
+
+.calendar-notes-root .calendar-task-open-marker {
+  background: var(--color-orange);
+}
+
+.calendar-notes-root .calendar-task-done-marker {
+  background: var(--color-green);
+}
+
+.calendar-notes-root .calendar-selected-day {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.calendar-notes-root .calendar-selected-day-title {
+  font-weight: var(--font-semibold);
+}
+
+.calendar-notes-root .calendar-day-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.calendar-notes-root .calendar-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.calendar-notes-root .calendar-section-title {
+  color: var(--text-muted);
+  font-weight: var(--font-semibold);
+  font-size: var(--font-ui-smaller);
+}
+
+.calendar-notes-root .calendar-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  box-shadow: none;
+}
+
+.calendar-notes-root .calendar-icon-button:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.calendar-notes-root .calendar-task-menu-button {
+  color: var(--text-faint);
+}
+
+.calendar-notes-root .calendar-item-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0;
+  margin: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.calendar-notes-root .calendar-item {
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-normal);
+  box-shadow: none;
+  font-size: inherit;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-notes-root .calendar-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.calendar-notes-root .calendar-empty-label {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+.calendar-notes-root .calendar-overdue-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.calendar-notes-root .calendar-overdue-title {
+  color: var(--text-error);
+}
+
+.calendar-notes-root .calendar-task {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calendar-notes-root .calendar-task-checkbox {
+  flex: 0 0 auto;
+  margin: 0;
+  cursor: pointer;
+}
+
+.calendar-notes-root .calendar-task-body {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.calendar-notes-root .calendar-task-title {
+  min-width: 0;
+  width: 100%;
+}
+
+.calendar-notes-root .calendar-task-repeat-meta {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-notes-root .calendar-task-date-prefix {
+  margin-right: 6px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.calendar-notes-root .calendar-task.is-completed .calendar-task-title {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+body.is-mobile .calendar-notes-root {
+  --calendar-day-height: 44px;
+  --calendar-control-size: 40px;
+}
+
+body.is-mobile .calendar-notes-root .calendar-icon-button {
+  width: 40px;
+  height: 40px;
+}
+
+body.is-mobile .calendar-notes-root .calendar-item {
+  padding: 10px 8px;
+}
+
+body.is-mobile .calendar-notes-root .calendar-item-list {
+  max-height: none;
+}
+
+body.is-mobile .calendar-notes-root .calendar-task {
+  min-height: 40px;
+}
+
+body.is-mobile .calendar-notes-root .calendar-task-checkbox {
+  --checkbox-size: 22px;
+}
