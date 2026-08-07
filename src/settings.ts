@@ -59,7 +59,7 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
     this.addTextSetting(containerEl, {
       name: strings.noteTemplateLabel,
       description: strings.noteTemplateDescription,
-      placeholder: "Templates/Calendar note",
+      placeholder: strings.noteTemplatePlaceholder,
       key: "noteTemplate",
     });
 
@@ -75,7 +75,7 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
     this.addTextSetting(containerEl, {
       name: strings.taskTemplateLabel,
       description: strings.taskTemplateDescription,
-      placeholder: "Templates/Calendar task",
+      placeholder: strings.taskTemplatePlaceholder,
       key: "taskTemplate",
     });
   }

@@ -23,8 +23,10 @@ export interface AppLocalization {
   newTaskNameDescription: string;
   noteTemplateLabel: string;
   noteTemplateDescription: string;
+  noteTemplatePlaceholder: string;
   taskTemplateLabel: string;
   taskTemplateDescription: string;
+  taskTemplatePlaceholder: string;
   toggleCalendarCommandLabel: string;
   createNoteTodayCommandLabel: string;
   createTaskTodayCommandLabel: string;
@@ -100,8 +102,10 @@ const defaultStrings: AppLocalization = {
     "The task's date is added as a prefix using the format selected in the settings.",
   noteTemplateLabel: "New note template",
   noteTemplateDescription: "Path to the template used to create new notes.",
+  noteTemplatePlaceholder: "Templates/Calendar note",
   taskTemplateLabel: "New task template",
   taskTemplateDescription: "Path to the template used to create new tasks.",
+  taskTemplatePlaceholder: "Templates/Calendar task",
   toggleCalendarCommandLabel: "Toggle calendar",
   createNoteTodayCommandLabel: "Create note for today",
   createTaskTodayCommandLabel: "Create task for today",
@@ -182,8 +186,10 @@ const localizations: Record<string, Partial<AppLocalization>> = {
       "К названию будет добавлен префикс с датой задачи в формате, выбранном в настройках.",
     noteTemplateLabel: "Шаблон новой заметки",
     noteTemplateDescription: "Путь к шаблону, по которому будут создаваться новые заметки.",
+    noteTemplatePlaceholder: "Шаблоны/Заметка",
     taskTemplateLabel: "Шаблон новой задачи",
     taskTemplateDescription: "Путь к шаблону, по которому будут создаваться новые задачи.",
+    taskTemplatePlaceholder: "Шаблоны/Задача",
     toggleCalendarCommandLabel: "Показать или скрыть календарь",
     createNoteTodayCommandLabel: "Создать заметку на сегодня",
     createTaskTodayCommandLabel: "Создать задачу на сегодня",
