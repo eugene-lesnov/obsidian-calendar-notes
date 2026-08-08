@@ -36,6 +36,7 @@ export interface AppLocalization {
   taskTemplateDescription: string;
   taskTemplatePlaceholder: string;
   toggleCalendarCommandLabel: string;
+  calendarRibbonLabel: string;
   createNoteTodayCommandLabel: string;
   createTaskTodayCommandLabel: string;
   goToTodayCommandLabel: string;
@@ -122,6 +123,7 @@ const defaultStrings: AppLocalization = {
   taskTemplateDescription: "Path to the template used to create new tasks.",
   taskTemplatePlaceholder: "Templates/Calendar task",
   toggleCalendarCommandLabel: "Toggle calendar",
+  calendarRibbonLabel: "Calendar Notes",
   createNoteTodayCommandLabel: "Create note for today",
   createTaskTodayCommandLabel: "Create task for today",
   goToTodayCommandLabel: "Go to today",
@@ -212,7 +214,7 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     taskTemplateLabel: "Шаблон новой задачи",
     taskTemplateDescription: "Путь к шаблону, по которому будут создаваться новые задачи.",
     taskTemplatePlaceholder: "Шаблоны/Задача",
-    toggleCalendarCommandLabel: "Показать или скрыть панель Calendar Notes",
+    toggleCalendarCommandLabel: "Открыть или закрыть календарь",
     createNoteTodayCommandLabel: "Создать заметку на сегодня",
     createTaskTodayCommandLabel: "Создать задачу на сегодня",
     goToTodayCommandLabel: "Перейти к сегодняшнему дню",

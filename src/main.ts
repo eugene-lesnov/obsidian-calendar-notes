@@ -62,7 +62,7 @@ export default class CalendarNotesPlugin extends Plugin {
       defaultMod: true,
     });
 
-    this.addRibbonIcon(RIBBON_ICON, strings.toggleCalendarCommandLabel, () => {
+    this.addRibbonIcon(RIBBON_ICON, strings.calendarRibbonLabel, () => {
       void this.toggleView();
     });
 
