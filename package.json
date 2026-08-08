@@ -1,6 +1,6 @@
 {
   "name": "obsidian-calendar-notes",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Sidebar calendar for dated Markdown notes, note-like tasks, and overdue follow-up.",
   "main": "main.js",
   "type": "module",
