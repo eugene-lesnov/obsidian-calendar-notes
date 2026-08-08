@@ -6,7 +6,7 @@ import {
   weekOffset,
   weekdayLabels,
 } from "../core/dateUtils";
-import strings, { formatLocalizedString, getLocales } from "../core/localization";
+import strings, { getLocales } from "../core/localization";
 import type { WeekStart } from "../core/types";
 import type { CalendarDayCounts } from "../data/calendarIndex";
 
@@ -110,13 +110,6 @@ function renderDays(container: HTMLElement, params: MonthGridParams): void {
     const dateId = formatDateId(params.year, params.month, day);
     const counts = params.getCounts(dateId);
     const dayButton = grid.createEl("button", { cls: "calendar-day" });
-
-    dayButton.setAttribute(
-      "aria-label",
-      formatLocalizedString(strings.selectDayTitle, {
-        date: params.formatDayLabel(dateId),
-      }),
-    );
 
     dayButton.createSpan({ cls: "calendar-day-number", text: String(day) });
     renderDayMarkers(dayButton, counts);
