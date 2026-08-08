@@ -22,12 +22,34 @@ function isOpenTask(item: CalendarItem): boolean {
   return item.kind === "task" && !item.done;
 }
 
+function compareTitles(first: CalendarItem, second: CalendarItem): number {
+  return first.title.localeCompare(second.title, undefined, { numeric: true });
+}
+
 function compareItems(first: CalendarItem, second: CalendarItem): number {
   if (first.done !== second.done) {
     return first.done ? 1 : -1;
   }
 
-  return first.title.localeCompare(second.title, undefined, { numeric: true });
+  if (first.kind === "task" && second.kind === "task") {
+    if (first.done && second.done && first.completed !== second.completed) {
+      if (!first.completed) {
+        return 1;
+      }
+
+      if (!second.completed) {
+        return -1;
+      }
+
+      return first.completed < second.completed ? -1 : 1;
+    }
+
+    if (first.file.stat.ctime !== second.file.stat.ctime) {
+      return first.file.stat.ctime - second.file.stat.ctime;
+    }
+  }
+
+  return compareTitles(first, second);
 }
 
 function compareOverdueItems(first: CalendarItem, second: CalendarItem): number {
@@ -35,7 +57,11 @@ function compareOverdueItems(first: CalendarItem, second: CalendarItem): number 
     return first.dateId < second.dateId ? -1 : 1;
   }
 
-  return first.title.localeCompare(second.title, undefined, { numeric: true });
+  if (first.file.stat.ctime !== second.file.stat.ctime) {
+    return first.file.stat.ctime - second.file.stat.ctime;
+  }
+
+  return compareTitles(first, second);
 }
 
 function sameRepeat(first: CalendarItem, second: CalendarItem): boolean {
@@ -46,6 +72,7 @@ function sameCalendarState(first: CalendarItem, second: CalendarItem): boolean {
   return first.file.path === second.file.path
     && first.title === second.title
     && first.dateId === second.dateId
+    && first.file.stat.ctime === second.file.stat.ctime
     && first.kind === second.kind
     && first.done === second.done
     && first.completed === second.completed

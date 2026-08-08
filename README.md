@@ -85,6 +85,7 @@ always recognized when reading properties.
 The plugin manages these fields as follows:
 
 - New tasks start with `done: false`.
+- Active tasks are sorted from oldest to newest using the file creation time.
 - Checking a task sets `done: true` and writes `completed` with today's date.
 - Checking a task moves its file to the completed tasks folder.
 - Unchecking it removes `completed` and moves the file back to the active tasks folder.
