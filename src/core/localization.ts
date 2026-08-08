@@ -40,7 +40,6 @@ export interface AppLocalization {
   createTaskTodayCommandLabel: string;
   goToTodayCommandLabel: string;
   calendarViewTitle: string;
-  selectDayTitle: string;
   previousMonthTitle: string;
   nextMonthTitle: string;
   todayButtonLabel: string;
@@ -99,9 +98,9 @@ const defaultStrings: AppLocalization = {
   dateFormatMigrationFailed:
     "Failed to update {{count}} calendar notes. They keep the old format and stay hidden from the calendar until it is fixed.",
   weekStartLabel: "Week starts on",
-  defaultNotesFolder: "Calendar/Notes",
-  defaultActiveTasksFolder: "Calendar/Tasks/Active",
-  defaultCompletedTasksFolder: "Calendar/Tasks/Completed",
+  defaultNotesFolder: "Calendar Notes/Notes",
+  defaultActiveTasksFolder: "Calendar Notes/Tasks/Active",
+  defaultCompletedTasksFolder: "Calendar Notes/Tasks/Completed",
   notesFolderLabel: "Notes folder",
   notesFolderDescription: "Folder where calendar notes are stored. Subfolders are included.",
   activeTasksFolderLabel: "Active tasks folder",
@@ -127,7 +126,6 @@ const defaultStrings: AppLocalization = {
   createTaskTodayCommandLabel: "Create task for today",
   goToTodayCommandLabel: "Go to today",
   calendarViewTitle: "Calendar Notes",
-  selectDayTitle: "Select {{date}}",
   previousMonthTitle: "Previous month",
   nextMonthTitle: "Next month",
   todayButtonLabel: "Today",
@@ -191,15 +189,15 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     dateFormatMigrationFailed:
       "Не удалось обновить календарных заметок: {{count}}. Они остались в старом формате и не будут видны в календаре, пока это не исправлено.",
     weekStartLabel: "Первый день недели",
-    defaultNotesFolder: "Календарь/Заметки",
-    defaultActiveTasksFolder: "Календарь/Задачи/Активные",
-    defaultCompletedTasksFolder: "Календарь/Задачи/Завершенные",
+    defaultNotesFolder: "Calendar Notes/Заметки",
+    defaultActiveTasksFolder: "Calendar Notes/Задачи/Активные",
+    defaultCompletedTasksFolder: "Calendar Notes/Задачи/Завершенные",
     notesFolderLabel: "Папка заметок",
     notesFolderDescription: "Папка для календарных заметок. Учитываются вложенные папки.",
     activeTasksFolderLabel: "Папка активных задач",
     activeTasksFolderDescription: "Папка для всех незавершённых задач.",
     completedTasksFolderLabel: "Папка завершённых задач",
-    completedTasksFolderDescription: "Папка, куда перемещаются завершённые задачи.",
+    completedTasksFolderDescription: "Папка, куда перемещаются завершенные задачи.",
     taskFoldersConflictError:
       "Папки активных и завершённых задач должны отличаться и не должны находиться одна внутри другой.",
     newNoteNameLabel: "Название новой заметки",
@@ -214,12 +212,11 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     taskTemplateLabel: "Шаблон новой задачи",
     taskTemplateDescription: "Путь к шаблону, по которому будут создаваться новые задачи.",
     taskTemplatePlaceholder: "Шаблоны/Задача",
-    toggleCalendarCommandLabel: "Показать или скрыть календарь",
+    toggleCalendarCommandLabel: "Показать или скрыть панель Calendar Notes",
     createNoteTodayCommandLabel: "Создать заметку на сегодня",
     createTaskTodayCommandLabel: "Создать задачу на сегодня",
     goToTodayCommandLabel: "Перейти к сегодняшнему дню",
     calendarViewTitle: "Calendar Notes",
-    selectDayTitle: "Выбрать {{date}}",
     previousMonthTitle: "Предыдущий месяц",
     nextMonthTitle: "Следующий месяц",
     todayButtonLabel: "Сегодня",

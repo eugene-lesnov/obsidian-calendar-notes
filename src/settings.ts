@@ -14,10 +14,14 @@ import type { WeekStart } from "./core/types";
 import { applyDateFormatMigration, planDateFormatMigration } from "./data/dateFormatMigration";
 import type CalendarNotesPlugin from "./main";
 import { DateFormatMigrationModal } from "./view/DateFormatMigrationModal";
+import { FolderSuggest } from "./view/FolderSuggest";
+import { MarkdownFileSuggest } from "./view/MarkdownFileSuggest";
 
 const REINDEX_DEBOUNCE_MS = 600;
 
-type TextSettingKey = "newNoteName" | "newTaskName" | "noteTemplate" | "taskTemplate";
+type TextSettingKey = "newNoteName" | "newTaskName";
+
+type TemplateSettingKey = "noteTemplate" | "taskTemplate";
 
 type FolderSettingKey = "notesFolder" | "activeTasksFolder" | "completedTasksFolder";
 
@@ -59,7 +63,7 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
       key: "newNoteName",
     });
 
-    this.addTextSetting(containerEl, {
+    this.addTemplateSetting(containerEl, {
       name: strings.noteTemplateLabel,
       description: strings.noteTemplateDescription,
       placeholder: strings.noteTemplatePlaceholder,
@@ -87,7 +91,7 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
       key: "newTaskName",
     });
 
-    this.addTextSetting(containerEl, {
+    this.addTemplateSetting(containerEl, {
       name: strings.taskTemplateLabel,
       description: strings.taskTemplateDescription,
       placeholder: strings.taskTemplatePlaceholder,
@@ -229,15 +233,15 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName(options.name)
       .setDesc(options.description)
-      .addText((text) =>
-        text
-          .setPlaceholder(fallback)
-          .setValue(this.plugin.settings[options.key])
-          .onChange((value) => {
-            this.plugin.settings[options.key] = value.trim();
-            this.saveAndReindex();
-          }),
-      );
+      .addText((text) => {
+        text.setPlaceholder(fallback).setValue(this.plugin.settings[options.key]);
+
+        new FolderSuggest(this.app, text.inputEl).onSelect((folder) => {
+          text.setValue(folder.path);
+          this.plugin.settings[options.key] = folder.path;
+          this.saveAndReindex();
+        });
+      });
   }
 
   private addTextSetting(
@@ -261,6 +265,29 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           }),
       );
+  }
+
+  private addTemplateSetting(
+    containerEl: HTMLElement,
+    options: {
+      name: string;
+      description: string;
+      placeholder: string;
+      key: TemplateSettingKey;
+    },
+  ): void {
+    new Setting(containerEl)
+      .setName(options.name)
+      .setDesc(options.description)
+      .addText((text) => {
+        text.setPlaceholder(options.placeholder).setValue(this.plugin.settings[options.key]);
+
+        new MarkdownFileSuggest(this.app, text.inputEl).onSelect((file) => {
+          text.setValue(file.path);
+          this.plugin.settings[options.key] = file.path;
+          void this.plugin.saveSettings();
+        });
+      });
   }
 
   private previewDate(format: string): string {
