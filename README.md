@@ -12,37 +12,44 @@ days with content and keeps overdue tasks close at hand.
 
 - Compact calendar in the sidebar.
 - Multiple notes and tasks per day.
-- Day markers: grey for notes, orange for open tasks, green when all tasks are done.
+- Day markers: gray for notes, orange for open tasks, green when all tasks are done.
 - Collapsible list of overdue tasks.
 - Daily, weekly, monthly, and yearly recurring tasks.
 - Open notes, change dates, complete tasks, and configure repeats directly from the calendar.
 - Templates for new notes and tasks.
-- Configurable folder scope, including subfolders or the whole vault.
+- Separate configurable folders for notes, active tasks, and completed tasks.
 - English and Russian UI, following the Obsidian language setting.
 - Local-first storage: every item is an ordinary Markdown file.
 
 ## One item, one file
 
-Calendar Notes creates files in the configured folder and prefixes their names with
-the selected date:
+Calendar Notes creates files in separate configured folders and prefixes their names
+with the selected date:
 
 ```text
 Calendar/
-├── 2026-08-06 - Meeting with the team.md
-├── 2026-08-06 - Day summary.md
-└── 2026-08-07 - New task.md
+├── Notes/
+│   ├── 2026-08-06 - Meeting with the team.md
+│   └── 2026-08-06 - Day summary.md
+└── Tasks/
+    ├── Active/
+    │   └── 2026-08-07 - New task.md
+    └── Completed/
 ```
 
-The folder defines the calendar scope. Items in its subfolders are included; leave
-the setting empty to use the whole vault. Moving an item outside the configured
-folder hides it from the calendar without changing the file.
+Each folder defines the scope for its item type, and its subfolders are included.
+New tasks are created in the active folder. Completing a task moves its file to the
+completed folder; unchecking it in the calendar moves it back to the active folder.
+Missing configured folders are created automatically.
+The active and completed task folders must be separate and cannot be nested inside
+one another.
 
 The date in the filename and the `date` property stay synchronized in both
 directions. If the date prefix is removed completely, the plugin leaves the filename
 alone and continues using the property.
 
 Calendar items can also be created manually. The plugin recognizes a Markdown file
-inside the configured folder when it has the properties shown below.
+inside the corresponding configured folder when it has the properties shown below.
 
 A note needs two properties:
 
@@ -79,7 +86,8 @@ The plugin manages these fields as follows:
 
 - New tasks start with `done: false`.
 - Checking a task sets `done: true` and writes `completed` with today's date.
-- Unchecking it removes `completed`.
+- Checking a task moves its file to the completed tasks folder.
+- Unchecking it removes `completed` and moves the file back to the active tasks folder.
 - Changing the item date from the calendar updates `date` and the filename. If the target
   filename already exists, the plugin adds ` (2)`, ` (3)`, and so on.
 - Renaming a date-prefixed file updates `date`.
@@ -92,9 +100,10 @@ choices are daily, weekly, monthly, yearly, and do not repeat. Custom repeat int
 and schedules are not supported.
 
 Each occurrence is a separate Markdown file. Completing a repeating task creates
-the next future occurrence and moves the repeat rule to it. If the completed task is
-overdue, missed dates are skipped rather than created retroactively. The completed
-file stays in the vault as a permanent record with its own notes and completion date.
+the next future occurrence in the active tasks folder and moves the repeat rule to
+it. If the completed task is overdue, missed dates are skipped rather than created
+retroactively. The completed file is moved to the completed tasks folder as a
+permanent record with its own notes and completion date.
 
 New occurrences use the task template rather than copying the previous body. To end
 a series, choose **Do not repeat**, remove the `repeat` property manually, or use
@@ -110,7 +119,9 @@ the target path are not overwritten.
 | --- | --- |
 | Date format | Controls dates in the UI, properties, and generated filenames |
 | Week starts on | Starts the calendar week on Monday or Sunday |
-| Calendar folder | Sets the indexed folder and creation destination; empty means the whole vault |
+| Notes folder | Sets the indexed folder and creation destination for notes |
+| Active tasks folder | Stores new and unfinished tasks |
+| Completed tasks folder | Receives tasks when they are completed |
 | New note name | Sets the default filename title for new notes |
 | New note template | Selects the template copied into new notes |
 | New task name | Sets the default filename title for new tasks |

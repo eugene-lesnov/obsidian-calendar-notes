@@ -19,12 +19,15 @@ const REINDEX_DEBOUNCE_MS = 600;
 
 type TextSettingKey = "newNoteName" | "newTaskName" | "noteTemplate" | "taskTemplate";
 
-type FolderSettingKey = "calendarItemsFolder";
+type FolderSettingKey = "notesFolder" | "activeTasksFolder" | "completedTasksFolder";
 
 export class CalendarNotesSettingTab extends PluginSettingTab {
   private readonly saveAndReindex = debounce(
     () => {
-      void this.plugin.saveSettingsAndReindex();
+      void this.plugin.saveSettingsAndReindex().catch((error) => {
+        new Notice(String(error instanceof Error ? error.message : error));
+        this.display();
+      });
     },
     REINDEX_DEBOUNCE_MS,
     true,
@@ -41,13 +44,13 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
     this.addDateFormatSetting(containerEl);
     this.addWeekStartSetting(containerEl);
 
-    this.addFolderSetting(containerEl, {
-      name: strings.calendarItemsFolderLabel,
-      description: strings.calendarItemsFolderDescription,
-      key: "calendarItemsFolder",
-    });
-
     new Setting(containerEl).setName(strings.notesSectionLabel).setHeading();
+
+    this.addFolderSetting(containerEl, {
+      name: strings.notesFolderLabel,
+      description: strings.notesFolderDescription,
+      key: "notesFolder",
+    });
 
     this.addTextSetting(containerEl, {
       name: strings.newNoteNameLabel,
@@ -64,6 +67,18 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
     });
 
     new Setting(containerEl).setName(strings.tasksSectionLabel).setHeading();
+
+    this.addFolderSetting(containerEl, {
+      name: strings.activeTasksFolderLabel,
+      description: strings.activeTasksFolderDescription,
+      key: "activeTasksFolder",
+    });
+
+    this.addFolderSetting(containerEl, {
+      name: strings.completedTasksFolderLabel,
+      description: strings.completedTasksFolderDescription,
+      key: "completedTasksFolder",
+    });
 
     this.addTextSetting(containerEl, {
       name: strings.newTaskNameLabel,

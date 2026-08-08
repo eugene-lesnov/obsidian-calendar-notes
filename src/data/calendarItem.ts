@@ -23,14 +23,31 @@ export type CalendarItem = {
   repeat?: RepeatRule;
 };
 
-export function isInsideCalendarFolder(file: TFile, settings: CalendarSettings): boolean {
-  const folder = normalizePath(joinPath(settings.calendarItemsFolder));
+function isInsideFolder(file: TFile, configuredPath: string): boolean {
+  const folder = normalizePath(joinPath(configuredPath));
 
   if (!folder || folder === "/") {
     return true;
   }
 
   return file.path.startsWith(`${folder}/`);
+}
+
+export function isTaskInStatusFolder(
+  file: TFile,
+  settings: CalendarSettings,
+  done: boolean,
+): boolean {
+  return isInsideFolder(file, done ? settings.completedTasksFolder : settings.activeTasksFolder);
+}
+
+function isInItemScope(file: TFile, settings: CalendarSettings, kind: CalendarItemKind): boolean {
+  if (kind === "note") {
+    return isInsideFolder(file, settings.notesFolder);
+  }
+
+  return isInsideFolder(file, settings.activeTasksFolder)
+    || isInsideFolder(file, settings.completedTasksFolder);
 }
 
 function isRealDate(year: number, month: number, day: number): boolean {
@@ -124,10 +141,6 @@ export function classifyFile(
     return null;
   }
 
-  if (!isInsideCalendarFolder(file, settings)) {
-    return null;
-  }
-
   const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
 
   if (!frontmatter) {
@@ -137,6 +150,10 @@ export function classifyFile(
   const kind = normalizeKind(frontmatter[ITEM_MARKER_FIELD]);
 
   if (!kind) {
+    return null;
+  }
+
+  if (!isInItemScope(file, settings, kind)) {
     return null;
   }
 

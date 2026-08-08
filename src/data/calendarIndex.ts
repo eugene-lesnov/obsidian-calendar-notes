@@ -2,7 +2,7 @@ import { App, TAbstractFile, TFile, TFolder, normalizePath } from "obsidian";
 
 import type { CalendarSettings } from "../core/types";
 import type { CalendarItem } from "./calendarItem";
-import { classifyFile } from "./calendarItem";
+import { classifyFile, isTaskInStatusFolder } from "./calendarItem";
 import { joinPath } from "./folders";
 
 export type CalendarDayCounts = {
@@ -14,6 +14,7 @@ export type CalendarDayCounts = {
 export type CalendarUpsertResult = {
   changed: boolean;
   completedTask?: CalendarItem;
+  taskToUpdate?: CalendarItem;
 };
 
 function isOpenTask(item: CalendarItem): boolean {
@@ -134,9 +135,25 @@ export class CalendarIndex {
     const previous = this.itemsByPath.get(file.path) ?? null;
     const current = classifyFile(this.app, file, this.getSettings());
     const completedTask = previous && current && !previous.done && current.done ? current : null;
+    const currentFrontmatter = current
+      ? this.app.metadataCache.getFileCache(current.file)?.frontmatter
+      : null;
+    const completionMetadataMismatch = current?.kind === "task"
+      && (current.done ? !current.completed : currentFrontmatter?.completed !== undefined);
+    const taskToUpdate = current?.kind === "task"
+      && (
+        completionMetadataMismatch
+        || !isTaskInStatusFolder(current.file, this.getSettings(), current.done)
+      )
+      ? current
+      : null;
 
     if (previous && current && sameCalendarState(previous, current)) {
-      return { changed: false, ...(completedTask ? { completedTask } : {}) };
+      return {
+        changed: false,
+        ...(completedTask ? { completedTask } : {}),
+        ...(taskToUpdate ? { taskToUpdate } : {}),
+      };
     }
 
     const removed = this.removeByPath(file.path);
@@ -146,7 +163,11 @@ export class CalendarIndex {
       this.insert(current);
     }
 
-    return { changed: removed || Boolean(current), ...(completedTask ? { completedTask } : {}) };
+    return {
+      changed: removed || Boolean(current),
+      ...(completedTask ? { completedTask } : {}),
+      ...(taskToUpdate ? { taskToUpdate } : {}),
+    };
   }
 
   remove(path: string): boolean {
@@ -161,19 +182,32 @@ export class CalendarIndex {
   }
 
   private getFilesInScope(): TFile[] {
-    const folderPath = normalizePath(joinPath(this.getSettings().calendarItemsFolder));
+    const settings = this.getSettings();
+    const paths = [settings.notesFolder, settings.activeTasksFolder, settings.completedTasksFolder];
+    const files = new Map<string, TFile>();
+
+    for (const configuredPath of paths) {
+      this.collectFolderFiles(configuredPath, files);
+    }
+
+    return Array.from(files.values());
+  }
+
+  private collectFolderFiles(configuredPath: string, files: Map<string, TFile>): void {
+    const folderPath = normalizePath(joinPath(configuredPath));
 
     if (!folderPath || folderPath === "/") {
-      return this.app.vault.getMarkdownFiles();
+      this.app.vault.getMarkdownFiles().forEach((file) => files.set(file.path, file));
+
+      return;
     }
 
     const root = this.app.vault.getAbstractFileByPath(folderPath);
 
     if (!(root instanceof TFolder)) {
-      return [];
+      return;
     }
 
-    const files: TFile[] = [];
     const folders = [root];
 
     while (folders.length > 0) {
@@ -187,12 +221,10 @@ export class CalendarIndex {
         if (child instanceof TFolder) {
           folders.push(child);
         } else if (child instanceof TFile && child.extension === "md") {
-          files.push(child);
+          files.set(child.path, child);
         }
       });
     }
-
-    return files;
   }
 
   private addFile(file: TAbstractFile): boolean {

@@ -5,7 +5,7 @@ import strings, { formatLocalizedString } from "../core/localization";
 import type { CalendarSettings, RepeatRule } from "../core/types";
 import { getNextRepeatDateId } from "../tasks/repeat";
 import type { CalendarItem, CalendarItemKind } from "./calendarItem";
-import { classifyFile, normalizeDateId } from "./calendarItem";
+import { classifyFile, isTaskInStatusFolder, normalizeDateId } from "./calendarItem";
 import {
   MARKDOWN_SUFFIX,
   ensureFolderOrThrow,
@@ -26,6 +26,11 @@ type TemplateResult = {
 };
 
 const EMPTY_TEMPLATE: TemplateResult = { body: "", fields: {} };
+const TASKS_IN_STATUS_TRANSITION = new WeakSet<TFile>();
+
+export function isTaskStatusTransitioning(file: TFile): boolean {
+  return TASKS_IN_STATUS_TRANSITION.has(file);
+}
 
 function templatePathFor(settings: CalendarSettings, kind: CalendarItemKind): string {
   return (kind === "task" ? settings.taskTemplate : settings.noteTemplate).trim();
@@ -46,6 +51,10 @@ function itemNameFor(settings: CalendarSettings, kind: CalendarItemKind): string
   const fallback = kind === "task" ? strings.newTaskDefaultTitle : strings.newNoteDefaultTitle;
 
   return sanitizeFileName(configured) || sanitizeFileName(fallback);
+}
+
+function folderForItem(settings: CalendarSettings, kind: CalendarItemKind): string {
+  return kind === "task" ? settings.activeTasksFolder : settings.notesFolder;
 }
 
 async function readTemplateBody(
@@ -113,7 +122,7 @@ export async function createItem(
   kind: CalendarItemKind,
   dateId: string,
 ): Promise<TFile> {
-  const folderPath = joinPath(settings.calendarItemsFolder);
+  const folderPath = joinPath(folderForItem(settings, kind));
 
   await ensureFolderOrThrow(app, folderPath, folderErrorFor(kind));
 
@@ -193,15 +202,88 @@ export async function setTaskDone(
   item: CalendarItem,
   done: boolean,
 ): Promise<void> {
-  await app.fileManager.processFrontMatter(item.file, (frontmatter: Record<string, unknown>) => {
-    frontmatter.done = done;
+  TASKS_IN_STATUS_TRANSITION.add(item.file);
+  let sourcePath = item.file.path;
 
-    if (done) {
-      frontmatter.completed = buildDayIdentifier(getTodayDateId(), settings);
+  try {
+    sourcePath = await moveTaskToStatusFolder(app, settings, item.file, done);
+    await app.fileManager.processFrontMatter(item.file, (frontmatter: Record<string, unknown>) => {
+      frontmatter.done = done;
+
+      if (done) {
+        frontmatter.completed = buildDayIdentifier(getTodayDateId(), settings);
+      } else {
+        delete frontmatter.completed;
+      }
+    });
+  } catch (error) {
+    await rollbackTaskMove(app, item.file, sourcePath);
+    throw error;
+  } finally {
+    TASKS_IN_STATUS_TRANSITION.delete(item.file);
+  }
+}
+
+export async function moveTaskToStatusFolder(
+  app: App,
+  settings: CalendarSettings,
+  file: TFile,
+  done: boolean,
+): Promise<string> {
+  const sourcePath = file.path;
+  const folderPath = joinPath(done ? settings.completedTasksFolder : settings.activeTasksFolder);
+
+  await ensureFolderOrThrow(app, folderPath, strings.createCalendarTaskFolderError);
+
+  if (isTaskInStatusFolder(file, settings, done)) {
+    return sourcePath;
+  }
+
+  const directPath = normalizePath(joinPath(folderPath, file.name));
+  const targetPath = app.vault.getAbstractFileByPath(directPath)
+    ? makeUniquePath(app, folderPath, file.basename)
+    : directPath;
+
+  await app.fileManager.renameFile(file, targetPath);
+
+  return sourcePath;
+}
+
+export async function synchronizeTaskCompletionMetadata(
+  app: App,
+  settings: CalendarSettings,
+  item: CalendarItem,
+): Promise<void> {
+  const frontmatter = app.metadataCache.getFileCache(item.file)?.frontmatter;
+  const completedDateId = normalizeDateId(frontmatter?.completed, settings);
+  const needsCompletedDate = item.done && !completedDateId;
+  const needsCompletedRemoval = !item.done && frontmatter?.completed !== undefined;
+
+  if (!needsCompletedDate && !needsCompletedRemoval) {
+    return;
+  }
+
+  await app.fileManager.processFrontMatter(item.file, (current: Record<string, unknown>) => {
+    if (item.done) {
+      if (!normalizeDateId(current.completed, settings)) {
+        current.completed = buildDayIdentifier(getTodayDateId(), settings);
+      }
     } else {
-      delete frontmatter.completed;
+      delete current.completed;
     }
   });
+}
+
+async function rollbackTaskMove(app: App, file: TFile, sourcePath: string): Promise<void> {
+  if (file.path === sourcePath) {
+    return;
+  }
+
+  try {
+    await app.fileManager.renameFile(file, sourcePath);
+  } catch (rollbackError) {
+    console.error("Failed to roll back task move.", rollbackError);
+  }
 }
 
 export async function setTaskRepeat(
@@ -280,7 +362,8 @@ export async function completeRepeatingOccurrence(
 
   const nextDateId = getNextRepeatDateId(occurrenceDateId, rule, getTodayDateId());
   const title = parseItemName(item.file.basename, settings).title;
-  const folderPath = item.file.parent?.path ?? "";
+  const folderPath = joinPath(settings.activeTasksFolder);
+  await ensureFolderOrThrow(app, folderPath, strings.createCalendarTaskFolderError);
   const nextName = buildItemName(settings, nextDateId, title);
   const targetPath = normalizePath(joinPath(folderPath, `${nextName}${MARKDOWN_SUFFIX}`));
 
@@ -315,13 +398,33 @@ export async function completeAndStopRepeat(
   settings: CalendarSettings,
   item: CalendarItem,
 ): Promise<void> {
-  await app.fileManager.processFrontMatter(item.file, (frontmatter: Record<string, unknown>) => {
-    if (!matchesStoredDate(frontmatter, item, settings)) {
-      return;
-    }
+  const storedDateId = normalizeDateId(
+    app.metadataCache.getFileCache(item.file)?.frontmatter?.date,
+    settings,
+  );
 
-    delete frontmatter.repeat;
-    frontmatter.done = true;
-    frontmatter.completed = buildDayIdentifier(getTodayDateId(), settings);
-  });
+  if (storedDateId !== item.dateId) {
+    throw new Error(`Task changed before it could be completed: ${item.file.path}`);
+  }
+
+  TASKS_IN_STATUS_TRANSITION.add(item.file);
+  let sourcePath = item.file.path;
+
+  try {
+    sourcePath = await moveTaskToStatusFolder(app, settings, item.file, true);
+    await app.fileManager.processFrontMatter(item.file, (frontmatter: Record<string, unknown>) => {
+      if (!matchesStoredDate(frontmatter, item, settings)) {
+        throw new Error(`Task changed before it could be completed: ${item.file.path}`);
+      }
+
+      delete frontmatter.repeat;
+      frontmatter.done = true;
+      frontmatter.completed = buildDayIdentifier(getTodayDateId(), settings);
+    });
+  } catch (error) {
+    await rollbackTaskMove(app, item.file, sourcePath);
+    throw error;
+  } finally {
+    TASKS_IN_STATUS_TRANSITION.delete(item.file);
+  }
 }

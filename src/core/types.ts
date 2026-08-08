@@ -15,7 +15,9 @@ export type CalendarDate = {
 export type CalendarSettings = {
   dateFormat: string;
   weekStart: WeekStart;
-  calendarItemsFolder: string;
+  notesFolder: string;
+  activeTasksFolder: string;
+  completedTasksFolder: string;
   newNoteName: string;
   newTaskName: string;
   noteTemplate: string;

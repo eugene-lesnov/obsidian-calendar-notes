@@ -12,7 +12,9 @@ export function createDefaultSettings(): CalendarSettings {
   return {
     dateFormat: DEFAULT_DATE_FORMAT,
     weekStart: "monday",
-    calendarItemsFolder: strings.defaultNewItemFolder,
+    notesFolder: strings.defaultNotesFolder,
+    activeTasksFolder: strings.defaultActiveTasksFolder,
+    completedTasksFolder: strings.defaultCompletedTasksFolder,
     newNoteName: strings.newNoteDefaultTitle,
     newTaskName: strings.newTaskDefaultTitle,
     noteTemplate: "",

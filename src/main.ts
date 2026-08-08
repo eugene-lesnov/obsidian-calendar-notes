@@ -1,4 +1,12 @@
-import { Notice, Plugin, TAbstractFile, TFile, WorkspaceLeaf, getLanguage } from "obsidian";
+import {
+  Notice,
+  Plugin,
+  TAbstractFile,
+  TFile,
+  WorkspaceLeaf,
+  getLanguage,
+  normalizePath,
+} from "obsidian";
 
 import {
   COMMAND_TOGGLE_CALENDAR,
@@ -14,7 +22,15 @@ import type { CalendarItem, CalendarItemKind } from "./data/calendarItem";
 import { classifyFile } from "./data/calendarItem";
 import type { CalendarUpsertResult } from "./data/calendarIndex";
 import { CalendarIndex } from "./data/calendarIndex";
-import { completeRepeatingOccurrence, createItem, reconcileItemName } from "./data/itemMutations";
+import { ensureFolder, joinPath } from "./data/folders";
+import {
+  completeRepeatingOccurrence,
+  createItem,
+  isTaskStatusTransitioning,
+  moveTaskToStatusFolder,
+  reconcileItemName,
+  synchronizeTaskCompletionMetadata,
+} from "./data/itemMutations";
 import type { ReconcileSource } from "./data/itemMutations";
 import { CalendarNotesSettingTab } from "./settings";
 import { CalendarView } from "./view/CalendarView";
@@ -29,6 +45,7 @@ export default class CalendarNotesPlugin extends Plugin {
   private currentDateId = getTodayDateId();
   private readonly reportedReconcileFailures = new Set<string>();
   private readonly pendingRepeatFiles = new Set<TFile>();
+  private readonly taskStateQueues = new WeakMap<TFile, Promise<void>>();
 
   async onload(): Promise<void> {
     setLocale([getLanguage(), ...getLocales()]);
@@ -55,7 +72,16 @@ export default class CalendarNotesPlugin extends Plugin {
       window.setInterval(() => this.checkDateChange(), DATE_CHANGE_CHECK_MS),
     );
 
-    this.app.workspace.onLayoutReady(() => {
+    this.app.workspace.onLayoutReady(async () => {
+      try {
+        this.validateConfiguredFolders();
+        await this.ensureConfiguredFolders();
+        await this.organizeTasksByStatus();
+      } catch (error) {
+        console.error("Failed to prepare configured folders.", error);
+        new Notice(String(error instanceof Error ? error.message : error));
+      }
+
       this.index.rebuild();
       this.registerVaultEvents();
       this.refreshViews();
@@ -178,12 +204,46 @@ export default class CalendarNotesPlugin extends Plugin {
         return { changed: result.changed, advancedRepeat: false };
       }
 
-      void this.advanceRepeatingTask(result.completedTask);
+      this.enqueueTaskStateUpdate(result.completedTask.file, true);
 
       return { changed: result.changed, advancedRepeat: true };
     }
 
+    if (result.taskToUpdate && !isTaskStatusTransitioning(result.taskToUpdate.file)) {
+      this.enqueueTaskStateUpdate(result.taskToUpdate.file, false);
+    }
+
     return { changed: result.changed, advancedRepeat: false };
+  }
+
+  private enqueueTaskStateUpdate(file: TFile, advanceRepeat: boolean): void {
+    const previous = this.taskStateQueues.get(file) ?? Promise.resolve();
+    const next = previous
+      .catch(() => undefined)
+      .then(async () => {
+        const current = classifyFile(this.app, file, this.settings);
+
+        if (current?.kind !== "task") {
+          return;
+        }
+
+        await synchronizeTaskCompletionMetadata(this.app, this.settings, current);
+        await moveTaskToStatusFolder(this.app, this.settings, file, current.done);
+
+        if (advanceRepeat) {
+          const latest = classifyFile(this.app, file, this.settings);
+
+          if (latest?.kind === "task" && latest.done && latest.repeat) {
+            await this.advanceRepeatingTask(latest);
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to apply task status change.", error);
+        new Notice(String(error instanceof Error ? error.message : error));
+      });
+
+    this.taskStateQueues.set(file, next);
   }
 
   private reconcile(file: TAbstractFile, advancedRepeat: boolean, source: ReconcileSource): void {
@@ -254,9 +314,61 @@ export default class CalendarNotesPlugin extends Plugin {
   }
 
   async saveSettingsAndReindex(): Promise<void> {
-    await this.saveData(this.settings);
-    this.index.rebuild();
-    this.refreshViews();
+    const savedSettings = Object.assign(
+      {},
+      createDefaultSettings(),
+      ((await this.loadData()) ?? {}) as Partial<CalendarSettings>,
+    );
+
+    try {
+      this.validateConfiguredFolders();
+      await this.ensureConfiguredFolders();
+      await this.saveData(this.settings);
+      this.index.rebuild();
+      this.refreshViews();
+    } catch (error) {
+      this.settings = savedSettings;
+      this.index.rebuild();
+      this.refreshViews();
+      throw error;
+    }
+  }
+
+  private validateConfiguredFolders(): void {
+    const active = normalizePath(joinPath(this.settings.activeTasksFolder));
+    const completed = normalizePath(joinPath(this.settings.completedTasksFolder));
+    const overlaps = active === completed
+      || active === "/"
+      || completed === "/"
+      || active.startsWith(`${completed}/`)
+      || completed.startsWith(`${active}/`);
+
+    if (overlaps) {
+      throw new Error(strings.taskFoldersConflictError);
+    }
+  }
+
+  private async ensureConfiguredFolders(): Promise<void> {
+    const paths = [
+      this.settings.notesFolder,
+      this.settings.activeTasksFolder,
+      this.settings.completedTasksFolder,
+    ];
+
+    for (const path of new Set(paths)) {
+      await ensureFolder(this.app, path);
+    }
+  }
+
+  private async organizeTasksByStatus(): Promise<void> {
+    for (const file of this.app.vault.getMarkdownFiles()) {
+      const item = classifyFile(this.app, file, this.settings);
+
+      if (item?.kind === "task") {
+        await synchronizeTaskCompletionMetadata(this.app, this.settings, item);
+        await moveTaskToStatusFolder(this.app, this.settings, file, item.done);
+      }
+    }
   }
 
   async toggleView(): Promise<void> {

@@ -14,9 +14,16 @@ export interface AppLocalization {
   dateFormatMigrationDone: string;
   dateFormatMigrationFailed: string;
   weekStartLabel: string;
-  defaultNewItemFolder: string;
-  calendarItemsFolderLabel: string;
-  calendarItemsFolderDescription: string;
+  defaultNotesFolder: string;
+  defaultActiveTasksFolder: string;
+  defaultCompletedTasksFolder: string;
+  notesFolderLabel: string;
+  notesFolderDescription: string;
+  activeTasksFolderLabel: string;
+  activeTasksFolderDescription: string;
+  completedTasksFolderLabel: string;
+  completedTasksFolderDescription: string;
+  taskFoldersConflictError: string;
   newNoteNameLabel: string;
   newNoteNameDescription: string;
   newTaskNameLabel: string;
@@ -90,10 +97,17 @@ const defaultStrings: AppLocalization = {
   dateFormatMigrationFailed:
     "Failed to update {{count}} calendar notes. They keep the old format and stay hidden from the calendar until it is fixed.",
   weekStartLabel: "Week starts on",
-  defaultNewItemFolder: "Calendar",
-  calendarItemsFolderLabel: "Calendar folder",
-  calendarItemsFolderDescription:
-    "Path to the folder for notes and tasks. Subfolders are included. Leave empty to use the entire vault.",
+  defaultNotesFolder: "Calendar/Notes",
+  defaultActiveTasksFolder: "Calendar/Tasks/Active",
+  defaultCompletedTasksFolder: "Calendar/Tasks/Completed",
+  notesFolderLabel: "Notes folder",
+  notesFolderDescription: "Folder where calendar notes are stored. Subfolders are included.",
+  activeTasksFolderLabel: "Active tasks folder",
+  activeTasksFolderDescription: "Folder where unfinished tasks are stored.",
+  completedTasksFolderLabel: "Completed tasks folder",
+  completedTasksFolderDescription: "Folder where tasks are moved when completed.",
+  taskFoldersConflictError:
+    "Active and completed task folders must be separate and must not contain one another.",
   newNoteNameLabel: "New note name",
   newNoteNameDescription:
     "The note's date is added as a prefix using the format selected in the settings.",
@@ -174,10 +188,17 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     dateFormatMigrationFailed:
       "Не удалось обновить календарных заметок: {{count}}. Они остались в старом формате и не будут видны в календаре, пока это не исправлено.",
     weekStartLabel: "Первый день недели",
-    defaultNewItemFolder: "Календарь",
-    calendarItemsFolderLabel: "Папка календаря",
-    calendarItemsFolderDescription:
-      "Путь к папке для заметок и задач. Учитываются вложенные папки. Оставьте поле пустым, чтобы использовать всё хранилище.",
+    defaultNotesFolder: "Календарь/Заметки",
+    defaultActiveTasksFolder: "Календарь/Задачи/Активные",
+    defaultCompletedTasksFolder: "Календарь/Задачи/Завершенные",
+    notesFolderLabel: "Папка заметок",
+    notesFolderDescription: "Папка для календарных заметок. Учитываются вложенные папки.",
+    activeTasksFolderLabel: "Папка активных задач",
+    activeTasksFolderDescription: "Папка для всех незавершённых задач.",
+    completedTasksFolderLabel: "Папка завершённых задач",
+    completedTasksFolderDescription: "Папка, куда перемещаются завершённые задачи.",
+    taskFoldersConflictError:
+      "Папки активных и завершённых задач должны отличаться и не должны находиться одна внутри другой.",
     newNoteNameLabel: "Название новой заметки",
     newNoteNameDescription:
       "К названию будет добавлен префикс с датой заметки в формате, выбранном в настройках.",
