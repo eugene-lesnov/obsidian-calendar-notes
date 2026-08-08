@@ -3,6 +3,7 @@ import type { RepeatFrequency } from "./types";
 export interface AppLocalization {
   dateFormatLabel: string;
   dateFormatDescription: string;
+  dateFormatPreview: string;
   dateFormatWarning: string;
   dateFormatApplyLabel: string;
   dateFormatMigrationTitle: string;
@@ -84,6 +85,7 @@ const PLACEHOLDER_PATTERN = /\{\{\s*([A-Za-z0-9_]+)\s*\}\}/g;
 const defaultStrings: AppLocalization = {
   dateFormatLabel: "Date format",
   dateFormatDescription: "Format for displayed and stored dates, e.g. YYYY-MM-DD.",
+  dateFormatPreview: "Preview: {{date}}",
   dateFormatWarning: "Changing it updates existing dates and filenames after confirmation.",
   dateFormatApplyLabel: "Apply",
   dateFormatMigrationTitle: "Change date format",
@@ -175,6 +177,7 @@ const localizations: Record<string, Partial<AppLocalization>> = {
   ru: {
     dateFormatLabel: "Формат даты",
     dateFormatDescription: "Формат отображения и хранения дат, например YYYY-MM-DD.",
+    dateFormatPreview: "Пример: {{date}}",
     dateFormatWarning: "После подтверждения обновятся существующие даты и имена файлов.",
     dateFormatApplyLabel: "Применить",
     dateFormatMigrationTitle: "Смена формата даты",

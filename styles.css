@@ -1,3 +1,26 @@
+.calendar-notes-date-format-setting {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 16px;
+  row-gap: 2px;
+  align-items: start;
+}
+
+.calendar-notes-date-format-setting .setting-item-control {
+  align-self: start;
+  gap: 8px;
+}
+
+.calendar-notes-format-details {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: var(--font-ui-smaller);
+  line-height: var(--line-height-tight);
+}
+
 .calendar-notes-format-preview {
   color: var(--text-muted);
 }
@@ -7,7 +30,29 @@
 }
 
 .calendar-notes-format-warning {
-  color: var(--text-warning);
+  margin-top: 4px;
+  padding-left: 8px;
+  border-left: 2px solid var(--text-warning);
+  color: var(--text-muted);
+}
+
+@media (max-width: 520px) {
+  .calendar-notes-date-format-setting {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-notes-date-format-setting .setting-item-control,
+  .calendar-notes-format-details {
+    grid-column: 1;
+  }
+
+  .calendar-notes-date-format-setting .setting-item-control {
+    margin-top: 8px;
+  }
+}
+
+.calendar-notes-week-start-setting {
+  align-items: center;
 }
 
 .calendar-notes-root {

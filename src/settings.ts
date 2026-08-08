@@ -100,20 +100,26 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
       .setName(strings.dateFormatLabel)
       .setDesc(strings.dateFormatDescription);
 
-    setting.descEl.createDiv({
+    setting.settingEl.addClass("calendar-notes-date-format-setting");
+
+    const detailsEl = setting.settingEl.createDiv({ cls: "calendar-notes-format-details" });
+    const feedbackEl = detailsEl.createDiv({ cls: "calendar-notes-format-preview" });
+
+    detailsEl.createDiv({
       cls: "calendar-notes-format-warning",
       text: strings.dateFormatWarning,
     });
-
-    const previewEl = setting.descEl.createDiv({ cls: "calendar-notes-format-preview" });
-    const errorEl = setting.descEl.createDiv({ cls: "calendar-notes-format-error" });
 
     let pendingFormat = this.plugin.settings.dateFormat;
     let applyButton: ButtonComponent | null = null;
 
     const updateFeedback = (format: string, valid: boolean): void => {
-      previewEl.setText(valid ? this.previewDate(format) : "");
-      errorEl.setText(valid ? "" : strings.invalidDateFormatError);
+      feedbackEl.toggleClass("calendar-notes-format-error", !valid);
+      feedbackEl.setText(
+        valid
+          ? formatLocalizedString(strings.dateFormatPreview, { date: this.previewDate(format) })
+          : strings.invalidDateFormatError,
+      );
       applyButton?.setDisabled(!valid || format === this.plugin.settings.dateFormat);
     };
 
@@ -194,7 +200,7 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
   }
 
   private addWeekStartSetting(containerEl: HTMLElement): void {
-    new Setting(containerEl)
+    const setting = new Setting(containerEl)
       .setName(strings.weekStartLabel)
       .addDropdown((dropdown) =>
         dropdown
@@ -206,6 +212,8 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           }),
       );
+
+    setting.settingEl.addClass("calendar-notes-week-start-setting");
   }
 
   private addFolderSetting(
