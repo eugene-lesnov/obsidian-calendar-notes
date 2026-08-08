@@ -2,8 +2,9 @@ import { App, TAbstractFile, TFile, TFolder, normalizePath } from "obsidian";
 
 import type { CalendarSettings } from "../core/types";
 import type { CalendarItem } from "./calendarItem";
-import { classifyFile, isTaskInStatusFolder } from "./calendarItem";
+import { classifyFile } from "./calendarItem";
 import { joinPath } from "./folders";
+import { configuredFolderPaths } from "./itemFolders";
 
 export type CalendarDayCounts = {
   notes: number;
@@ -13,8 +14,8 @@ export type CalendarDayCounts = {
 
 export type CalendarUpsertResult = {
   changed: boolean;
-  completedTask?: CalendarItem;
-  taskToUpdate?: CalendarItem;
+  previous: CalendarItem | null;
+  current: CalendarItem | null;
 };
 
 function isOpenTask(item: CalendarItem): boolean {
@@ -129,31 +130,14 @@ export class CalendarIndex {
 
   upsert(file: TAbstractFile): CalendarUpsertResult {
     if (!(file instanceof TFile)) {
-      return { changed: false };
+      return { changed: false, previous: null, current: null };
     }
 
     const previous = this.itemsByPath.get(file.path) ?? null;
     const current = classifyFile(this.app, file, this.getSettings());
-    const completedTask = previous && current && !previous.done && current.done ? current : null;
-    const currentFrontmatter = current
-      ? this.app.metadataCache.getFileCache(current.file)?.frontmatter
-      : null;
-    const completionMetadataMismatch = current?.kind === "task"
-      && (current.done ? !current.completed : currentFrontmatter?.completed !== undefined);
-    const taskToUpdate = current?.kind === "task"
-      && (
-        completionMetadataMismatch
-        || !isTaskInStatusFolder(current.file, this.getSettings(), current.done)
-      )
-      ? current
-      : null;
 
     if (previous && current && sameCalendarState(previous, current)) {
-      return {
-        changed: false,
-        ...(completedTask ? { completedTask } : {}),
-        ...(taskToUpdate ? { taskToUpdate } : {}),
-      };
+      return { changed: false, previous, current };
     }
 
     const removed = this.removeByPath(file.path);
@@ -163,27 +147,27 @@ export class CalendarIndex {
       this.insert(current);
     }
 
-    return {
-      changed: removed || Boolean(current),
-      ...(completedTask ? { completedTask } : {}),
-      ...(taskToUpdate ? { taskToUpdate } : {}),
-    };
+    return { changed: removed || Boolean(current), previous, current };
   }
 
-  remove(path: string): boolean {
-    return this.removeByPath(path);
+  remove(path: string): CalendarUpsertResult {
+    const previous = this.itemsByPath.get(path) ?? null;
+
+    return { changed: this.removeByPath(path), previous, current: null };
   }
 
-  rename(file: TAbstractFile, oldPath: string): boolean {
+  rename(file: TAbstractFile, oldPath: string): CalendarUpsertResult {
+    const previous = this.itemsByPath.get(oldPath) ?? null;
     const removed = this.removeByPath(oldPath);
     const added = this.addFile(file);
+    const current = file instanceof TFile ? this.itemsByPath.get(file.path) ?? null : null;
 
-    return removed || added;
+    return { changed: removed || added, previous, current };
   }
 
   private getFilesInScope(): TFile[] {
     const settings = this.getSettings();
-    const paths = [settings.notesFolder, settings.activeTasksFolder, settings.completedTasksFolder];
+    const paths = configuredFolderPaths(settings);
     const files = new Map<string, TFile>();
 
     for (const configuredPath of paths) {

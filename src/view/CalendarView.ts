@@ -19,12 +19,11 @@ import strings from "../core/localization";
 import type { RepeatFrequency } from "../core/types";
 import type { CalendarItem, CalendarItemKind } from "../data/calendarItem";
 import {
-  completeAndStopRepeat,
   createItem,
   setItemDate,
-  setTaskDone,
   setTaskRepeat,
 } from "../data/itemMutations";
+import { setTaskDone } from "../data/taskState";
 import type CalendarNotesPlugin from "../main";
 import { renderDaySection, renderOverdueSection } from "./daySection";
 import { DatePickerModal } from "./DatePickerModal";
@@ -166,7 +165,9 @@ export class CalendarView extends ItemView {
   }
 
   private async stopRepeat(item: CalendarItem): Promise<void> {
-    await this.runMutation(() => completeAndStopRepeat(this.app, this.plugin.settings, item));
+    await this.runMutation(() =>
+      setTaskDone(this.app, this.plugin.settings, item, true, { stopRepeat: true }),
+    );
   }
 
   private toggleOverdueExpanded(): void {

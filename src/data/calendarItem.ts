@@ -1,9 +1,9 @@
-import { App, TFile, normalizePath } from "obsidian";
+import { App, TFile } from "obsidian";
 
 import { MARKDOWN_EXTENSION } from "../core/constants";
 import { formatDateId, momentFormatToPattern, parseDateByPattern } from "../core/dateUtils";
 import type { CalendarSettings, RepeatFrequency, RepeatRule } from "../core/types";
-import { joinPath } from "./folders";
+import { isFileInItemScope } from "./itemFolders";
 import { parseItemName } from "./itemName";
 
 const ITEM_MARKER_FIELD = "calendarItem";
@@ -22,33 +22,6 @@ export type CalendarItem = {
   completed?: string;
   repeat?: RepeatRule;
 };
-
-function isInsideFolder(file: TFile, configuredPath: string): boolean {
-  const folder = normalizePath(joinPath(configuredPath));
-
-  if (!folder || folder === "/") {
-    return true;
-  }
-
-  return file.path.startsWith(`${folder}/`);
-}
-
-export function isTaskInStatusFolder(
-  file: TFile,
-  settings: CalendarSettings,
-  done: boolean,
-): boolean {
-  return isInsideFolder(file, done ? settings.completedTasksFolder : settings.activeTasksFolder);
-}
-
-function isInItemScope(file: TFile, settings: CalendarSettings, kind: CalendarItemKind): boolean {
-  if (kind === "note") {
-    return isInsideFolder(file, settings.notesFolder);
-  }
-
-  return isInsideFolder(file, settings.activeTasksFolder)
-    || isInsideFolder(file, settings.completedTasksFolder);
-}
 
 function isRealDate(year: number, month: number, day: number): boolean {
   const date = new Date(year, month, day);
@@ -153,7 +126,7 @@ export function classifyFile(
     return null;
   }
 
-  if (!isInItemScope(file, settings, kind)) {
+  if (!isFileInItemScope(file, settings, kind)) {
     return null;
   }
 

@@ -5,7 +5,6 @@ import {
   TFile,
   WorkspaceLeaf,
   getLanguage,
-  normalizePath,
 } from "obsidian";
 
 import {
@@ -22,16 +21,18 @@ import type { CalendarItem, CalendarItemKind } from "./data/calendarItem";
 import { classifyFile } from "./data/calendarItem";
 import type { CalendarUpsertResult } from "./data/calendarIndex";
 import { CalendarIndex } from "./data/calendarIndex";
-import { ensureFolder, joinPath } from "./data/folders";
+import { ensureFolder } from "./data/folders";
+import { configuredFolderPaths, validateTaskFolders } from "./data/itemFolders";
 import {
   completeRepeatingOccurrence,
   createItem,
-  isTaskStatusTransitioning,
-  moveTaskToStatusFolder,
   reconcileItemName,
-  synchronizeTaskCompletionMetadata,
 } from "./data/itemMutations";
 import type { ReconcileSource } from "./data/itemMutations";
+import {
+  isTaskStateTransitioning,
+  synchronizeTaskState,
+} from "./data/taskState";
 import { CalendarNotesSettingTab } from "./settings";
 import { CalendarView } from "./view/CalendarView";
 
@@ -74,7 +75,7 @@ export default class CalendarNotesPlugin extends Plugin {
 
     this.app.workspace.onLayoutReady(async () => {
       try {
-        this.validateConfiguredFolders();
+        validateTaskFolders(this.settings);
         await this.ensureConfiguredFolders();
         await this.organizeTasksByStatus();
       } catch (error) {
@@ -160,17 +161,13 @@ export default class CalendarNotesPlugin extends Plugin {
 
     this.registerEvent(
       vault.on("delete", (file: TAbstractFile) => {
-        this.applyIndexChange(
-          this.handleFileEvent(file, () => ({ changed: this.index.remove(file.path) })).changed,
-        );
+        this.applyIndexChange(this.handleFileEvent(file, () => this.index.remove(file.path)).changed);
       }),
     );
 
     this.registerEvent(
       vault.on("rename", (file: TAbstractFile, oldPath: string) => {
-        const advanced = this.handleFileEvent(file, () => ({
-          changed: this.index.rename(file, oldPath),
-        }));
+        const advanced = this.handleFileEvent(file, () => this.index.rename(file, oldPath));
 
         this.applyIndexChange(advanced.changed);
         this.reconcile(file, advanced.advancedRepeat, "name");
@@ -197,29 +194,39 @@ export default class CalendarNotesPlugin extends Plugin {
 
     const result = action();
 
-    if (result.completedTask?.repeat) {
+    const { previous, current } = result;
+    const completedTask = previous?.kind === "task"
+      && current?.kind === "task"
+      && !previous.done
+      && current.done
+      ? current
+      : null;
+
+    if (completedTask?.repeat) {
       if (this.isMigrating) {
         this.pendingRepeatFiles.add(file);
 
         return { changed: result.changed, advancedRepeat: false };
       }
 
-      this.enqueueTaskStateUpdate(result.completedTask.file, true);
+      this.enqueueTaskStateUpdate(completedTask.file, true);
 
       return { changed: result.changed, advancedRepeat: true };
     }
 
-    if (result.taskToUpdate && !isTaskStatusTransitioning(result.taskToUpdate.file)) {
-      this.enqueueTaskStateUpdate(result.taskToUpdate.file, false);
+    if (
+      current?.kind === "task"
+      && !isTaskStateTransitioning(current.file)
+    ) {
+      this.enqueueTaskStateUpdate(current.file, false);
     }
 
     return { changed: result.changed, advancedRepeat: false };
   }
 
   private enqueueTaskStateUpdate(file: TFile, advanceRepeat: boolean): void {
-    const previous = this.taskStateQueues.get(file) ?? Promise.resolve();
-    const next = previous
-      .catch(() => undefined)
+    const queue = this.taskStateQueues.get(file) ?? Promise.resolve();
+    const next = queue
       .then(async () => {
         const current = classifyFile(this.app, file, this.settings);
 
@@ -227,8 +234,7 @@ export default class CalendarNotesPlugin extends Plugin {
           return;
         }
 
-        await synchronizeTaskCompletionMetadata(this.app, this.settings, current);
-        await moveTaskToStatusFolder(this.app, this.settings, file, current.done);
+        await synchronizeTaskState(this.app, this.settings, current);
 
         if (advanceRepeat) {
           const latest = classifyFile(this.app, file, this.settings);
@@ -321,7 +327,7 @@ export default class CalendarNotesPlugin extends Plugin {
     );
 
     try {
-      this.validateConfiguredFolders();
+      validateTaskFolders(this.settings);
       await this.ensureConfiguredFolders();
       await this.saveData(this.settings);
       this.index.rebuild();
@@ -334,28 +340,8 @@ export default class CalendarNotesPlugin extends Plugin {
     }
   }
 
-  private validateConfiguredFolders(): void {
-    const active = normalizePath(joinPath(this.settings.activeTasksFolder));
-    const completed = normalizePath(joinPath(this.settings.completedTasksFolder));
-    const overlaps = active === completed
-      || active === "/"
-      || completed === "/"
-      || active.startsWith(`${completed}/`)
-      || completed.startsWith(`${active}/`);
-
-    if (overlaps) {
-      throw new Error(strings.taskFoldersConflictError);
-    }
-  }
-
   private async ensureConfiguredFolders(): Promise<void> {
-    const paths = [
-      this.settings.notesFolder,
-      this.settings.activeTasksFolder,
-      this.settings.completedTasksFolder,
-    ];
-
-    for (const path of new Set(paths)) {
+    for (const path of configuredFolderPaths(this.settings)) {
       await ensureFolder(this.app, path);
     }
   }
@@ -365,8 +351,7 @@ export default class CalendarNotesPlugin extends Plugin {
       const item = classifyFile(this.app, file, this.settings);
 
       if (item?.kind === "task") {
-        await synchronizeTaskCompletionMetadata(this.app, this.settings, item);
-        await moveTaskToStatusFolder(this.app, this.settings, file, item.done);
+        await synchronizeTaskState(this.app, this.settings, item);
       }
     }
   }
