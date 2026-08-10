@@ -4,7 +4,7 @@ import { HOVER_LINK_SOURCE } from "../core/constants";
 import strings from "../core/localization";
 import type { TaskList } from "../core/types";
 import type { Task } from "../data/item";
-import type { ItemCallbacks } from "./daySection";
+import { type ItemCallbacks, renderTaskRepeatMeta } from "./daySection";
 
 export type TaskListsSectionParams = ItemCallbacks & {
   app: App;
@@ -29,7 +29,8 @@ function renderTask(
   checkbox.setAttribute("aria-label", task.title);
   checkbox.addEventListener("change", () => params.onToggleTaskCompleted(task, checkbox.checked));
 
-  const title = item.createEl("button", {
+  const body = item.createDiv({ cls: "calendar-item-body" });
+  const title = body.createEl("button", {
     cls: "calendar-item calendar-item-title",
     text: task.title,
   });
@@ -43,6 +44,7 @@ function renderTask(
       linktext: task.file.path,
     });
   });
+  renderTaskRepeatMeta(body, task);
 
   const menuButton = item.createEl("button", {
     cls: "calendar-icon-button calendar-item-menu-button",

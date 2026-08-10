@@ -82,6 +82,19 @@ function renderCheckbox(item: HTMLElement, entry: Task, callbacks: ItemCallbacks
   checkbox.addEventListener("change", () => callbacks.onToggleTaskCompleted(entry, checkbox.checked));
 }
 
+export function renderTaskRepeatMeta(body: HTMLElement, task: Task): void {
+  if (!task.repeat) {
+    return;
+  }
+
+  body.createDiv({
+    cls: "calendar-task-repeat-meta",
+    text: formatLocalizedString(strings.taskRepeatMetaLabel, {
+      repeat: getRepeatLabel(task.repeat.frequency),
+    }),
+  });
+}
+
 function renderItemRow(
   list: HTMLElement,
   app: App,
@@ -120,13 +133,8 @@ function renderItemRow(
   title.addEventListener("click", (event: MouseEvent) => callbacks.onOpen(entry, event));
   registerHoverPreview(app, hoverParent, title, entry.file);
 
-  if (entry.kind === "task" && entry.repeat) {
-    body.createDiv({
-      cls: "calendar-task-repeat-meta",
-      text: formatLocalizedString(strings.taskRepeatMetaLabel, {
-        repeat: getRepeatLabel(entry.repeat.frequency),
-      }),
-    });
+  if (entry.kind === "task") {
+    renderTaskRepeatMeta(body, entry);
   }
 
   const menuButton = item.createEl("button", {
