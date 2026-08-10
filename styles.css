@@ -104,8 +104,40 @@
   display: block;
 }
 
+.calendar-task-list-setting .setting-item-control {
+  flex: 0 1 214px;
+}
+
+.calendar-task-list-setting select {
+  width: 100%;
+}
+
+.calendar-folder-feedback {
+  display: none;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.calendar-folder-feedback.is-visible {
+  display: block;
+}
+
+.calendar-folder-feedback.is-error {
+  color: var(--text-error);
+}
+
+.calendar-folder-feedback.is-warning {
+  color: var(--text-warning);
+}
+
 @media (max-width: 520px) {
   .calendar-task-list-settings-header .setting-item-control {
+    width: 100%;
+  }
+
+  .calendar-task-list-setting .setting-item-control {
+    flex-basis: auto;
     width: 100%;
   }
 }

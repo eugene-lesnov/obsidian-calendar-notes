@@ -5,6 +5,8 @@ import {
   Notice,
   PluginSettingTab,
   Setting,
+  TFolder,
+  TextComponent,
   debounce,
 } from "obsidian";
 
@@ -25,13 +27,14 @@ import {
 } from "./core/pathDefaults";
 import type { TaskList, WeekStart } from "./core/types";
 import { applyDateFormatMigration, planDateFormatMigration } from "./data/dateFormatMigration";
-import { normalizeFolderPath } from "./data/itemScopes";
+import { normalizeFolderPath, validateTaskLists } from "./data/itemScopes";
 import type CalendarNotesPlugin from "./main";
 import { DateFormatMigrationModal } from "./view/DateFormatMigrationModal";
 import { FolderSuggest } from "./view/FolderSuggest";
 import { MarkdownFileSuggest } from "./view/MarkdownFileSuggest";
 
 const REINDEX_DEBOUNCE_MS = 600;
+const FOLDER_BLUR_COMMIT_DELAY_MS = 150;
 
 function taskFolderNames() {
   return {
@@ -46,6 +49,10 @@ type TextSettingKey = "newNoteName";
 type TemplateSettingKey = "noteTemplate";
 
 type FolderSettingKey = "notesFolder";
+
+type FolderInputController = {
+  setCommittedValue: (value: string) => void;
+};
 
 class ConfirmTaskListDeleteModal extends Modal {
   constructor(app: App, private readonly onConfirm: () => void) {
@@ -201,23 +208,26 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
       .onClick(() => this.confirmRemoveTaskList(index)));
     updateDuplicateNameWarning();
 
+    let completedFolderInput: FolderInputController | null = null;
     const activeFolderSetting = new Setting(group)
       .setName(strings.taskListActiveFolderLabel)
-      .setDesc(strings.taskListActiveFolderDescription)
-      .addText((text) => {
-        text.setValue(taskList.activeFolder).onChange((value) => {
-          this.updateTaskListActiveFolder(taskList, value);
-          this.saveAndReindex();
-        });
-        new FolderSuggest(this.app, text.inputEl).onSelect((folder) => {
-          text.setValue(folder.path);
-          this.updateTaskListActiveFolder(taskList, folder.path);
-          this.saveAndReindex();
-        });
-      });
+      .setDesc(strings.taskListActiveFolderDescription);
+    this.addFolderInput(activeFolderSetting, {
+      value: taskList.activeFolder,
+      emptyError: formatLocalizedString(strings.taskListFolderRequiredError, {
+        name: taskList.name,
+      }),
+      onCommit: async (value) => {
+        const completedFolder = await this.commitActiveFolder(taskList, value);
+
+        if (completedFolder) {
+          completedFolderInput?.setCommittedValue(completedFolder);
+        }
+      },
+    });
     activeFolderSetting.settingEl.addClass("calendar-task-list-setting");
 
-    new Setting(group)
+    const completionSetting = new Setting(group)
       .setName(strings.taskListCompletionLabel)
       .setDesc(strings.taskListCompletionDescription)
       .addDropdown((dropdown) => dropdown
@@ -240,30 +250,19 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
           this.saveAndReindex();
           this.display();
         }));
+    completionSetting.settingEl.addClass("calendar-task-list-setting");
 
     if (taskList.completionBehavior.type === "move") {
-      new Setting(group)
+      const completedFolderSetting = new Setting(group)
         .setName(strings.taskListCompletedFolderLabel)
-        .setDesc(strings.taskListCompletedFolderDescription)
-        .addText((text) => {
-          text.setValue(taskList.completionBehavior.type === "move"
-            ? taskList.completionBehavior.completedFolder
-            : "");
-          text.onChange((value) => {
-            if (taskList.completionBehavior.type === "move") {
-              taskList.completionBehavior.completedFolder = value.trim();
-              this.saveAndReindex();
-            }
-          });
-          new FolderSuggest(this.app, text.inputEl).onSelect((folder) => {
-            text.setValue(folder.path);
-
-            if (taskList.completionBehavior.type === "move") {
-              taskList.completionBehavior.completedFolder = folder.path;
-              this.saveAndReindex();
-            }
-          });
-        });
+        .setDesc(strings.taskListCompletedFolderDescription);
+      completedFolderInput = this.addFolderInput(completedFolderSetting, {
+        value: taskList.completionBehavior.completedFolder,
+        emptyError: formatLocalizedString(strings.taskListFolderRequiredError, {
+          name: taskList.name,
+        }),
+        onCommit: (value) => this.commitCompletedFolder(taskList, value),
+      });
     }
 
     new Setting(group)
@@ -300,9 +299,13 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
       });
   }
 
-  private updateTaskListActiveFolder(taskList: TaskList, value: string): void {
-    const activeFolder = value.trim();
+  private async commitActiveFolder(
+    taskList: TaskList,
+    activeFolder: string,
+  ): Promise<string | null> {
     const folderNames = taskFolderNames();
+    let completionBehavior = taskList.completionBehavior;
+    let completedFolderChanged = false;
 
     if (
       taskList.completionBehavior.type === "move"
@@ -313,14 +316,47 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
           folderNames.completed,
         )
     ) {
-      taskList.completionBehavior.completedFolder = suggestCompletedFolder(
-        activeFolder,
-        folderNames.active,
-        folderNames.completed,
-      );
+      completionBehavior = {
+        type: "move",
+        completedFolder: suggestCompletedFolder(
+          activeFolder,
+          folderNames.active,
+          folderNames.completed,
+        ),
+      };
+      completedFolderChanged = true;
     }
 
+    const candidate = { ...taskList, activeFolder, completionBehavior };
+    this.validateTaskListUpdate(taskList, candidate);
     taskList.activeFolder = activeFolder;
+    taskList.completionBehavior = completionBehavior;
+    await this.plugin.saveSettingsAndReindex();
+
+    return completedFolderChanged && completionBehavior.type === "move"
+      ? completionBehavior.completedFolder
+      : null;
+  }
+
+  private async commitCompletedFolder(taskList: TaskList, completedFolder: string): Promise<void> {
+    if (taskList.completionBehavior.type !== "move") {
+      return;
+    }
+
+    const completionBehavior = { type: "move" as const, completedFolder };
+    const candidate = { ...taskList, completionBehavior };
+    this.validateTaskListUpdate(taskList, candidate);
+    taskList.completionBehavior = completionBehavior;
+    await this.plugin.saveSettingsAndReindex();
+  }
+
+  private validateTaskListUpdate(taskList: TaskList, candidate: TaskList): void {
+    validateTaskLists({
+      ...this.plugin.settings,
+      taskLists: this.plugin.settings.taskLists.map((current) =>
+        current.id === taskList.id ? candidate : current,
+      ),
+    });
   }
 
   private nextTaskListDefaults(): {
@@ -503,19 +539,147 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
     },
   ): void {
     const fallback = createDefaultSettings()[options.key];
-
-    new Setting(containerEl)
+    const setting = new Setting(containerEl)
       .setName(options.name)
-      .setDesc(options.description)
-      .addText((text) => {
-        text.setPlaceholder(fallback).setValue(this.plugin.settings[options.key]);
+      .setDesc(options.description);
 
-        new FolderSuggest(this.app, text.inputEl).onSelect((folder) => {
-          text.setValue(folder.path);
-          this.plugin.settings[options.key] = folder.path;
-          this.saveAndReindex();
-        });
+    this.addFolderInput(setting, {
+      value: this.plugin.settings[options.key],
+      placeholder: fallback,
+      emptyError: strings.notesFolderRequiredError,
+      onCommit: async (value) => {
+        this.plugin.settings[options.key] = value;
+        await this.plugin.saveSettingsAndReindex();
+      },
+    });
+  }
+
+  private addFolderInput(
+    setting: Setting,
+    options: {
+      value: string;
+      placeholder?: string;
+      emptyError: string;
+      onCommit: (value: string) => Promise<void>;
+    },
+  ): FolderInputController {
+    const feedback = setting.descEl.createDiv({ cls: "calendar-folder-feedback" });
+
+    let controller: FolderInputController | null = null;
+
+    setting.addText((text: TextComponent) => {
+      let committedValue = options.value;
+      let blurTimer: number | null = null;
+      let commitVersion = 0;
+
+      const clearBlurTimer = (): void => {
+        if (blurTimer !== null) {
+          window.clearTimeout(blurTimer);
+          blurTimer = null;
+        }
+      };
+
+      const showFeedback = (message: string, type?: "error" | "warning"): void => {
+        feedback.setText(message);
+        feedback.toggleClass("is-visible", Boolean(message));
+        feedback.toggleClass("is-error", type === "error");
+        feedback.toggleClass("is-warning", type === "warning");
+      };
+
+      const showFolderStatus = (value: string): void => {
+        const path = normalizeFolderPath(value);
+        const exists = this.app.vault.getAbstractFileByPath(path) instanceof TFolder;
+
+        showFeedback(exists ? "" : strings.folderMissingWarning, exists ? undefined : "warning");
+      };
+
+      const commit = async (rawValue: string): Promise<void> => {
+        clearBlurTimer();
+        const version = ++commitVersion;
+        const trimmedValue = rawValue.trim();
+
+        if (!trimmedValue) {
+          showFeedback(options.emptyError, "error");
+          return;
+        }
+
+        const value = normalizeFolderPath(trimmedValue);
+
+        if (value === committedValue) {
+          showFolderStatus(value);
+          return;
+        }
+
+        try {
+          await options.onCommit(value);
+
+          if (version !== commitVersion) {
+            return;
+          }
+
+          committedValue = value;
+          text.setValue(value);
+          showFolderStatus(value);
+        } catch (error) {
+          if (version === commitVersion) {
+            showFeedback(String(error instanceof Error ? error.message : error), "error");
+          }
+        }
+      };
+
+      text.setValue(options.value);
+
+      if (options.placeholder) {
+        text.setPlaceholder(options.placeholder);
+      }
+
+      text.inputEl.addEventListener("input", () => {
+        const value = text.inputEl.value.trim();
+        showFeedback(value ? "" : options.emptyError, value ? undefined : "error");
       });
+      text.inputEl.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          void commit(text.inputEl.value);
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          ++commitVersion;
+          clearBlurTimer();
+          text.setValue(committedValue);
+          showFolderStatus(committedValue);
+          text.inputEl.blur();
+        }
+      });
+      text.inputEl.addEventListener("blur", () => {
+        blurTimer = window.setTimeout(() => {
+          blurTimer = null;
+          void commit(text.inputEl.value);
+        }, FOLDER_BLUR_COMMIT_DELAY_MS);
+      });
+
+      new FolderSuggest(this.app, text.inputEl).onSelect((folder) => {
+        clearBlurTimer();
+        text.setValue(folder.path);
+        void commit(folder.path);
+      });
+
+      showFolderStatus(options.value);
+      controller = {
+        setCommittedValue: (value) => {
+          ++commitVersion;
+          clearBlurTimer();
+          committedValue = value;
+          text.setValue(value);
+          showFolderStatus(value);
+        },
+      };
+    });
+
+    if (!controller) {
+      throw new Error("Failed to initialize folder input.");
+    }
+
+    return controller;
   }
 
   private addTextSetting(

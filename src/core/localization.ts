@@ -45,6 +45,8 @@ export interface AppLocalization {
   taskListNameRequiredError: string;
   taskListFolderRequiredError: string;
   taskListFoldersConflictError: string;
+  notesFolderRequiredError: string;
+  folderMissingWarning: string;
   taskListDuplicateNameWarning: string;
   taskListRequiredError: string;
   taskMoveConflictError: string;
@@ -160,6 +162,8 @@ const defaultStrings: AppLocalization = {
   taskListNameRequiredError: "Every task list must have a name.",
   taskListFolderRequiredError: "Task list {{name}} must have valid folders.",
   taskListFoldersConflictError: "Task list folders must not overlap.",
+  notesFolderRequiredError: "Notes folder must not be empty.",
+  folderMissingWarning: "Folder does not exist yet. It will be created when needed.",
   taskListDuplicateNameWarning: "Another task list has the same name.",
   taskListRequiredError: "Create a task list before creating or changing tasks.",
   taskMoveConflictError: "Cannot move the task because {{path}} already exists.",
@@ -247,7 +251,7 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     dateFormatMigrationConfirmLabel: "Сменить формат",
     dateFormatMigrationCancelLabel: "Отмена",
     dateFormatMigrationDone:
-      "Формат даты изменён. Обновлено календарных заметок и календарных задач: {{items}}.",
+      "Формат даты изменен. Обновлено календарных заметок и календарных задач: {{items}}.",
     dateFormatMigrationFailed:
       "Не удалось обновить календарные заметки или календарные задачи: {{count}}. Они остались в старом формате и могут быть недоступны в календаре, пока это не исправлено.",
     weekStartLabel: "Первый день недели",
@@ -261,7 +265,7 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     defaultTaskListFolderName: "Задачи",
     newTaskListFolderName: "Список задач {{index}}",
     activeTasksFolderName: "Активные",
-    completedTasksFolderName: "Завершённые",
+    completedTasksFolderName: "Завершенные",
     templatesFolderName: "Шаблоны",
     noteTemplateName: "Заметка",
     taskTemplateName: "Задача",
@@ -269,15 +273,15 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     taskListNameDescription: "Название списка в блоке задач Calendar Notes.",
     taskListActiveFolderLabel: "Папка активных задач",
     taskListActiveFolderDescription:
-      "Активные задачи индексируются в этой папке и её подпапках. Новые задачи создаются здесь.",
+      "Активные задачи индексируются в этой папке и ее подпапках. Новые задачи создаются здесь.",
     taskListCompletionLabel: "Завершение",
     taskListCompletionDescription:
-      "Оставлять завершённые файлы на месте или перемещать их в отдельную папку.",
+      "Оставлять завершенные файлы на месте или перемещать их в отдельную папку.",
     taskListKeepLabel: "Оставлять файл на месте",
     taskListMoveLabel: "Перемещать файл в папку",
-    taskListCompletedFolderLabel: "Папка завершённых задач",
+    taskListCompletedFolderLabel: "Папка завершенных задач",
     taskListCompletedFolderDescription:
-      "Завершённые файлы перемещаются сюда с сохранением относительного пути подпапок.",
+      "Завершенные файлы перемещаются сюда с сохранением относительного пути подпапок.",
     removeTaskListLabel: "Удалить список задач",
     removeTaskListDescription:
       "Будет удалена только настройка списка. Markdown-файлы останутся на месте.",
@@ -285,6 +289,8 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     taskListNameRequiredError: "У каждого списка задач должно быть название.",
     taskListFolderRequiredError: "Для списка {{name}} должны быть указаны корректные папки.",
     taskListFoldersConflictError: "Папки списков задач не должны пересекаться.",
+    notesFolderRequiredError: "Папка заметок не должна быть пустой.",
+    folderMissingWarning: "Папка пока не существует. Она будет создана при необходимости.",
     taskListDuplicateNameWarning: "У другого списка задач такое же название.",
     taskListRequiredError: "Сначала создайте список задач.",
     taskMoveConflictError: "Не удалось переместить задачу: файл {{path}} уже существует.",
