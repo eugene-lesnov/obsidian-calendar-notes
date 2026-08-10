@@ -403,10 +403,13 @@
 .calendar-notes-root .calendar-task-list-toggle {
   min-width: 0;
   display: inline-flex;
+  flex: 1 1 auto;
   align-items: center;
+  justify-content: flex-start;
   gap: 4px;
-  padding: 3px 0;
+  padding: 3px 4px;
   border: none;
+  border-radius: 6px;
   background: transparent;
   color: var(--text-normal);
   box-shadow: none;
