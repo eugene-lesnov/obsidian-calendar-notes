@@ -4,7 +4,11 @@ import { HOVER_LINK_SOURCE } from "../core/constants";
 import strings from "../core/localization";
 import type { TaskList } from "../core/types";
 import type { Task } from "../data/item";
-import { type ItemCallbacks, renderTaskRepeatMeta } from "./daySection";
+import {
+  type ItemCallbacks,
+  registerItemTitleTooltip,
+  renderTaskRepeatMeta,
+} from "./daySection";
 
 export type TaskListsSectionParams = ItemCallbacks & {
   app: App;
@@ -36,6 +40,7 @@ function renderTask(
     cls: "vault-agenda-item vault-agenda-item-title",
     text: task.title,
   });
+  registerItemTitleTooltip(title, task.title);
   title.addEventListener("click", (event) => params.onOpen(task, event));
   title.addEventListener("mouseover", (event) => {
     params.app.workspace.trigger("hover-link", {

@@ -1,4 +1,4 @@
-import { App, HoverParent, TFile, setIcon } from "obsidian";
+import { App, HoverParent, TFile, displayTooltip, setIcon } from "obsidian";
 
 import { HOVER_LINK_SOURCE } from "../core/constants";
 import strings, { formatLocalizedString, getRepeatLabel } from "../core/localization";
@@ -6,6 +6,13 @@ import type { TaskListColor } from "../core/types";
 import type { Item, Task } from "../data/item";
 
 const COLLAPSED_OVERDUE_TASK_COUNT = 3;
+const ITEM_TITLE_TOOLTIP_CLASS = "vault-agenda-item-title-tooltip";
+
+function removeItemTitleTooltip(): void {
+  document.querySelectorAll(`.${ITEM_TITLE_TOOLTIP_CLASS}`).forEach((tooltip) => {
+    tooltip.remove();
+  });
+}
 
 export type ItemCallbacks = {
   getTaskListColor: (taskListId: string) => TaskListColor;
@@ -95,6 +102,20 @@ export function renderTaskRepeatMeta(body: HTMLElement, task: Task): void {
   });
 }
 
+export function registerItemTitleTooltip(title: HTMLElement, text: string): void {
+  title.addEventListener("mouseenter", () => {
+    removeItemTitleTooltip();
+
+    if (title.scrollWidth > title.clientWidth) {
+      displayTooltip(title, text, {
+        placement: "top",
+        classes: [ITEM_TITLE_TOOLTIP_CLASS],
+      });
+    }
+  });
+  title.addEventListener("mouseleave", removeItemTitleTooltip);
+}
+
 function renderItemRow(
   list: HTMLElement,
   app: App,
@@ -123,13 +144,12 @@ function renderItemRow(
   const body = item.createDiv({ cls: "vault-agenda-item-body" });
   const title = body.createEl("button", { cls: "vault-agenda-item vault-agenda-item-title" });
 
-  title.setAttribute("aria-label", entry.title);
-
   if (datePrefix) {
     title.createSpan({ cls: "vault-agenda-task-date-prefix", text: datePrefix });
   }
 
   title.createSpan({ text: entry.title });
+  registerItemTitleTooltip(title, entry.title);
   title.addEventListener("click", (event: MouseEvent) => callbacks.onOpen(entry, event));
   registerHoverPreview(app, hoverParent, title, entry.file);
 
