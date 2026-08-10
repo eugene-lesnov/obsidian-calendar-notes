@@ -1,7 +1,7 @@
 import { App, TFile, normalizePath } from "obsidian";
 
 import type { CalendarSettings } from "../core/types";
-import { classifyFile, normalizeDateId } from "./calendarItem";
+import { classifyItemFile, normalizeDateId } from "./item";
 import { MARKDOWN_SUFFIX } from "./fileNames";
 import { joinPath } from "./folders";
 import { buildItemName, parseItemName } from "./itemName";
@@ -9,10 +9,10 @@ import { buildDayIdentifier } from "./templates";
 
 export type DateFormatMigrationEntry = {
   file: TFile;
-  sourcePath: string;
-  sourceDate: string;
-  sourceCompleted: string;
-  date: string;
+  originalPath: string;
+  originalDateSignature: string;
+  originalCompletedSignature: string;
+  date: string | null;
   completed: string | null;
   targetPath: string | null;
 };
@@ -44,16 +44,12 @@ function valueSignature(value: unknown): string {
 
 function resolveTargetPath(
   file: TFile,
+  dateId: string,
   settings: CalendarSettings,
   nextSettings: CalendarSettings,
 ): string | null {
   const parsed = parseItemName(file.basename, settings);
-
-  if (!parsed.dateId) {
-    return null;
-  }
-
-  const nextName = buildItemName(nextSettings, parsed.dateId, parsed.title);
+  const nextName = buildItemName(nextSettings, dateId, parsed.title);
   const folderPath = file.parent?.path ?? "";
   const targetPath = normalizePath(joinPath(folderPath, `${nextName}${MARKDOWN_SUFFIX}`));
 
@@ -62,17 +58,20 @@ function resolveTargetPath(
 
 function buildEntry(
   file: TFile,
-  dateId: string,
+  dateId: string | undefined,
   frontmatter: Record<string, unknown>,
   settings: CalendarSettings,
   nextSettings: CalendarSettings,
+  renameFile: boolean,
 ): DateFormatMigrationEntry | null {
-  const date = buildDayIdentifier(dateId, nextSettings);
+  const date = dateId ? buildDayIdentifier(dateId, nextSettings) : null;
   const completedId = normalizeDateId(frontmatter.completed, settings);
   const completed = completedId ? buildDayIdentifier(completedId, nextSettings) : null;
-  const targetPath = resolveTargetPath(file, settings, nextSettings);
+  const targetPath = renameFile && dateId
+    ? resolveTargetPath(file, dateId, settings, nextSettings)
+    : null;
 
-  const dateChanged = frontmatter.date !== date;
+  const dateChanged = Boolean(date) && frontmatter.date !== date;
   const completedChanged = Boolean(completed) && frontmatter.completed !== completed;
 
   if (!dateChanged && !completedChanged && !targetPath) {
@@ -81,9 +80,9 @@ function buildEntry(
 
   return {
     file,
-    sourcePath: file.path,
-    sourceDate: valueSignature(frontmatter.date),
-    sourceCompleted: valueSignature(frontmatter.completed),
+    originalPath: file.path,
+    originalDateSignature: valueSignature(frontmatter.date),
+    originalCompletedSignature: valueSignature(frontmatter.completed),
     date,
     completed,
     targetPath,
@@ -101,9 +100,9 @@ export function planDateFormatMigration(
   let sample: DateFormatMigrationSample | null = null;
 
   for (const file of app.vault.getMarkdownFiles()) {
-    const active = classifyFile(app, file, settings);
+    const currentItem = classifyItemFile(app, file, settings);
 
-    if (!active) {
+    if (!currentItem) {
       continue;
     }
 
@@ -113,7 +112,19 @@ export function planDateFormatMigration(
       continue;
     }
 
-    const entry = buildEntry(file, active.dateId, frontmatter, settings, nextSettings);
+    const parsedName = parseItemName(file.basename, settings);
+    const hasSynchronizedDatePrefix = Boolean(
+      currentItem.dateId && parsedName.dateId === currentItem.dateId,
+    );
+
+    const entry = buildEntry(
+      file,
+      currentItem.dateId,
+      frontmatter,
+      settings,
+      nextSettings,
+      currentItem.kind === "note" || hasSynchronizedDatePrefix,
+    );
 
     if (!entry) {
       continue;
@@ -125,7 +136,7 @@ export function planDateFormatMigration(
       renameCount += 1;
     }
 
-    if (!sample && typeof frontmatter.date === "string") {
+    if (!sample && entry.date && typeof frontmatter.date === "string") {
       sample = { from: frontmatter.date, to: entry.date };
     }
   }
@@ -134,8 +145,8 @@ export function planDateFormatMigration(
 }
 
 async function applyEntry(app: App, entry: DateFormatMigrationEntry): Promise<boolean> {
-  if (entry.file.path !== entry.sourcePath) {
-    throw new Error(`Calendar item moved during date migration: ${entry.sourcePath}`);
+  if (entry.file.path !== entry.originalPath) {
+    throw new Error(`Calendar item moved during date migration: ${entry.originalPath}`);
   }
 
   if (entry.targetPath && app.vault.getAbstractFileByPath(entry.targetPath)) {
@@ -147,13 +158,15 @@ async function applyEntry(app: App, entry: DateFormatMigrationEntry): Promise<bo
       entry.file,
       (frontmatter: Record<string, unknown>) => {
         if (
-          valueSignature(frontmatter.date) !== entry.sourceDate
-          || valueSignature(frontmatter.completed) !== entry.sourceCompleted
+          valueSignature(frontmatter.date) !== entry.originalDateSignature
+          || valueSignature(frontmatter.completed) !== entry.originalCompletedSignature
         ) {
-          throw new Error(`Calendar item changed during date migration: ${entry.sourcePath}`);
+          throw new Error(`Calendar item changed during date migration: ${entry.originalPath}`);
         }
 
-        frontmatter.date = entry.date;
+        if (entry.date) {
+          frontmatter.date = entry.date;
+        }
 
         if (entry.completed) {
           frontmatter.completed = entry.completed;
@@ -174,7 +187,7 @@ async function applyEntry(app: App, entry: DateFormatMigrationEntry): Promise<bo
     await updateFrontmatter();
   } catch (error) {
     try {
-      await app.fileManager.renameFile(entry.file, entry.sourcePath);
+      await app.fileManager.renameFile(entry.file, entry.originalPath);
     } catch (rollbackError) {
       console.error("Failed to roll back calendar item rename after migration error.", rollbackError);
     }

@@ -16,44 +16,96 @@ import {
 } from "./core/constants";
 import { getTodayDateId } from "./core/dateUtils";
 import strings, { formatLocalizedString, getLocales, setLocale } from "./core/localization";
-import type { CalendarSettings } from "./core/types";
-import type { CalendarItem, CalendarItemKind } from "./data/calendarItem";
-import { classifyFile } from "./data/calendarItem";
-import type { CalendarUpsertResult } from "./data/calendarIndex";
-import { CalendarIndex } from "./data/calendarIndex";
-import { ensureFolder } from "./data/folders";
-import { configuredFolderPaths, validateTaskFolders } from "./data/itemFolders";
+import type { CalendarSettings, TaskList } from "./core/types";
+import type { ItemKind, Task } from "./data/item";
+import { classifyItemFile } from "./data/item";
+import type { ItemUpsertResult } from "./data/itemIndex";
+import { ItemIndex } from "./data/itemIndex";
+import { validateTaskLists } from "./data/itemScopes";
 import {
   completeRepeatingOccurrence,
-  createItem,
+  createDatedItem,
   reconcileItemName,
 } from "./data/itemMutations";
-import type { ReconcileSource } from "./data/itemMutations";
+import type { ReconcileTrigger } from "./data/itemMutations";
 import {
-  isTaskStateTransitioning,
-  synchronizeTaskState,
-} from "./data/taskState";
+  applyExternalTaskCompletion,
+  isTaskCompletionTransitioning,
+  setTaskCompleted,
+} from "./data/taskCompletion";
 import { CalendarNotesSettingTab } from "./settings";
 import { CalendarView } from "./view/CalendarView";
 
 const DATE_CHANGE_CHECK_MS = 60000;
 
+function isTaskList(value: unknown): value is TaskList {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const taskList = value as Partial<TaskList>;
+  const completionBehavior = taskList.completionBehavior;
+
+  return typeof taskList.id === "string"
+    && typeof taskList.name === "string"
+    && typeof taskList.activeFolder === "string"
+    && typeof taskList.newTaskName === "string"
+    && typeof taskList.taskTemplate === "string"
+    && Boolean(completionBehavior)
+    && (
+      completionBehavior?.type === "keep"
+      || (
+        completionBehavior?.type === "move"
+        && typeof completionBehavior.completedFolder === "string"
+      )
+    );
+}
+
+function normalizeSettings(savedSettings: Partial<CalendarSettings>): CalendarSettings {
+  const defaults = createDefaultSettings();
+  const settings = Object.assign({}, defaults, savedSettings);
+
+  if (!Array.isArray(settings.taskLists) || !settings.taskLists.every(isTaskList)) {
+    settings.taskLists = defaults.taskLists;
+  } else {
+    settings.taskLists = settings.taskLists.map((taskList) => ({
+      id: taskList.id,
+      name: taskList.name,
+      activeFolder: taskList.activeFolder,
+      newTaskName: taskList.newTaskName,
+      taskTemplate: taskList.taskTemplate,
+      completionBehavior: taskList.completionBehavior.type === "move"
+        ? {
+            type: "move",
+            completedFolder: taskList.completionBehavior.completedFolder,
+          }
+        : { type: "keep" },
+    }));
+  }
+
+  if (!Array.isArray(settings.expandedTaskListIds)) {
+    settings.expandedTaskListIds = defaults.expandedTaskListIds;
+  }
+
+  return settings;
+}
+
 export default class CalendarNotesPlugin extends Plugin {
   settings!: CalendarSettings;
-  index!: CalendarIndex;
+  itemIndex!: ItemIndex;
   isMigrating = false;
 
   private currentDateId = getTodayDateId();
   private readonly reportedReconcileFailures = new Set<string>();
   private readonly pendingRepeatFiles = new Set<TFile>();
-  private readonly taskStateQueues = new WeakMap<TFile, Promise<void>>();
+  private readonly taskCompletionQueues = new WeakMap<TFile, Promise<void>>();
 
   async onload(): Promise<void> {
     setLocale([getLanguage(), ...getLocales()]);
 
     await this.loadSettings();
 
-    this.index = new CalendarIndex(this.app, () => this.settings);
+    this.itemIndex = new ItemIndex(this.app, () => this.settings);
 
     this.registerView(VIEW_TYPE_CALENDAR, (leaf) => new CalendarView(leaf, this));
 
@@ -75,15 +127,13 @@ export default class CalendarNotesPlugin extends Plugin {
 
     this.app.workspace.onLayoutReady(async () => {
       try {
-        validateTaskFolders(this.settings);
-        await this.ensureConfiguredFolders();
-        await this.organizeTasksByStatus();
+        validateTaskLists(this.settings);
       } catch (error) {
         console.error("Failed to prepare configured folders.", error);
         new Notice(String(error instanceof Error ? error.message : error));
       }
 
-      this.index.rebuild();
+      this.itemIndex.rebuild();
       this.registerVaultEvents();
       this.refreshViews();
     });
@@ -121,11 +171,29 @@ export default class CalendarNotesPlugin extends Plugin {
         void this.goToToday();
       },
     });
+
+    this.addCommand({
+      id: "reopen-current-task",
+      name: strings.reopenCurrentTaskCommandLabel,
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        const item = file ? classifyItemFile(this.app, file, this.settings) : null;
+        const available = item?.kind === "task" && item.done;
+
+        if (available && !checking) {
+          void setTaskCompleted(this.app, this.settings, item, false).catch((error) => {
+            new Notice(String(error instanceof Error ? error.message : error));
+          });
+        }
+
+        return available;
+      },
+    });
   }
 
-  private async createItemForToday(kind: CalendarItemKind): Promise<void> {
+  private async createItemForToday(kind: ItemKind): Promise<void> {
     try {
-      const file = await createItem(this.app, this.settings, kind, getTodayDateId());
+      const file = await createDatedItem(this.app, this.settings, kind, getTodayDateId());
 
       await this.app.workspace.getLeaf(false).openFile(file);
     } catch (error) {
@@ -155,89 +223,79 @@ export default class CalendarNotesPlugin extends Plugin {
 
     this.registerEvent(
       vault.on("create", (file: TAbstractFile) => {
-        this.applyIndexChange(this.handleFileEvent(file, () => this.index.upsert(file)).changed);
+        this.applyItemIndexChange(this.handleFileEvent(file, () => this.itemIndex.upsert(file)).changed);
       }),
     );
 
     this.registerEvent(
       vault.on("delete", (file: TAbstractFile) => {
-        this.applyIndexChange(this.handleFileEvent(file, () => this.index.remove(file.path)).changed);
+        this.applyItemIndexChange(this.handleFileEvent(file, () => this.itemIndex.remove(file.path)).changed);
       }),
     );
 
     this.registerEvent(
       vault.on("rename", (file: TAbstractFile, oldPath: string) => {
-        const advanced = this.handleFileEvent(file, () => this.index.rename(file, oldPath));
+        const result = this.handleFileEvent(file, () => this.itemIndex.rename(file, oldPath));
 
-        this.applyIndexChange(advanced.changed);
-        this.reconcile(file, advanced.advancedRepeat, "name");
+        this.applyItemIndexChange(result.changed);
+        this.reconcile(file, "name");
       }),
     );
 
     this.registerEvent(
       metadataCache.on("changed", (file: TAbstractFile) => {
-        const advanced = this.handleFileEvent(file, () => this.index.upsert(file));
+        const result = this.handleFileEvent(file, () => this.itemIndex.upsert(file));
 
-        this.applyIndexChange(advanced.changed);
-        this.reconcile(file, advanced.advancedRepeat, "frontmatter");
+        this.applyItemIndexChange(result.changed);
+        this.reconcile(file, "frontmatter");
       }),
     );
   }
 
   private handleFileEvent(
     file: TAbstractFile,
-    action: () => CalendarUpsertResult,
-  ): { changed: boolean; advancedRepeat: boolean } {
+    action: () => ItemUpsertResult,
+  ): ItemUpsertResult {
     if (!(file instanceof TFile)) {
-      return { changed: false, advancedRepeat: false };
+      return { changed: false, previous: null, current: null };
     }
 
     const result = action();
 
     const { previous, current } = result;
-    const completedTask = previous?.kind === "task"
-      && current?.kind === "task"
-      && !previous.done
-      && current.done
-      ? current
-      : null;
-
-    if (completedTask?.repeat) {
-      if (this.isMigrating) {
-        this.pendingRepeatFiles.add(file);
-
-        return { changed: result.changed, advancedRepeat: false };
-      }
-
-      this.enqueueTaskStateUpdate(completedTask.file, true);
-
-      return { changed: result.changed, advancedRepeat: true };
-    }
-
     if (
-      current?.kind === "task"
-      && !isTaskStateTransitioning(current.file)
+      previous?.kind === "task"
+      && current?.kind === "task"
+      && previous.done !== current.done
     ) {
-      this.enqueueTaskStateUpdate(current.file, false);
+      const pluginTransition = isTaskCompletionTransitioning(current.file);
+      const advanceRepeat = current.done && Boolean(current.repeat);
+
+      if (this.isMigrating && advanceRepeat) {
+        this.pendingRepeatFiles.add(file);
+      } else {
+        this.enqueueTaskCompletionUpdate(previous, current, !pluginTransition, advanceRepeat);
+      }
     }
 
-    return { changed: result.changed, advancedRepeat: false };
+    return result;
   }
 
-  private enqueueTaskStateUpdate(file: TFile, advanceRepeat: boolean): void {
-    const queue = this.taskStateQueues.get(file) ?? Promise.resolve();
+  private enqueueTaskCompletionUpdate(
+    previous: Task,
+    current: Task,
+    synchronizeExternal: boolean,
+    advanceRepeat: boolean,
+  ): void {
+    const queue = this.taskCompletionQueues.get(current.file) ?? Promise.resolve();
     const next = queue
       .then(async () => {
-        const current = classifyFile(this.app, file, this.settings);
-
-        if (current?.kind !== "task") {
-          return;
+        if (synchronizeExternal) {
+          await applyExternalTaskCompletion(this.app, this.settings, previous, current);
         }
 
-        await synchronizeTaskState(this.app, this.settings, current);
-
         if (advanceRepeat) {
-          const latest = classifyFile(this.app, file, this.settings);
+          const latest = classifyItemFile(this.app, current.file, this.settings);
 
           if (latest?.kind === "task" && latest.done && latest.repeat) {
             await this.advanceRepeatingTask(latest);
@@ -249,17 +307,17 @@ export default class CalendarNotesPlugin extends Plugin {
         new Notice(String(error instanceof Error ? error.message : error));
       });
 
-    this.taskStateQueues.set(file, next);
+    this.taskCompletionQueues.set(current.file, next);
   }
 
-  private reconcile(file: TAbstractFile, advancedRepeat: boolean, source: ReconcileSource): void {
-    if (advancedRepeat || this.isMigrating || !(file instanceof TFile)) {
+  private reconcile(file: TAbstractFile, trigger: ReconcileTrigger): void {
+    if (this.isMigrating || !(file instanceof TFile)) {
       return;
     }
 
     const path = file.path;
 
-    void reconcileItemName(this.app, this.settings, file, source)
+    void reconcileItemName(this.app, this.settings, file, trigger)
       .then(() => this.reportedReconcileFailures.delete(path))
       .catch((error) => {
         console.error("Failed to synchronize calendar item name and date.", error);
@@ -276,7 +334,7 @@ export default class CalendarNotesPlugin extends Plugin {
     new Notice(formatLocalizedString(strings.reconcileError, { path }));
   }
 
-  private async advanceRepeatingTask(item: CalendarItem): Promise<void> {
+  private async advanceRepeatingTask(item: Task): Promise<void> {
     try {
       await completeRepeatingOccurrence(this.app, this.settings, item);
     } catch (error) {
@@ -292,7 +350,7 @@ export default class CalendarNotesPlugin extends Plugin {
     this.pendingRepeatFiles.clear();
 
     for (const file of pendingFiles) {
-      const item = classifyFile(this.app, file, this.settings);
+      const item = classifyItemFile(this.app, file, this.settings);
 
       if (item?.kind === "task" && item.done && item.repeat) {
         await this.advanceRepeatingTask(item);
@@ -300,7 +358,7 @@ export default class CalendarNotesPlugin extends Plugin {
     }
   }
 
-  private applyIndexChange(changed: boolean): void {
+  private applyItemIndexChange(changed: boolean): void {
     if (!changed) {
       return;
     }
@@ -311,7 +369,7 @@ export default class CalendarNotesPlugin extends Plugin {
   async loadSettings(): Promise<void> {
     const savedSettings = ((await this.loadData()) ?? {}) as Partial<CalendarSettings>;
 
-    this.settings = Object.assign({}, createDefaultSettings(), savedSettings);
+    this.settings = normalizeSettings(savedSettings);
   }
 
   async saveSettings(): Promise<void> {
@@ -320,39 +378,20 @@ export default class CalendarNotesPlugin extends Plugin {
   }
 
   async saveSettingsAndReindex(): Promise<void> {
-    const savedSettings = Object.assign(
-      {},
-      createDefaultSettings(),
+    const savedSettings = normalizeSettings(
       ((await this.loadData()) ?? {}) as Partial<CalendarSettings>,
     );
 
     try {
-      validateTaskFolders(this.settings);
-      await this.ensureConfiguredFolders();
+      validateTaskLists(this.settings);
       await this.saveData(this.settings);
-      this.index.rebuild();
+      this.itemIndex.rebuild();
       this.refreshViews();
     } catch (error) {
       this.settings = savedSettings;
-      this.index.rebuild();
+      this.itemIndex.rebuild();
       this.refreshViews();
       throw error;
-    }
-  }
-
-  private async ensureConfiguredFolders(): Promise<void> {
-    for (const path of configuredFolderPaths(this.settings)) {
-      await ensureFolder(this.app, path);
-    }
-  }
-
-  private async organizeTasksByStatus(): Promise<void> {
-    for (const file of this.app.vault.getMarkdownFiles()) {
-      const item = classifyFile(this.app, file, this.settings);
-
-      if (item?.kind === "task") {
-        await synchronizeTaskState(this.app, this.settings, item);
-      }
     }
   }
 

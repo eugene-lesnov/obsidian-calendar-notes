@@ -2,21 +2,21 @@ import { App, HoverParent, TFile, setIcon } from "obsidian";
 
 import { HOVER_LINK_SOURCE } from "../core/constants";
 import strings, { formatLocalizedString, getRepeatLabel } from "../core/localization";
-import type { CalendarItem } from "../data/calendarItem";
+import type { Item, Task } from "../data/item";
 
 const COLLAPSED_OVERDUE_TASK_COUNT = 3;
 
 export type ItemCallbacks = {
-  onToggleDone: (item: CalendarItem, done: boolean) => void;
-  onOpen: (item: CalendarItem, event: MouseEvent) => void;
-  onMenu: (item: CalendarItem, event: MouseEvent) => void;
+  onToggleTaskCompleted: (item: Task, completed: boolean) => void;
+  onOpen: (item: Item, event: MouseEvent) => void;
+  onMenu: (item: Item, event: MouseEvent) => void;
 };
 
 export type DaySectionParams = ItemCallbacks & {
   app: App;
   hoverParent: HoverParent;
   dateId: string;
-  items: CalendarItem[];
+  items: Item[];
   onCreateNote: () => void;
   onCreateTask: () => void;
   formatDayLabel: (dateId: string) => string;
@@ -25,7 +25,7 @@ export type DaySectionParams = ItemCallbacks & {
 export type OverdueSectionParams = ItemCallbacks & {
   app: App;
   hoverParent: HoverParent;
-  items: CalendarItem[];
+  items: Task[];
   total: number;
   expanded: boolean;
   onToggleExpanded: () => void;
@@ -68,7 +68,7 @@ function renderSectionHeader(
   addButton.addEventListener("click", onAdd);
 }
 
-function renderCheckbox(item: HTMLElement, entry: CalendarItem, callbacks: ItemCallbacks): void {
+function renderCheckbox(item: HTMLElement, entry: Task, callbacks: ItemCallbacks): void {
   const checkbox = item.createEl("input", {
     cls: "calendar-task-checkbox",
     type: "checkbox",
@@ -77,27 +77,27 @@ function renderCheckbox(item: HTMLElement, entry: CalendarItem, callbacks: ItemC
   checkbox.checked = entry.done;
   checkbox.setAttribute("aria-label", entry.title);
   checkbox.addEventListener("click", (event: MouseEvent) => event.stopPropagation());
-  checkbox.addEventListener("change", () => callbacks.onToggleDone(entry, checkbox.checked));
+  checkbox.addEventListener("change", () => callbacks.onToggleTaskCompleted(entry, checkbox.checked));
 }
 
 function renderItemRow(
   list: HTMLElement,
   app: App,
   hoverParent: HoverParent,
-  entry: CalendarItem,
+  entry: Item,
   callbacks: ItemCallbacks,
   datePrefix: string,
 ): void {
-  const item = list.createEl("li", { cls: "calendar-task" });
+  const item = list.createEl("li", { cls: "calendar-item-row" });
 
-  item.toggleClass("is-completed", entry.done);
+  item.toggleClass("is-completed", entry.kind === "task" && entry.done);
 
   if (entry.kind === "task") {
     renderCheckbox(item, entry, callbacks);
   }
 
-  const body = item.createDiv({ cls: "calendar-task-body" });
-  const title = body.createEl("button", { cls: "calendar-item calendar-task-title" });
+  const body = item.createDiv({ cls: "calendar-item-body" });
+  const title = body.createEl("button", { cls: "calendar-item calendar-item-title" });
 
   title.setAttribute("aria-label", entry.title);
 
@@ -109,7 +109,7 @@ function renderItemRow(
   title.addEventListener("click", (event: MouseEvent) => callbacks.onOpen(entry, event));
   registerHoverPreview(app, hoverParent, title, entry.file);
 
-  if (entry.repeat) {
+  if (entry.kind === "task" && entry.repeat) {
     body.createDiv({
       cls: "calendar-task-repeat-meta",
       text: formatLocalizedString(strings.taskRepeatMetaLabel, {
@@ -119,7 +119,7 @@ function renderItemRow(
   }
 
   const menuButton = item.createEl("button", {
-    cls: "calendar-icon-button calendar-task-menu-button",
+    cls: "calendar-icon-button calendar-item-menu-button",
   });
 
   menuButton.setAttribute("aria-label", strings.itemActionsLabel);
@@ -134,10 +134,10 @@ function renderItemList(
   section: HTMLElement,
   app: App,
   hoverParent: HoverParent,
-  items: CalendarItem[],
+  items: Item[],
   callbacks: ItemCallbacks,
   emptyLabel: string | null,
-  formatDatePrefix: ((entry: CalendarItem) => string) | null,
+  formatDatePrefix: ((entry: Item) => string) | null,
 ): void {
   if (items.length === 0) {
     if (emptyLabel) {
@@ -203,7 +203,7 @@ export function renderOverdueSection(
     visibleItems,
     params,
     null,
-    (entry) => params.formatDayLabel(entry.dateId),
+    (entry) => entry.dateId ? params.formatDayLabel(entry.dateId) : "",
   );
 }
 

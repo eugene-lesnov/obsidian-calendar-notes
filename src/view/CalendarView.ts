@@ -16,19 +16,23 @@ import {
   parseDateId,
 } from "../core/dateUtils";
 import strings from "../core/localization";
-import type { RepeatFrequency } from "../core/types";
-import type { CalendarItem, CalendarItemKind } from "../data/calendarItem";
+import type { RepeatFrequency, TaskList } from "../core/types";
+import type { Item, ItemKind, Task } from "../data/item";
 import {
-  createItem,
+  createDatedItem,
+  createTask,
   setItemDate,
   setTaskRepeat,
+  unscheduleTask,
 } from "../data/itemMutations";
-import { setTaskDone } from "../data/taskState";
+import { setTaskCompleted } from "../data/taskCompletion";
 import type CalendarNotesPlugin from "../main";
 import { renderDaySection, renderOverdueSection } from "./daySection";
 import { DatePickerModal } from "./DatePickerModal";
+import { ConfirmUnscheduleModal } from "./ConfirmUnscheduleModal";
 import { showItemMenu } from "./itemMenu";
 import { renderMonthGrid } from "./monthGrid";
+import { renderTaskListsSection } from "./taskListsSection";
 
 const RENDER_DEBOUNCE_MS = 250;
 
@@ -40,6 +44,7 @@ export class CalendarView extends ItemView {
   private month: number;
   private selectedDateId: string;
   private overdueExpanded = false;
+  private readonly expandedTaskLists: Set<string>;
 
   readonly scheduleRender = debounce(() => this.render(), RENDER_DEBOUNCE_MS, false);
 
@@ -52,6 +57,7 @@ export class CalendarView extends ItemView {
     this.year = today.year;
     this.month = today.month;
     this.selectedDateId = todayDateId;
+    this.expandedTaskLists = new Set(plugin.settings.expandedTaskListIds);
   }
 
   getViewType(): string {
@@ -87,7 +93,7 @@ export class CalendarView extends ItemView {
       weekStart: this.plugin.settings.weekStart,
       selectedDateId: this.selectedDateId,
       todayDateId,
-      getCounts: (dateId) => this.plugin.index.getCounts(dateId),
+      getDayCounts: (dateId) => this.plugin.itemIndex.getDayCounts(dateId),
       formatDayLabel: (dateId) => this.formatDayLabel(dateId),
       onSelectDate: (dateId) => this.selectDate(dateId),
       onPrevMonth: () => this.shiftMonth(-1),
@@ -95,7 +101,7 @@ export class CalendarView extends ItemView {
       onToday: () => this.goToToday(),
     });
 
-    const overdue = this.plugin.index.getOverdueTasks(todayDateId, {
+    const overdue = this.plugin.itemIndex.getOverdueTasks(todayDateId, {
       excludeDateId: this.selectedDateId,
       ...(!this.overdueExpanded ? { limit: 3 } : {}),
     });
@@ -107,20 +113,36 @@ export class CalendarView extends ItemView {
       total: overdue.total,
       expanded: this.overdueExpanded,
       onToggleExpanded: () => this.toggleOverdueExpanded(),
-      onToggleDone: (item, done) => void this.toggleDone(item, done),
+      onToggleTaskCompleted: (item, completed) =>
+        void this.toggleTaskCompleted(item, completed),
       onOpen: (item, event) => this.openFile(item.file, event),
       onMenu: (item, event) => this.openItemMenu(item, event),
       formatDayLabel: (dateId) => this.formatDayLabel(dateId),
+    });
+
+    renderTaskListsSection(root, {
+      app: this.app,
+      hoverParent: this,
+      taskLists: this.plugin.settings.taskLists,
+      getTasks: (taskListId) => this.plugin.itemIndex.getActiveTasks(taskListId),
+      isExpanded: (taskListId) => this.expandedTaskLists.has(taskListId),
+      onToggleExpanded: (taskListId) => this.toggleTaskList(taskListId),
+      onCreateTask: (taskList) => void this.createTaskInList(taskList),
+      onToggleTaskCompleted: (item, completed) =>
+        void this.toggleTaskCompleted(item, completed),
+      onOpen: (item, event) => this.openFile(item.file, event),
+      onMenu: (item, event) => this.openItemMenu(item, event),
     });
 
     renderDaySection(root, {
       app: this.app,
       hoverParent: this,
       dateId: this.selectedDateId,
-      items: this.plugin.index.getItems(this.selectedDateId),
-      onCreateNote: () => void this.createItem("note"),
-      onCreateTask: () => void this.createItem("task"),
-      onToggleDone: (item, done) => void this.toggleDone(item, done),
+      items: this.plugin.itemIndex.getItemsByDate(this.selectedDateId),
+      onCreateNote: () => void this.createDatedItem("note"),
+      onCreateTask: () => void this.createDatedItem("task"),
+      onToggleTaskCompleted: (item, completed) =>
+        void this.toggleTaskCompleted(item, completed),
       onOpen: (item, event) => this.openFile(item.file, event),
       onMenu: (item, event) => this.openItemMenu(item, event),
       formatDayLabel: (dateId) => this.formatDayLabel(dateId),
@@ -136,37 +158,46 @@ export class CalendarView extends ItemView {
     this.render();
   }
 
-  private openItemMenu(item: CalendarItem, event: MouseEvent): void {
+  private openItemMenu(item: Item, event: MouseEvent): void {
     showItemMenu(this.app, event, item, {
       onOpen: (openEvent) => this.openFile(item.file, openEvent),
-      onPickDate: () => this.openDatePicker(item),
+      onSetDate: () => this.openDatePicker(item),
+      onUnschedule: () => this.unschedule(item),
       onSetRepeat: (frequency) => void this.applyRepeat(item, frequency),
       onCompleteAndStopRepeat: () => void this.stopRepeat(item),
     });
   }
 
-  private openDatePicker(item: CalendarItem): void {
-    new DatePickerModal(this.app, this.plugin.settings, item.dateId, (dateId) => {
-      void this.moveItem(item, dateId);
+  private openDatePicker(item: Item): void {
+    new DatePickerModal(this.app, this.plugin.settings, item.dateId ?? getTodayDateId(), (dateId) => {
+      void this.setItemDate(item, dateId);
     }).open();
   }
 
-  private async moveItem(item: CalendarItem, dateId: string): Promise<void> {
+  private async setItemDate(item: Item, dateId: string): Promise<void> {
     await this.runMutation(() => setItemDate(this.app, this.plugin.settings, item, dateId));
   }
 
   private async applyRepeat(
-    item: CalendarItem,
+    item: Item,
     frequency: RepeatFrequency | null,
   ): Promise<void> {
+    if (item.kind !== "task") {
+      return;
+    }
+
     const rule = frequency ? { frequency } : null;
 
     await this.runMutation(() => setTaskRepeat(this.app, this.plugin.settings, item, rule));
   }
 
-  private async stopRepeat(item: CalendarItem): Promise<void> {
+  private async stopRepeat(item: Item): Promise<void> {
+    if (item.kind !== "task") {
+      return;
+    }
+
     await this.runMutation(() =>
-      setTaskDone(this.app, this.plugin.settings, item, true, { stopRepeat: true }),
+      setTaskCompleted(this.app, this.plugin.settings, item, true, { stopRepeat: true }),
     );
   }
 
@@ -175,18 +206,53 @@ export class CalendarView extends ItemView {
     this.render();
   }
 
-  private async toggleDone(item: CalendarItem, done: boolean): Promise<void> {
+  private async toggleTaskCompleted(item: Task, completed: boolean): Promise<void> {
     try {
-      await setTaskDone(this.app, this.plugin.settings, item, done);
+      await setTaskCompleted(this.app, this.plugin.settings, item, completed);
     } catch (error) {
       new Notice(String(error instanceof Error ? error.message : error));
       this.render();
     }
   }
 
-  private async createItem(kind: CalendarItemKind): Promise<void> {
+  private unschedule(item: Item): void {
+    if (item.kind !== "task" || !item.dateId) {
+      return;
+    }
+
+    const apply = (): void => {
+      void this.runMutation(() => unscheduleTask(this.app, this.plugin.settings, item));
+    };
+
+    if (item.repeat) {
+      new ConfirmUnscheduleModal(this.app, apply).open();
+    } else {
+      apply();
+    }
+  }
+
+  private toggleTaskList(taskListId: string): void {
+    if (this.expandedTaskLists.has(taskListId)) {
+      this.expandedTaskLists.delete(taskListId);
+    } else {
+      this.expandedTaskLists.add(taskListId);
+    }
+
+    this.plugin.settings.expandedTaskListIds = Array.from(this.expandedTaskLists);
+    void this.plugin.saveSettings();
+    this.render();
+  }
+
+  private async createTaskInList(taskList: TaskList): Promise<void> {
     await this.runMutation(async () => {
-      const file = await createItem(this.app, this.plugin.settings, kind, this.selectedDateId);
+      const file = await createTask(this.app, this.plugin.settings, taskList);
+      await this.app.workspace.getLeaf(false).openFile(file);
+    });
+  }
+
+  private async createDatedItem(kind: ItemKind): Promise<void> {
+    await this.runMutation(async () => {
+      const file = await createDatedItem(this.app, this.plugin.settings, kind, this.selectedDateId);
 
       await this.app.workspace.getLeaf(false).openFile(file);
     });

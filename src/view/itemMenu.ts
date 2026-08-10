@@ -3,9 +3,9 @@ import { App, Menu } from "obsidian";
 import { HOVER_LINK_SOURCE } from "../core/constants";
 import strings from "../core/localization";
 import type { RepeatFrequency } from "../core/types";
-import type { CalendarItem } from "../data/calendarItem";
+import type { Item } from "../data/item";
 
-const MOVE_MENU_SECTION = "calendar-notes-move";
+const DATE_MENU_SECTION = "calendar-notes-date";
 const REPEAT_MENU_SECTION = "calendar-notes-repeat";
 
 const REPEAT_OPTIONS: Array<{ frequency: RepeatFrequency | null; label: () => string }> = [
@@ -18,7 +18,8 @@ const REPEAT_OPTIONS: Array<{ frequency: RepeatFrequency | null; label: () => st
 
 export type ItemMenuCallbacks = {
   onOpen: (event: MouseEvent | KeyboardEvent) => void;
-  onPickDate: () => void;
+  onSetDate: () => void;
+  onUnschedule: () => void;
   onSetRepeat: (frequency: RepeatFrequency | null) => void;
   onCompleteAndStopRepeat: () => void;
 };
@@ -26,31 +27,41 @@ export type ItemMenuCallbacks = {
 export function showItemMenu(
   app: App,
   event: MouseEvent,
-  item: CalendarItem,
+  item: Item,
   callbacks: ItemMenuCallbacks,
 ): void {
   const menu = new Menu();
 
   menu.addItem((menuItem) =>
     menuItem
-      .setTitle(strings.moveItemPickDateLabel)
-      .setSection(MOVE_MENU_SECTION)
+      .setTitle(strings.setItemDateLabel)
+      .setSection(DATE_MENU_SECTION)
       .setIcon("calendar")
-      .onClick(() => callbacks.onPickDate()),
+      .onClick(() => callbacks.onSetDate()),
   );
 
   if (item.kind === "task") {
+    if (item.dateId) {
+      menu.addItem((menuItem) => menuItem
+        .setTitle(strings.unscheduleTaskLabel)
+        .setSection(DATE_MENU_SECTION)
+        .setIcon("calendar-x")
+        .onClick(() => callbacks.onUnschedule()));
+    }
+
     const currentFrequency = item.repeat?.frequency ?? null;
 
-    REPEAT_OPTIONS.forEach((option) => {
-      menu.addItem((menuItem) =>
-        menuItem
-          .setTitle(option.label())
-          .setSection(REPEAT_MENU_SECTION)
-          .setChecked(option.frequency === currentFrequency)
-          .onClick(() => callbacks.onSetRepeat(option.frequency)),
-      );
-    });
+    if (item.dateId) {
+      REPEAT_OPTIONS.forEach((option) => {
+        menu.addItem((menuItem) =>
+          menuItem
+            .setTitle(option.label())
+            .setSection(REPEAT_MENU_SECTION)
+            .setChecked(option.frequency === currentFrequency)
+            .onClick(() => callbacks.onSetRepeat(option.frequency)),
+        );
+      });
+    }
 
     if (item.repeat) {
       menu.addItem((menuItem) =>

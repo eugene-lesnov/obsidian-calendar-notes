@@ -15,30 +15,52 @@ export interface AppLocalization {
   dateFormatMigrationDone: string;
   dateFormatMigrationFailed: string;
   weekStartLabel: string;
-  defaultNotesFolder: string;
-  defaultActiveTasksFolder: string;
-  defaultCompletedTasksFolder: string;
+  notesFolderName: string;
   notesFolderLabel: string;
   notesFolderDescription: string;
-  activeTasksFolderLabel: string;
-  activeTasksFolderDescription: string;
-  completedTasksFolderLabel: string;
-  completedTasksFolderDescription: string;
-  taskFoldersConflictError: string;
+  taskListsSectionLabel: string;
+  addTaskListLabel: string;
+  newTaskListName: string;
+  taskListsFolderName: string;
+  defaultTaskListFolderName: string;
+  newTaskListFolderName: string;
+  activeTasksFolderName: string;
+  completedTasksFolderName: string;
+  templatesFolderName: string;
+  noteTemplateName: string;
+  taskTemplateName: string;
+  taskListNameLabel: string;
+  taskListNameDescription: string;
+  taskListActiveFolderLabel: string;
+  taskListActiveFolderDescription: string;
+  taskListCompletionLabel: string;
+  taskListCompletionDescription: string;
+  taskListKeepLabel: string;
+  taskListMoveLabel: string;
+  taskListCompletedFolderLabel: string;
+  taskListCompletedFolderDescription: string;
+  removeTaskListLabel: string;
+  removeTaskListDescription: string;
+  taskListIdError: string;
+  taskListNameRequiredError: string;
+  taskListFolderRequiredError: string;
+  taskListFoldersConflictError: string;
+  taskListDuplicateNameWarning: string;
+  taskListRequiredError: string;
+  taskMoveConflictError: string;
   newNoteNameLabel: string;
   newNoteNameDescription: string;
   newTaskNameLabel: string;
   newTaskNameDescription: string;
   noteTemplateLabel: string;
   noteTemplateDescription: string;
-  noteTemplatePlaceholder: string;
   taskTemplateLabel: string;
   taskTemplateDescription: string;
-  taskTemplatePlaceholder: string;
   toggleCalendarCommandLabel: string;
   calendarRibbonLabel: string;
   createNoteTodayCommandLabel: string;
   createTaskTodayCommandLabel: string;
+  reopenCurrentTaskCommandLabel: string;
   goToTodayCommandLabel: string;
   calendarViewTitle: string;
   previousMonthTitle: string;
@@ -59,7 +81,12 @@ export interface AppLocalization {
   itemActionsLabel: string;
   openItemLabel: string;
   completeAndStopRepeatLabel: string;
-  moveItemPickDateLabel: string;
+  setItemDateLabel: string;
+  unscheduleTaskLabel: string;
+  unscheduleRepeatConfirmTitle: string;
+  unscheduleRepeatConfirmMessage: string;
+  confirmLabel: string;
+  cancelLabel: string;
   changeDateModalTitle: string;
   changeDateModalDescription: string;
   changeDateModalSubmitLabel: string;
@@ -76,6 +103,7 @@ export interface AppLocalization {
   createCalendarTaskTemplateReadError: string;
   repeatAdvanceError: string;
   repeatOccurrenceConflictError: string;
+  repeatRequiresDateError: string;
   reconcileError: string;
   invalidDateFormatError: string;
 }
@@ -91,41 +119,65 @@ const defaultStrings: AppLocalization = {
   dateFormatMigrationTitle: "Change date format",
   dateFormatMigrationSummary: "Date format will change from {{from}} to {{to}}.",
   dateFormatMigrationCounts:
-    "Calendar notes to update: {{items}}. Files to rename: {{renames}}.",
+    "Calendar notes and calendar tasks to update: {{items}}. Files to rename: {{renames}}.",
   dateFormatMigrationSample: "For example: {{from}} becomes {{to}}.",
   dateFormatMigrationConfirmLabel: "Change format",
   dateFormatMigrationCancelLabel: "Cancel",
-  dateFormatMigrationDone: "Date format changed. Calendar notes updated: {{items}}.",
+  dateFormatMigrationDone:
+    "Date format changed. Calendar notes and calendar tasks updated: {{items}}.",
   dateFormatMigrationFailed:
-    "Failed to update {{count}} calendar notes. They keep the old format and stay hidden from the calendar until it is fixed.",
+    "Failed to update {{count}} calendar notes or calendar tasks. They keep the old format and may be unavailable in the calendar until fixed.",
   weekStartLabel: "Week starts on",
-  defaultNotesFolder: "Calendar Notes/Notes",
-  defaultActiveTasksFolder: "Calendar Notes/Tasks/Active",
-  defaultCompletedTasksFolder: "Calendar Notes/Tasks/Completed",
+  notesFolderName: "Notes",
   notesFolderLabel: "Notes folder",
   notesFolderDescription: "Folder where calendar notes are stored. Subfolders are included.",
-  activeTasksFolderLabel: "Active tasks folder",
-  activeTasksFolderDescription: "Folder where unfinished tasks are stored.",
-  completedTasksFolderLabel: "Completed tasks folder",
-  completedTasksFolderDescription: "Folder where tasks are moved when completed.",
-  taskFoldersConflictError:
-    "Active and completed task folders must be separate and must not contain one another.",
+  taskListsSectionLabel: "Task lists",
+  addTaskListLabel: "Add task list",
+  newTaskListName: "Task List {{index}}",
+  taskListsFolderName: "Task Lists",
+  defaultTaskListFolderName: "Tasks",
+  newTaskListFolderName: "Task List {{index}}",
+  activeTasksFolderName: "Active",
+  completedTasksFolderName: "Completed",
+  templatesFolderName: "Templates",
+  noteTemplateName: "Note",
+  taskTemplateName: "Task",
+  taskListNameLabel: "Name",
+  taskListNameDescription: "Name shown in the Calendar Notes task lists section.",
+  taskListActiveFolderLabel: "Active folder",
+  taskListActiveFolderDescription:
+    "Active tasks are indexed in this folder and its subfolders. New tasks are created here.",
+  taskListCompletionLabel: "Completion",
+  taskListCompletionDescription: "Keep completed files here or move them to a separate folder.",
+  taskListKeepLabel: "Keep file in place",
+  taskListMoveLabel: "Move file to folder",
+  taskListCompletedFolderLabel: "Completed folder",
+  taskListCompletedFolderDescription:
+    "Completed files are moved here while preserving their relative subfolder path.",
+  removeTaskListLabel: "Remove task list",
+  removeTaskListDescription: "Only the task list setting will be removed. Files will be kept.",
+  taskListIdError: "Every task list must have a unique internal identifier.",
+  taskListNameRequiredError: "Every task list must have a name.",
+  taskListFolderRequiredError: "Task list {{name}} must have valid folders.",
+  taskListFoldersConflictError: "Task list folders must not overlap.",
+  taskListDuplicateNameWarning: "Another task list has the same name.",
+  taskListRequiredError: "Create a task list before creating or changing tasks.",
+  taskMoveConflictError: "Cannot move the task because {{path}} already exists.",
   newNoteNameLabel: "New note name",
   newNoteNameDescription:
     "The note's date is added as a prefix using the format selected in the settings.",
   newTaskNameLabel: "New task name",
   newTaskNameDescription:
-    "The task's date is added as a prefix using the format selected in the settings.",
+    "Default file name for a new task. A numeric suffix is added if it already exists.",
   noteTemplateLabel: "New note template",
   noteTemplateDescription: "Path to the template used to create new notes.",
-  noteTemplatePlaceholder: "Templates/Calendar note",
   taskTemplateLabel: "New task template",
-  taskTemplateDescription: "Path to the template used to create new tasks.",
-  taskTemplatePlaceholder: "Templates/Calendar task",
+  taskTemplateDescription: "Path to the template used to create new tasks in this list.",
   toggleCalendarCommandLabel: "Toggle calendar",
   calendarRibbonLabel: "Calendar Notes",
   createNoteTodayCommandLabel: "Create note for today",
   createTaskTodayCommandLabel: "Create task for today",
+  reopenCurrentTaskCommandLabel: "Reopen current task",
   goToTodayCommandLabel: "Go to today",
   calendarViewTitle: "Calendar Notes",
   previousMonthTitle: "Previous month",
@@ -146,10 +198,16 @@ const defaultStrings: AppLocalization = {
   itemActionsLabel: "Actions",
   openItemLabel: "Open",
   completeAndStopRepeatLabel: "Complete and stop repeating",
-  moveItemPickDateLabel: "Move to date...",
+  setItemDateLabel: "Set date...",
+  unscheduleTaskLabel: "Remove date",
+  unscheduleRepeatConfirmTitle: "Remove date and repeat",
+  unscheduleRepeatConfirmMessage:
+    "This task repeats. Removing its date will also remove the repeat rule.",
+  confirmLabel: "Continue",
+  cancelLabel: "Cancel",
   changeDateModalTitle: "Change date",
   changeDateModalDescription: "Date in {{format}} format",
-  changeDateModalSubmitLabel: "Move",
+  changeDateModalSubmitLabel: "Save",
   invalidDateError: "Enter a valid date in {{format}} format.",
 
   taskRepeatNoneLabel: "Do not repeat",
@@ -167,6 +225,7 @@ const defaultStrings: AppLocalization = {
   repeatAdvanceError: "Failed to move the repeating task to its next date.",
   repeatOccurrenceConflictError:
     "Cannot create the next occurrence of the task: {{path}} already exists.",
+  repeatRequiresDateError: "Set a task date before configuring repeat.",
   reconcileError:
     "Failed to synchronize the file name and date of {{path}}. The file name and its date property may differ.",
   invalidDateFormatError:
@@ -183,40 +242,67 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     dateFormatMigrationTitle: "Смена формата даты",
     dateFormatMigrationSummary: "Формат даты изменится с {{from}} на {{to}}.",
     dateFormatMigrationCounts:
-      "Календарных заметок будет обновлено: {{items}}. Файлов будет переименовано: {{renames}}.",
+      "Календарных заметок и календарных задач будет обновлено: {{items}}. Файлов будет переименовано: {{renames}}.",
     dateFormatMigrationSample: "Например: {{from}} станет {{to}}.",
     dateFormatMigrationConfirmLabel: "Сменить формат",
     dateFormatMigrationCancelLabel: "Отмена",
-    dateFormatMigrationDone: "Формат даты изменён. Обновлено календарных заметок: {{items}}.",
+    dateFormatMigrationDone:
+      "Формат даты изменён. Обновлено календарных заметок и календарных задач: {{items}}.",
     dateFormatMigrationFailed:
-      "Не удалось обновить календарных заметок: {{count}}. Они остались в старом формате и не будут видны в календаре, пока это не исправлено.",
+      "Не удалось обновить календарные заметки или календарные задачи: {{count}}. Они остались в старом формате и могут быть недоступны в календаре, пока это не исправлено.",
     weekStartLabel: "Первый день недели",
-    defaultNotesFolder: "Calendar Notes/Заметки",
-    defaultActiveTasksFolder: "Calendar Notes/Задачи/Активные",
-    defaultCompletedTasksFolder: "Calendar Notes/Задачи/Завершенные",
+    notesFolderName: "Заметки",
     notesFolderLabel: "Папка заметок",
     notesFolderDescription: "Папка для календарных заметок. Учитываются вложенные папки.",
-    activeTasksFolderLabel: "Папка активных задач",
-    activeTasksFolderDescription: "Папка для всех незавершённых задач.",
-    completedTasksFolderLabel: "Папка завершённых задач",
-    completedTasksFolderDescription: "Папка, куда перемещаются завершенные задачи.",
-    taskFoldersConflictError:
-      "Папки активных и завершённых задач должны отличаться и не должны находиться одна внутри другой.",
+    taskListsSectionLabel: "Списки задач",
+    addTaskListLabel: "Добавить список задач",
+    newTaskListName: "Список задач {{index}}",
+    taskListsFolderName: "Списки задач",
+    defaultTaskListFolderName: "Задачи",
+    newTaskListFolderName: "Список задач {{index}}",
+    activeTasksFolderName: "Активные",
+    completedTasksFolderName: "Завершённые",
+    templatesFolderName: "Шаблоны",
+    noteTemplateName: "Заметка",
+    taskTemplateName: "Задача",
+    taskListNameLabel: "Название",
+    taskListNameDescription: "Название списка в блоке задач Calendar Notes.",
+    taskListActiveFolderLabel: "Папка активных задач",
+    taskListActiveFolderDescription:
+      "Активные задачи индексируются в этой папке и её подпапках. Новые задачи создаются здесь.",
+    taskListCompletionLabel: "Завершение",
+    taskListCompletionDescription:
+      "Оставлять завершённые файлы на месте или перемещать их в отдельную папку.",
+    taskListKeepLabel: "Оставлять файл на месте",
+    taskListMoveLabel: "Перемещать файл в папку",
+    taskListCompletedFolderLabel: "Папка завершённых задач",
+    taskListCompletedFolderDescription:
+      "Завершённые файлы перемещаются сюда с сохранением относительного пути подпапок.",
+    removeTaskListLabel: "Удалить список задач",
+    removeTaskListDescription:
+      "Будет удалена только настройка списка. Markdown-файлы останутся на месте.",
+    taskListIdError: "У каждого списка задач должен быть уникальный внутренний идентификатор.",
+    taskListNameRequiredError: "У каждого списка задач должно быть название.",
+    taskListFolderRequiredError: "Для списка {{name}} должны быть указаны корректные папки.",
+    taskListFoldersConflictError: "Папки списков задач не должны пересекаться.",
+    taskListDuplicateNameWarning: "У другого списка задач такое же название.",
+    taskListRequiredError: "Сначала создайте список задач.",
+    taskMoveConflictError: "Не удалось переместить задачу: файл {{path}} уже существует.",
     newNoteNameLabel: "Название новой заметки",
     newNoteNameDescription:
       "К названию будет добавлен префикс с датой заметки в формате, выбранном в настройках.",
     newTaskNameLabel: "Название новой задачи",
     newTaskNameDescription:
-      "К названию будет добавлен префикс с датой задачи в формате, выбранном в настройках.",
+      "Название файла новой задачи. При конфликте добавляется числовой суффикс.",
     noteTemplateLabel: "Шаблон новой заметки",
     noteTemplateDescription: "Путь к шаблону, по которому будут создаваться новые заметки.",
-    noteTemplatePlaceholder: "Шаблоны/Заметка",
     taskTemplateLabel: "Шаблон новой задачи",
-    taskTemplateDescription: "Путь к шаблону, по которому будут создаваться новые задачи.",
-    taskTemplatePlaceholder: "Шаблоны/Задача",
+    taskTemplateDescription:
+      "Путь к шаблону, по которому будут создаваться новые задачи этого списка.",
     toggleCalendarCommandLabel: "Открыть или закрыть календарь",
     createNoteTodayCommandLabel: "Создать заметку на сегодня",
     createTaskTodayCommandLabel: "Создать задачу на сегодня",
+    reopenCurrentTaskCommandLabel: "Вернуть текущую задачу в активные",
     goToTodayCommandLabel: "Перейти к сегодняшнему дню",
     calendarViewTitle: "Calendar Notes",
     previousMonthTitle: "Предыдущий месяц",
@@ -237,10 +323,16 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     itemActionsLabel: "Действия",
     openItemLabel: "Открыть",
     completeAndStopRepeatLabel: "Завершить и прекратить повторение",
-    moveItemPickDateLabel: "Перенести на дату...",
+    setItemDateLabel: "Назначить дату...",
+    unscheduleTaskLabel: "Удалить дату",
+    unscheduleRepeatConfirmTitle: "Удалить дату и повтор",
+    unscheduleRepeatConfirmMessage:
+      "Задача повторяется. Вместе с датой будет удалено правило повторения.",
+    confirmLabel: "Продолжить",
+    cancelLabel: "Отмена",
     changeDateModalTitle: "Изменить дату",
     changeDateModalDescription: "Дата в формате {{format}}",
-    changeDateModalSubmitLabel: "Перенести",
+    changeDateModalSubmitLabel: "Сохранить",
     invalidDateError: "Введите корректную дату в формате {{format}}.",
 
     taskRepeatNoneLabel: "Не повторять",
@@ -260,6 +352,7 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     repeatAdvanceError: "Не удалось перенести повторяющуюся задачу на следующую дату.",
     repeatOccurrenceConflictError:
       "Не удалось создать следующее повторение задачи: {{path}} уже существует.",
+    repeatRequiresDateError: "Перед настройкой повтора назначьте задаче дату.",
     reconcileError:
       "Не удалось синхронизировать имя файла и дату для {{path}}. Имя файла и свойство date могут расходиться.",
     invalidDateFormatError:

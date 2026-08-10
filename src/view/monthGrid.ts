@@ -8,7 +8,7 @@ import {
 } from "../core/dateUtils";
 import strings, { getLocales } from "../core/localization";
 import type { WeekStart } from "../core/types";
-import type { CalendarDayCounts } from "../data/calendarIndex";
+import type { CalendarDayCounts } from "../data/itemIndex";
 
 export type MonthGridParams = {
   year: number;
@@ -16,7 +16,7 @@ export type MonthGridParams = {
   weekStart: WeekStart;
   selectedDateId: string | null;
   todayDateId: string;
-  getCounts: (dateId: string) => CalendarDayCounts;
+  getDayCounts: (dateId: string) => CalendarDayCounts;
   formatDayLabel: (dateId: string) => string;
   onSelectDate: (dateId: string) => void;
   onPrevMonth: () => void;
@@ -89,8 +89,8 @@ function renderDayMarkers(dayButton: HTMLElement, counts: CalendarDayCounts): vo
   }
 
   if (counts.tasks > 0) {
-    const taskMarkerClass = counts.hasOpenTasks
-      ? "calendar-task-open-marker"
+    const taskMarkerClass = counts.hasActiveTasks
+      ? "calendar-task-active-marker"
       : "calendar-task-done-marker";
 
     markers.createSpan({ cls: `calendar-day-marker ${taskMarkerClass}` });
@@ -108,7 +108,7 @@ function renderDays(container: HTMLElement, params: MonthGridParams): void {
 
   for (let day = 1; day <= totalDays; day++) {
     const dateId = formatDateId(params.year, params.month, day);
-    const counts = params.getCounts(dateId);
+    const counts = params.getDayCounts(dateId);
     const dayButton = grid.createEl("button", { cls: "calendar-day" });
 
     dayButton.createSpan({ cls: "calendar-day-number", text: String(day) });

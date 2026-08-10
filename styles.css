@@ -55,6 +55,61 @@
   align-items: center;
 }
 
+.calendar-task-list-settings-group {
+  margin: 12px 0 16px;
+  padding: 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-l);
+  background: var(--background-secondary-alt);
+}
+
+.calendar-task-list-settings-header {
+  padding: 4px 8px 8px;
+  border-top: 0;
+}
+
+.calendar-task-list-settings-header .setting-item-info {
+  display: none;
+}
+
+.calendar-task-list-settings-header .setting-item-control {
+  flex: 1 1 auto;
+}
+
+.calendar-task-list-settings-header .calendar-task-list-name-input {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  font-size: var(--font-ui-medium);
+  font-weight: var(--font-semibold);
+}
+
+.calendar-task-list-settings-header .calendar-task-list-name-input:hover,
+.calendar-task-list-settings-header .calendar-task-list-name-input:focus {
+  border-color: var(--background-modifier-border);
+  background: var(--background-modifier-form-field);
+}
+
+.calendar-task-list-name-feedback {
+  display: none;
+  padding: 0 8px 8px;
+  color: var(--text-warning);
+  font-size: var(--font-ui-smaller);
+}
+
+.calendar-task-list-name-feedback.is-visible {
+  display: block;
+}
+
+@media (max-width: 520px) {
+  .calendar-task-list-settings-header .setting-item-control {
+    width: 100%;
+  }
+}
+
 .calendar-notes-root {
   --calendar-day-height: 34px;
   --calendar-note-marker-color: var(--text-faint);
@@ -185,7 +240,7 @@
   background: var(--calendar-note-marker-color);
 }
 
-.calendar-notes-root .calendar-task-open-marker {
+.calendar-notes-root .calendar-task-active-marker {
   background: var(--color-orange);
 }
 
@@ -245,7 +300,7 @@
   color: var(--text-normal);
 }
 
-.calendar-notes-root .calendar-task-menu-button {
+.calendar-notes-root .calendar-item-menu-button {
   color: var(--text-faint);
 }
 
@@ -294,11 +349,58 @@
   border-top: 1px solid var(--background-modifier-border);
 }
 
+.calendar-notes-root .calendar-task-lists {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.calendar-notes-root .calendar-task-lists-title {
+  margin-bottom: 2px;
+}
+
+.calendar-notes-root .calendar-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.calendar-notes-root .calendar-task-list-toggle {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 0;
+  border: none;
+  background: transparent;
+  color: var(--text-normal);
+  box-shadow: none;
+  font-size: var(--font-ui-small);
+  text-align: left;
+}
+
+.calendar-notes-root .calendar-task-list-toggle:hover {
+  background: var(--background-modifier-hover);
+}
+
+.calendar-notes-root .calendar-task-list-toggle-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.calendar-notes-root .calendar-task-list-toggle-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
 .calendar-notes-root .calendar-overdue-title {
   color: var(--text-error);
 }
 
-.calendar-notes-root .calendar-task {
+.calendar-notes-root .calendar-item-row {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -310,7 +412,7 @@
   cursor: pointer;
 }
 
-.calendar-notes-root .calendar-task-body {
+.calendar-notes-root .calendar-item-body {
   min-width: 0;
   flex: 1 1 auto;
   display: flex;
@@ -318,7 +420,7 @@
   gap: 2px;
 }
 
-.calendar-notes-root .calendar-task-title {
+.calendar-notes-root .calendar-item-title {
   min-width: 0;
   width: 100%;
 }
@@ -337,7 +439,7 @@
   font-size: var(--font-ui-smaller);
 }
 
-.calendar-notes-root .calendar-task.is-completed .calendar-task-title {
+.calendar-notes-root .calendar-item-row.is-completed .calendar-item-title {
   color: var(--text-muted);
   text-decoration: line-through;
 }
@@ -360,7 +462,7 @@ body.is-mobile .calendar-notes-root .calendar-item-list {
   max-height: none;
 }
 
-body.is-mobile .calendar-notes-root .calendar-task {
+body.is-mobile .calendar-notes-root .calendar-item-row {
   min-height: 40px;
 }
 

@@ -6,6 +6,21 @@ export type RepeatRule = {
   frequency: RepeatFrequency;
 };
 
+export type TaskLocation = "active" | "completed";
+
+export type CompletionBehavior =
+  | { type: "keep" }
+  | { type: "move"; completedFolder: string };
+
+export type TaskList = {
+  id: string;
+  name: string;
+  activeFolder: string;
+  newTaskName: string;
+  taskTemplate: string;
+  completionBehavior: CompletionBehavior;
+};
+
 export type CalendarDate = {
   year: number;
   month: number;
@@ -16,10 +31,8 @@ export type CalendarSettings = {
   dateFormat: string;
   weekStart: WeekStart;
   notesFolder: string;
-  activeTasksFolder: string;
-  completedTasksFolder: string;
+  taskLists: TaskList[];
+  expandedTaskListIds: string[];
   newNoteName: string;
-  newTaskName: string;
   noteTemplate: string;
-  taskTemplate: string;
 };
