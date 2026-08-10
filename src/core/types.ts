@@ -8,6 +8,8 @@ export type RepeatRule = {
 
 export type TaskLocation = "active" | "completed";
 
+export type TaskListColor = string | null;
+
 export type CompletionBehavior =
   | { type: "keep" }
   | { type: "move"; completedFolder: string };
@@ -15,6 +17,7 @@ export type CompletionBehavior =
 export type TaskList = {
   id: string;
   name: string;
+  color: TaskListColor;
   activeFolder: string;
   newTaskName: string;
   taskTemplate: string;

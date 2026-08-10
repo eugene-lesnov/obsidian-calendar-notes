@@ -28,6 +28,7 @@ export function createDefaultSettings(): CalendarSettings {
     taskLists: [{
       id: DEFAULT_TASK_LIST_ID,
       name: strings.tasksSectionLabel,
+      color: null,
       activeFolder: taskListFolders.activeFolder,
       newTaskName: strings.newTaskDefaultTitle,
       taskTemplate: "",

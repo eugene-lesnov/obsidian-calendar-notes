@@ -48,6 +48,11 @@ function isTaskList(value: unknown): value is TaskList {
 
   return typeof taskList.id === "string"
     && typeof taskList.name === "string"
+    && (
+      taskList.color === undefined
+      || taskList.color === null
+      || typeof taskList.color === "string"
+    )
     && typeof taskList.activeFolder === "string"
     && typeof taskList.newTaskName === "string"
     && typeof taskList.taskTemplate === "string"
@@ -71,6 +76,9 @@ function normalizeSettings(savedSettings: Partial<CalendarSettings>): CalendarSe
     settings.taskLists = settings.taskLists.map((taskList) => ({
       id: taskList.id,
       name: taskList.name,
+      color: typeof taskList.color === "string" && /^#[0-9a-f]{6}$/i.test(taskList.color)
+        ? taskList.color
+        : null,
       activeFolder: taskList.activeFolder,
       newTaskName: taskList.newTaskName,
       taskTemplate: taskList.taskTemplate,

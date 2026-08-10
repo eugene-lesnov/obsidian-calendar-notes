@@ -31,6 +31,8 @@ export interface AppLocalization {
   taskTemplateName: string;
   taskListNameLabel: string;
   taskListNameDescription: string;
+  taskListColorLabel: string;
+  taskListColorDescription: string;
   taskListActiveFolderLabel: string;
   taskListActiveFolderDescription: string;
   taskListCompletionLabel: string;
@@ -145,6 +147,8 @@ const defaultStrings: AppLocalization = {
   taskTemplateName: "Task",
   taskListNameLabel: "Name",
   taskListNameDescription: "Name shown in the Calendar Notes task lists section.",
+  taskListColorLabel: "Color",
+  taskListColorDescription: "Optional color marker for this list and its tasks.",
   taskListActiveFolderLabel: "Active folder",
   taskListActiveFolderDescription:
     "Active tasks are indexed in this folder and its subfolders. New tasks are created here.",
@@ -269,6 +273,8 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     taskTemplateName: "Задача",
     taskListNameLabel: "Название",
     taskListNameDescription: "Название списка в блоке задач Calendar Notes.",
+    taskListColorLabel: "Цвет",
+    taskListColorDescription: "Необязательный цветовой маркер списка и его задач.",
     taskListActiveFolderLabel: "Папка активных задач",
     taskListActiveFolderDescription:
       "Активные задачи индексируются в этой папке и ее подпапках. Новые задачи создаются здесь.",

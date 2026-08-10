@@ -1,6 +1,7 @@
 import {
   App,
   ButtonComponent,
+  ColorComponent,
   Modal,
   Notice,
   PluginSettingTab,
@@ -35,6 +36,7 @@ import { MarkdownFileSuggest } from "./view/MarkdownFileSuggest";
 
 const REINDEX_DEBOUNCE_MS = 600;
 const FOLDER_BLUR_COMMIT_DELAY_MS = 150;
+const DEFAULT_TASK_LIST_COLOR = "#7e57c2";
 
 function taskFolderNames() {
   return {
@@ -149,6 +151,7 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
     const taskList: TaskList = {
       id,
       name: formatLocalizedString(strings.newTaskListName, { index: String(index) }),
+      color: null,
       activeFolder: folders.activeFolder,
       newTaskName: strings.newTaskDefaultTitle,
       taskTemplate: "",
@@ -231,6 +234,8 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
       .setTooltip(strings.removeTaskListLabel)
       .onClick(() => this.confirmRemoveTaskList(index)));
     updateDuplicateNameWarning();
+
+    this.addTaskListColorSetting(group, taskList);
 
     let completedFolderInput: FolderInputController | null = null;
     const activeFolderSetting = new Setting(group)
@@ -329,6 +334,36 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
           taskList.taskTemplate = file.path;
           void this.plugin.saveSettings();
         });
+      });
+  }
+
+  private addTaskListColorSetting(group: HTMLElement, taskList: TaskList): void {
+    let selectedColor = taskList.color ?? DEFAULT_TASK_LIST_COLOR;
+    let colorPicker: ColorComponent;
+
+    new Setting(group)
+      .setName(strings.taskListColorLabel)
+      .setDesc(strings.taskListColorDescription)
+      .addToggle((toggle) => toggle
+        .setValue(taskList.color !== null)
+        .onChange((enabled) => {
+          taskList.color = enabled ? selectedColor : null;
+          colorPicker.setDisabled(!enabled);
+          void this.plugin.saveSettings();
+        }))
+      .addColorPicker((picker) => {
+        colorPicker = picker;
+        picker
+          .setValue(selectedColor)
+          .setDisabled(taskList.color === null)
+          .onChange((color) => {
+            selectedColor = color;
+
+            if (taskList.color !== null) {
+              taskList.color = color;
+              void this.plugin.saveSettings();
+            }
+          });
       });
   }
 
