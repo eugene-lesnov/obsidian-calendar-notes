@@ -1,7 +1,7 @@
 {
 	"id": "vault-agenda",
 	"name": "Vault Agenda",
-	"version": "0.4.0",
+	"version": "0.4.1",
 	"minAppVersion": "1.8.7",
 	"description": "Plan dated notes and file-based tasks in a compact calendar, with lists, repeats, and overdue tracking.",
 	"author": "Eugene Lesnov",
