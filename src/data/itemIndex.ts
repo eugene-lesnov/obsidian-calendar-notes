@@ -29,14 +29,6 @@ function compareDayItems(first: Item, second: Item): number {
   return compareTitles(first, second);
 }
 
-function compareOverdueTasks(first: Task, second: Task): number {
-  if (first.dateId !== second.dateId) {
-    return (first.dateId ?? "").localeCompare(second.dateId ?? "");
-  }
-
-  return compareTitles(first, second);
-}
-
 function sameItem(first: Item, second: Item): boolean {
   if (
     first.kind !== second.kind
@@ -74,7 +66,9 @@ export class ItemIndex {
     this.itemsByPath.clear();
     this.activeTasksByListId.clear();
     this.datesWithActiveTasks.clear();
-    this.getFilesInScope().forEach((file) => this.addFile(file));
+    this.getFilesInScope().forEach((file) => this.addFile(file, false));
+    this.itemsByDate.forEach((items) => items.sort(compareDayItems));
+    this.activeTasksByListId.forEach((tasks) => tasks.sort(compareTitles));
   }
 
   getItemsByDate(dateId: string): Item[] {
@@ -113,14 +107,11 @@ export class ItemIndex {
       .filter((dateId) => dateId < todayDateId && dateId !== options.excludeDateId)
       .sort()
       .forEach((dateId) => {
-        this.itemsByDate.get(dateId)?.forEach((item) => {
-          if (item.kind === "task" && !item.done) {
-            overdue.push(item);
-          }
-        });
+        const tasks = (this.itemsByDate.get(dateId) ?? [])
+          .filter((item): item is Task => item.kind === "task" && !item.done)
+          .sort(compareTitles);
+        overdue.push(...tasks);
       });
-
-    overdue.sort(compareOverdueTasks);
 
     return {
       items: options.limit === undefined ? overdue : overdue.slice(0, options.limit),
@@ -200,7 +191,7 @@ export class ItemIndex {
     }
   }
 
-  private addFile(file: TAbstractFile): boolean {
+  private addFile(file: TAbstractFile, sort = true): boolean {
     if (!(file instanceof TFile)) {
       return false;
     }
@@ -211,18 +202,20 @@ export class ItemIndex {
       return false;
     }
 
-    this.insert(item);
+    this.insert(item, sort);
 
     return true;
   }
 
-  private insert(item: Item): void {
+  private insert(item: Item, sort = true): void {
     this.itemsByPath.set(item.file.path, item);
 
     if (item.dateId) {
       const dayItems = this.itemsByDate.get(item.dateId) ?? [];
       dayItems.push(item);
-      dayItems.sort(compareDayItems);
+      if (sort) {
+        dayItems.sort(compareDayItems);
+      }
       this.itemsByDate.set(item.dateId, dayItems);
 
       if (item.kind === "task" && !item.done) {
@@ -233,7 +226,9 @@ export class ItemIndex {
     if (item.kind === "task" && !item.done && item.taskLocation === "active") {
       const tasks = this.activeTasksByListId.get(item.taskListId) ?? [];
       tasks.push(item);
-      tasks.sort(compareTitles);
+      if (sort) {
+        tasks.sort(compareTitles);
+      }
       this.activeTasksByListId.set(item.taskListId, tasks);
     }
   }

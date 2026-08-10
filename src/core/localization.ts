@@ -49,7 +49,6 @@ export interface AppLocalization {
   folderMissingWarning: string;
   taskListDuplicateNameWarning: string;
   taskListRequiredError: string;
-  taskMoveConflictError: string;
   newNoteNameLabel: string;
   newNoteNameDescription: string;
   newTaskNameLabel: string;
@@ -166,7 +165,6 @@ const defaultStrings: AppLocalization = {
   folderMissingWarning: "Folder does not exist yet. It will be created when needed.",
   taskListDuplicateNameWarning: "Another task list has the same name.",
   taskListRequiredError: "Create a task list before creating or changing tasks.",
-  taskMoveConflictError: "Cannot move the task because {{path}} already exists.",
   newNoteNameLabel: "New note name",
   newNoteNameDescription:
     "The note's date is added as a prefix using the format selected in the settings.",
@@ -293,7 +291,6 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     folderMissingWarning: "Папка пока не существует. Она будет создана при необходимости.",
     taskListDuplicateNameWarning: "У другого списка задач такое же название.",
     taskListRequiredError: "Сначала создайте список задач.",
-    taskMoveConflictError: "Не удалось переместить задачу: файл {{path}} уже существует.",
     newNoteNameLabel: "Название новой заметки",
     newNoteNameDescription:
       "К названию будет добавлен префикс с датой заметки в формате, выбранном в настройках.",

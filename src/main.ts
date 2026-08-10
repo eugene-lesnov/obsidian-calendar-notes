@@ -85,6 +85,8 @@ function normalizeSettings(savedSettings: Partial<CalendarSettings>): CalendarSe
 
   if (!Array.isArray(settings.expandedTaskListIds)) {
     settings.expandedTaskListIds = defaults.expandedTaskListIds;
+  } else {
+    settings.expandedTaskListIds = [...settings.expandedTaskListIds];
   }
 
   return settings;
@@ -99,6 +101,7 @@ export default class CalendarNotesPlugin extends Plugin {
   private readonly reportedReconcileFailures = new Set<string>();
   private readonly pendingRepeatFiles = new Set<TFile>();
   private readonly taskCompletionQueues = new WeakMap<TFile, Promise<void>>();
+  private settingsSaveQueue = Promise.resolve();
 
   async onload(): Promise<void> {
     setLocale([getLanguage(), ...getLocales()]);
@@ -373,26 +376,30 @@ export default class CalendarNotesPlugin extends Plugin {
   }
 
   async saveSettings(): Promise<void> {
-    await this.saveData(this.settings);
-    this.refreshViews();
+    const settings = normalizeSettings(this.settings);
+
+    await this.enqueueSettingsSave(async () => {
+      await this.saveData(settings);
+      this.refreshViews();
+    });
   }
 
   async saveSettingsAndReindex(): Promise<void> {
-    const savedSettings = normalizeSettings(
-      ((await this.loadData()) ?? {}) as Partial<CalendarSettings>,
-    );
+    const settings = normalizeSettings(this.settings);
+    validateTaskLists(settings);
 
-    try {
-      validateTaskLists(this.settings);
-      await this.saveData(this.settings);
+    await this.enqueueSettingsSave(async () => {
+      await this.saveData(settings);
       this.itemIndex.rebuild();
       this.refreshViews();
-    } catch (error) {
-      this.settings = savedSettings;
-      this.itemIndex.rebuild();
-      this.refreshViews();
-      throw error;
-    }
+    });
+  }
+
+  private enqueueSettingsSave(action: () => Promise<void>): Promise<void> {
+    const result = this.settingsSaveQueue.then(action);
+    this.settingsSaveQueue = result.catch(() => undefined);
+
+    return result;
   }
 
   async toggleView(): Promise<void> {

@@ -146,14 +146,19 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
     const id = crypto.randomUUID();
     const { folders, index } = this.nextTaskListDefaults();
 
-    this.plugin.settings.taskLists.push({
+    const taskList: TaskList = {
       id,
       name: formatLocalizedString(strings.newTaskListName, { index: String(index) }),
       activeFolder: folders.activeFolder,
       newTaskName: strings.newTaskDefaultTitle,
       taskTemplate: "",
       completionBehavior: { type: "keep" },
+    };
+    validateTaskLists({
+      ...this.plugin.settings,
+      taskLists: [...this.plugin.settings.taskLists, taskList],
     });
+    this.plugin.settings.taskLists.push(taskList);
     void this.plugin.saveSettingsAndReindex().catch((error) => {
       new Notice(String(error instanceof Error ? error.message : error));
       this.display();
@@ -183,14 +188,33 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
     };
 
     heading.addText((text) => {
+      let committedName = taskList.name;
+
       text
         .setPlaceholder(strings.taskListNameLabel)
         .setValue(taskList.name)
         .onChange((value) => {
-          taskList.name = value.trim();
+          const name = value.trim();
+
+          if (!name) {
+            nameFeedback.setText(strings.taskListNameRequiredError);
+            nameFeedback.toggleClass("is-visible", true);
+            return;
+          }
+
+          const candidate = { ...taskList, name };
+          this.validateTaskListUpdate(taskList, candidate);
+          taskList.name = name;
+          committedName = name;
           updateDuplicateNameWarning();
           this.saveAndReindex();
         });
+      text.inputEl.addEventListener("blur", () => {
+        if (!text.inputEl.value.trim()) {
+          text.setValue(committedName);
+          updateDuplicateNameWarning();
+        }
+      });
       text.inputEl.setAttribute("aria-label", strings.taskListNameLabel);
       text.inputEl.addClass("calendar-task-list-name-input");
     });
@@ -237,16 +261,25 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
         .onChange((value) => {
           const folderNames = taskFolderNames();
 
-          taskList.completionBehavior = value === "move"
+          const completionBehavior = value === "move"
             ? {
-                type: "move",
+                type: "move" as const,
                 completedFolder: suggestCompletedFolder(
                   taskList.activeFolder,
                   folderNames.active,
                   folderNames.completed,
                 ),
               }
-            : { type: "keep" };
+            : { type: "keep" as const };
+          try {
+            this.validateTaskListUpdate(taskList, { ...taskList, completionBehavior });
+          } catch (error) {
+            new Notice(String(error instanceof Error ? error.message : error));
+            this.display();
+            return;
+          }
+
+          taskList.completionBehavior = completionBehavior;
           this.saveAndReindex();
           this.display();
         }));

@@ -80,7 +80,15 @@ export function configuredScopeFolders(settings: CalendarSettings): string[] {
     }
   });
 
-  return Array.from(new Set(paths.map(normalizeFolderPath).filter(Boolean)));
+  const normalizedPaths = Array.from(new Set(paths.map(normalizeFolderPath).filter(Boolean)));
+
+  if (normalizedPaths.includes("/")) {
+    return ["/"];
+  }
+
+  return normalizedPaths.filter((path, index) => !normalizedPaths.some((candidate, candidateIndex) =>
+    candidateIndex !== index && path.startsWith(`${candidate}/`),
+  ));
 }
 
 function scopesOverlap(first: string, second: string): boolean {

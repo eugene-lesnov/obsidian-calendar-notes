@@ -1,11 +1,11 @@
 import { App, TFile, normalizePath } from "obsidian";
 
 import { getTodayDateId } from "../core/dateUtils";
-import strings, { formatLocalizedString } from "../core/localization";
+import strings from "../core/localization";
 import type { CalendarSettings, TaskList } from "../core/types";
 import type { Task } from "./item";
 import { normalizeDateId } from "./item";
-import { ensureFolderOrThrow } from "./fileNames";
+import { MARKDOWN_SUFFIX, ensureFolderOrThrow, makeUniquePath } from "./fileNames";
 import { joinPath } from "./folders";
 import { findTaskScope, getTaskList } from "./itemScopes";
 import { buildDayIdentifier } from "./templates";
@@ -36,18 +36,25 @@ async function moveTaskForCompletion(
   }
 
   const folderPath = joinPath(resolveCompletionFolder(taskList, completed));
-  const targetPath = normalizePath(joinPath(folderPath, relativePath));
+  const directTargetPath = normalizePath(joinPath(folderPath, relativePath));
 
-  if (targetPath === file.path) {
+  if (directTargetPath === file.path) {
     return null;
   }
 
-  if (app.vault.getAbstractFileByPath(targetPath)) {
-    throw new Error(formatLocalizedString(strings.taskMoveConflictError, { path: targetPath }));
-  }
+  const separatorIndex = directTargetPath.lastIndexOf("/");
+  const targetFolder = separatorIndex >= 0 ? directTargetPath.slice(0, separatorIndex) : "";
+  const targetName = separatorIndex >= 0
+    ? directTargetPath.slice(separatorIndex + 1)
+    : directTargetPath;
+  const baseName = targetName.endsWith(MARKDOWN_SUFFIX)
+    ? targetName.slice(0, -MARKDOWN_SUFFIX.length)
+    : targetName;
+  const targetPath = app.vault.getAbstractFileByPath(directTargetPath)
+    ? makeUniquePath(app, targetFolder, baseName)
+    : directTargetPath;
 
-  const parentPath = targetPath.slice(0, Math.max(0, targetPath.lastIndexOf("/")));
-  await ensureFolderOrThrow(app, parentPath, strings.createCalendarTaskFolderError);
+  await ensureFolderOrThrow(app, targetFolder, strings.createCalendarTaskFolderError);
   const originalPath = file.path;
   await app.fileManager.renameFile(file, targetPath);
 
