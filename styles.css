@@ -391,13 +391,41 @@
 }
 
 .vault-agenda-root .vault-agenda-task-lists-title {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 4px;
+  padding: 3px 4px;
   margin-bottom: 2px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.vault-agenda-root .vault-agenda-task-lists-title:hover {
+  color: var(--text-normal);
+}
+
+.vault-agenda-root .vault-agenda-task-lists-title-icon {
+  display: inline-flex;
+}
+
+.vault-agenda-root .vault-agenda-task-lists-title-icon svg {
+  width: 16px;
+  height: 16px;
 }
 
 .vault-agenda-root .vault-agenda-task-list {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  padding-inline-start: 10px;
+}
+
+.vault-agenda-root .vault-agenda-task-list > .vault-agenda-item-list,
+.vault-agenda-root .vault-agenda-task-list > .vault-agenda-empty-label {
+  margin-inline-start: 20px;
 }
 
 .vault-agenda-root .vault-agenda-task-list-toggle {
@@ -415,10 +443,6 @@
   box-shadow: none;
   font-size: var(--font-ui-small);
   text-align: left;
-}
-
-.vault-agenda-root .vault-agenda-task-list-toggle:hover {
-  background: var(--background-modifier-hover);
 }
 
 .vault-agenda-root .vault-agenda-task-list-toggle-icon {

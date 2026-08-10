@@ -10,9 +10,11 @@ export type TaskListsSectionParams = ItemCallbacks & {
   app: App;
   hoverParent: HoverParent;
   taskLists: TaskList[];
+  expanded: boolean;
   getTasks: (taskListId: string) => Task[];
   isExpanded: (taskListId: string) => boolean;
-  onToggleExpanded: (taskListId: string) => void;
+  onToggleSectionExpanded: () => void;
+  onToggleTaskListExpanded: (taskListId: string) => void;
   onCreateTask: (taskList: TaskList) => void;
 };
 
@@ -63,10 +65,20 @@ export function renderTaskListsSection(
   }
 
   const root = container.createDiv({ cls: "vault-agenda-task-lists" });
-  root.createDiv({
+  const sectionToggle = root.createEl("button", {
     cls: "vault-agenda-section-title vault-agenda-task-lists-title",
-    text: strings.taskListsSectionLabel,
   });
+  sectionToggle.setAttribute("aria-expanded", String(params.expanded));
+  const sectionToggleIcon = sectionToggle.createSpan({
+    cls: "vault-agenda-task-lists-title-icon",
+  });
+  setIcon(sectionToggleIcon, params.expanded ? "chevron-down" : "chevron-right");
+  sectionToggle.createSpan({ text: strings.taskListsSectionLabel });
+  sectionToggle.addEventListener("click", params.onToggleSectionExpanded);
+
+  if (!params.expanded) {
+    return;
+  }
 
   params.taskLists.forEach((taskList) => {
     const tasks = params.getTasks(taskList.id);
@@ -93,7 +105,7 @@ export function renderTaskListsSection(
       cls: "vault-agenda-task-list-count",
       text: `(${tasks.length})`,
     });
-    toggle.addEventListener("click", () => params.onToggleExpanded(taskList.id));
+    toggle.addEventListener("click", () => params.onToggleTaskListExpanded(taskList.id));
 
     const addButton = header.createEl("button", {
       cls: "vault-agenda-icon-button",
