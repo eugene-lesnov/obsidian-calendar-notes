@@ -1,7 +1,7 @@
 import { App, TFile, getFrontMatterInfo, normalizePath } from "obsidian";
 
 import { formatDateByPattern, momentFormatToPattern, parseDateId } from "../core/dateUtils";
-import type { CalendarSettings } from "../core/types";
+import type { VaultAgendaSettings } from "../core/types";
 import { MARKDOWN_SUFFIX } from "./fileNames";
 
 export type TemplateParts = {
@@ -9,7 +9,7 @@ export type TemplateParts = {
   frontmatter: Record<string, unknown>;
 };
 
-export function buildDayIdentifier(dateId: string, settings: CalendarSettings): string {
+export function buildDayIdentifier(dateId: string, settings: VaultAgendaSettings): string {
   const date = parseDateId(dateId);
 
   return formatDateByPattern(date, momentFormatToPattern(settings.dateFormat));

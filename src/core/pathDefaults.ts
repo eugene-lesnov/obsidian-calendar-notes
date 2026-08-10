@@ -1,7 +1,7 @@
-export const CALENDAR_NOTES_ROOT_FOLDER = "Calendar Notes";
+export const VAULT_AGENDA_ROOT_FOLDER = "Vault Agenda";
 
 export function buildDefaultNotesFolder(notesFolderName: string): string {
-  return `${CALENDAR_NOTES_ROOT_FOLDER}/${notesFolderName}`;
+  return `${VAULT_AGENDA_ROOT_FOLDER}/${notesFolderName}`;
 }
 
 export function buildDefaultTemplatePath(
@@ -27,7 +27,7 @@ export function buildTaskListFolders(
   folderName: string,
   names: Pick<TaskFolderNames, "taskLists" | "active" | "completed">,
 ): TaskListFolders {
-  const root = `${CALENDAR_NOTES_ROOT_FOLDER}/${names.taskLists}/${folderName}`;
+  const root = `${VAULT_AGENDA_ROOT_FOLDER}/${names.taskLists}/${folderName}`;
 
   return {
     activeFolder: `${root}/${names.active}`,

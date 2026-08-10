@@ -1,8 +1,8 @@
-# Calendar Notes
+# Vault Agenda
 
-Calendar Notes adds a compact sidebar calendar for dated notes and tasks. Plan
-several items for the same day, track overdue work, and keep everything as plain
-Markdown files in your vault.
+Vault Agenda adds a compact sidebar agenda for dated notes and file-based tasks.
+Plan several items for the same day, track overdue work, and keep everything as
+plain Markdown files in your vault.
 
 ## Features
 
@@ -13,13 +13,13 @@ Markdown files in your vault.
 - Scheduled and unscheduled tasks.
 - Daily, weekly, monthly, and yearly recurring tasks.
 - Templates and configurable default names for new items.
-- Change dates, complete tasks, and manage repeats from the calendar.
+- Change dates, complete tasks, and manage repeats from the agenda.
 - Hover previews and standard Obsidian file actions.
 - English and Russian interface.
 
 ## How it works
 
-Each note or task is a regular Markdown file. Calendar Notes stores the item type,
+Each note or task is a regular Markdown file. Vault Agenda stores the item type,
 date, completion state, and repeat rule in frontmatter while keeping filenames and
 dates synchronized.
 
@@ -29,20 +29,23 @@ either stay in place or move to that folder.
 
 ```yaml
 ---
-calendarItem: task
+vaultAgendaItem: task
 date: 2026-08-10
 done: false
 repeat: weekly
 ---
 ```
 
-Removing a task's date keeps it in its task list without displaying it on a calendar
+Removing a task's date keeps it in its task list without displaying it on a dated
 day. Completing a recurring task creates its next future occurrence as a separate
 file.
 
+Folders, templates, task lists, date format, week start, and default item names are
+configured in **Settings → Vault Agenda**.
+
 ## Commands
 
-- Toggle calendar
+- Toggle Vault Agenda
 - Create note for today
 - Create task for today
 - Go to today
@@ -56,10 +59,10 @@ Install [BRAT](https://github.com/TfTHacker/obsidian42-brat), run
 **BRAT: Add a beta plugin for testing**, and enter:
 
 ```text
-https://github.com/eugene-lesnov/obsidian-calendar-notes
+https://github.com/eugene-lesnov/obsidian-vault-agenda
 ```
 
-You can also use [Install Calendar Notes with BRAT](obsidian://brat?plugin=eugene-lesnov/obsidian-calendar-notes).
+You can also use [Install Vault Agenda with BRAT](obsidian://brat?plugin=eugene-lesnov/obsidian-vault-agenda).
 
 ### Manual
 
@@ -67,10 +70,10 @@ Download `main.js`, `manifest.json`, and `styles.css` from the latest release an
 copy them to:
 
 ```text
-<vault>/.obsidian/plugins/calendar-notes/
+<vault>/.obsidian/plugins/vault-agenda/
 ```
 
-Reload Obsidian and enable **Calendar Notes** under **Community plugins**.
+Reload Obsidian and enable **Vault Agenda** under **Community plugins**.
 
 ## Development
 

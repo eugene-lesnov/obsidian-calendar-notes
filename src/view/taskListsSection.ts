@@ -21,17 +21,17 @@ function renderTask(
   task: Task,
   params: TaskListsSectionParams,
 ): void {
-  const item = list.createEl("li", { cls: "calendar-item-row" });
+  const item = list.createEl("li", { cls: "vault-agenda-item-row" });
   const checkbox = item.createEl("input", {
-    cls: "calendar-task-checkbox",
+    cls: "vault-agenda-task-checkbox",
     type: "checkbox",
   });
   checkbox.setAttribute("aria-label", task.title);
   checkbox.addEventListener("change", () => params.onToggleTaskCompleted(task, checkbox.checked));
 
-  const body = item.createDiv({ cls: "calendar-item-body" });
+  const body = item.createDiv({ cls: "vault-agenda-item-body" });
   const title = body.createEl("button", {
-    cls: "calendar-item calendar-item-title",
+    cls: "vault-agenda-item vault-agenda-item-title",
     text: task.title,
   });
   title.addEventListener("click", (event) => params.onOpen(task, event));
@@ -47,7 +47,7 @@ function renderTask(
   renderTaskRepeatMeta(body, task);
 
   const menuButton = item.createEl("button", {
-    cls: "calendar-icon-button calendar-item-menu-button",
+    cls: "vault-agenda-icon-button vault-agenda-item-menu-button",
   });
   menuButton.setAttribute("aria-label", strings.itemActionsLabel);
   setIcon(menuButton, "more-vertical");
@@ -62,41 +62,41 @@ export function renderTaskListsSection(
     return;
   }
 
-  const root = container.createDiv({ cls: "calendar-task-lists" });
+  const root = container.createDiv({ cls: "vault-agenda-task-lists" });
   root.createDiv({
-    cls: "calendar-section-title calendar-task-lists-title",
+    cls: "vault-agenda-section-title vault-agenda-task-lists-title",
     text: strings.taskListsSectionLabel,
   });
 
   params.taskLists.forEach((taskList) => {
     const tasks = params.getTasks(taskList.id);
     const expanded = params.isExpanded(taskList.id);
-    const section = root.createDiv({ cls: "calendar-task-list" });
+    const section = root.createDiv({ cls: "vault-agenda-task-list" });
 
     if (taskList.color !== null) {
-      section.style.setProperty("--calendar-task-list-color", taskList.color);
+      section.style.setProperty("--vault-agenda-task-list-color", taskList.color);
     }
 
-    const header = section.createDiv({ cls: "calendar-section-header" });
+    const header = section.createDiv({ cls: "vault-agenda-section-header" });
     const toggle = header.createEl("button", {
-      cls: "calendar-task-list-toggle",
+      cls: "vault-agenda-task-list-toggle",
     });
-    const icon = toggle.createSpan({ cls: "calendar-task-list-toggle-icon" });
+    const icon = toggle.createSpan({ cls: "vault-agenda-task-list-toggle-icon" });
     setIcon(icon, expanded ? "chevron-down" : "chevron-right");
 
     if (taskList.color !== null) {
-      toggle.createSpan({ cls: "calendar-task-list-color-marker" });
+      toggle.createSpan({ cls: "vault-agenda-task-list-color-marker" });
     }
 
     toggle.createSpan({ text: taskList.name });
     toggle.createSpan({
-      cls: "calendar-task-list-count",
+      cls: "vault-agenda-task-list-count",
       text: `(${tasks.length})`,
     });
     toggle.addEventListener("click", () => params.onToggleExpanded(taskList.id));
 
     const addButton = header.createEl("button", {
-      cls: "calendar-icon-button",
+      cls: "vault-agenda-icon-button",
     });
     addButton.setAttribute("aria-label", strings.createTaskButtonTitle);
     setIcon(addButton, "plus");
@@ -107,11 +107,11 @@ export function renderTaskListsSection(
     }
 
     if (tasks.length === 0) {
-      section.createDiv({ cls: "calendar-empty-label", text: strings.emptyTasksLabel });
+      section.createDiv({ cls: "vault-agenda-empty-label", text: strings.emptyTasksLabel });
       return;
     }
 
-    const list = section.createEl("ul", { cls: "calendar-item-list" });
+    const list = section.createEl("ul", { cls: "vault-agenda-item-list" });
     tasks.forEach((task) => renderTask(list, task, params));
   });
 }

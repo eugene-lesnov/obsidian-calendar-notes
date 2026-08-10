@@ -57,12 +57,12 @@ function renderSectionHeader(
   addTitle: string,
   onAdd: () => void,
 ): void {
-  const header = section.createDiv({ cls: "calendar-section-header" });
+  const header = section.createDiv({ cls: "vault-agenda-section-header" });
 
-  header.createDiv({ cls: "calendar-section-title", text: label });
+  header.createDiv({ cls: "vault-agenda-section-title", text: label });
 
   const addButton = header.createEl("button", {
-    cls: "calendar-icon-button calendar-add-button",
+    cls: "vault-agenda-icon-button vault-agenda-add-button",
   });
 
   addButton.setAttribute("aria-label", addTitle);
@@ -72,7 +72,7 @@ function renderSectionHeader(
 
 function renderCheckbox(item: HTMLElement, entry: Task, callbacks: ItemCallbacks): void {
   const checkbox = item.createEl("input", {
-    cls: "calendar-task-checkbox",
+    cls: "vault-agenda-task-checkbox",
     type: "checkbox",
   });
 
@@ -88,7 +88,7 @@ export function renderTaskRepeatMeta(body: HTMLElement, task: Task): void {
   }
 
   body.createDiv({
-    cls: "calendar-task-repeat-meta",
+    cls: "vault-agenda-task-repeat-meta",
     text: formatLocalizedString(strings.taskRepeatMetaLabel, {
       repeat: getRepeatLabel(task.repeat.frequency),
     }),
@@ -103,14 +103,14 @@ function renderItemRow(
   callbacks: ItemCallbacks,
   datePrefix: string,
 ): void {
-  const item = list.createEl("li", { cls: "calendar-item-row" });
+  const item = list.createEl("li", { cls: "vault-agenda-item-row" });
 
   if (entry.kind === "task") {
     const color = callbacks.getTaskListColor(entry.taskListId);
 
     if (color !== null) {
       item.addClass("is-list-colored");
-      item.style.setProperty("--calendar-task-list-color", color);
+      item.style.setProperty("--vault-agenda-task-list-color", color);
     }
   }
 
@@ -120,13 +120,13 @@ function renderItemRow(
     renderCheckbox(item, entry, callbacks);
   }
 
-  const body = item.createDiv({ cls: "calendar-item-body" });
-  const title = body.createEl("button", { cls: "calendar-item calendar-item-title" });
+  const body = item.createDiv({ cls: "vault-agenda-item-body" });
+  const title = body.createEl("button", { cls: "vault-agenda-item vault-agenda-item-title" });
 
   title.setAttribute("aria-label", entry.title);
 
   if (datePrefix) {
-    title.createSpan({ cls: "calendar-task-date-prefix", text: datePrefix });
+    title.createSpan({ cls: "vault-agenda-task-date-prefix", text: datePrefix });
   }
 
   title.createSpan({ text: entry.title });
@@ -138,7 +138,7 @@ function renderItemRow(
   }
 
   const menuButton = item.createEl("button", {
-    cls: "calendar-icon-button calendar-item-menu-button",
+    cls: "vault-agenda-icon-button vault-agenda-item-menu-button",
   });
 
   menuButton.setAttribute("aria-label", strings.itemActionsLabel);
@@ -160,13 +160,13 @@ function renderItemList(
 ): void {
   if (items.length === 0) {
     if (emptyLabel) {
-      section.createDiv({ cls: "calendar-empty-label", text: emptyLabel });
+      section.createDiv({ cls: "vault-agenda-empty-label", text: emptyLabel });
     }
 
     return;
   }
 
-  const list = section.createEl("ul", { cls: "calendar-item-list" });
+  const list = section.createEl("ul", { cls: "vault-agenda-item-list" });
 
   items.forEach((entry) => {
     renderItemRow(
@@ -188,11 +188,11 @@ export function renderOverdueSection(
     return;
   }
 
-  const root = container.createDiv({ cls: "calendar-overdue-section" });
-  const header = root.createDiv({ cls: "calendar-section-header" });
+  const root = container.createDiv({ cls: "vault-agenda-overdue-section" });
+  const header = root.createDiv({ cls: "vault-agenda-section-header" });
 
   header.createDiv({
-    cls: "calendar-section-title calendar-overdue-title",
+    cls: "vault-agenda-section-title vault-agenda-overdue-title",
     text: formatLocalizedString(strings.overdueTasksLabel, {
       count: params.total,
     }),
@@ -207,7 +207,7 @@ export function renderOverdueSection(
       ? strings.hideOverdueTasksLabel
       : strings.showAllOverdueTasksLabel;
     const toggle = header.createEl("button", {
-      cls: "calendar-icon-button calendar-overdue-toggle",
+      cls: "vault-agenda-icon-button vault-agenda-overdue-toggle",
     });
 
     toggle.setAttribute("aria-label", toggleLabel);
@@ -227,16 +227,16 @@ export function renderOverdueSection(
 }
 
 export function renderDaySection(container: HTMLElement, params: DaySectionParams): void {
-  const root = container.createDiv({ cls: "calendar-selected-day" });
+  const root = container.createDiv({ cls: "vault-agenda-selected-day" });
 
   root.createDiv({
-    cls: "calendar-selected-day-title",
+    cls: "vault-agenda-selected-day-title",
     text: formatLocalizedString(strings.selectedDayLabel, {
       date: params.formatDayLabel(params.dateId),
     }),
   });
 
-  const tasksSection = root.createDiv({ cls: "calendar-day-section" });
+  const tasksSection = root.createDiv({ cls: "vault-agenda-day-section" });
 
   renderSectionHeader(
     tasksSection,
@@ -255,7 +255,7 @@ export function renderDaySection(container: HTMLElement, params: DaySectionParam
     null,
   );
 
-  const notesSection = root.createDiv({ cls: "calendar-day-section" });
+  const notesSection = root.createDiv({ cls: "vault-agenda-day-section" });
 
   renderSectionHeader(
     notesSection,

@@ -1,7 +1,7 @@
 {
-  "name": "obsidian-calendar-notes",
+  "name": "obsidian-vault-agenda",
   "version": "0.3.0",
-  "description": "Sidebar calendar for dated Markdown notes, note-like tasks, and overdue follow-up.",
+  "description": "Plan dated notes and file-based tasks in a compact calendar, with lists, repeats, and overdue tracking.",
   "main": "main.js",
   "type": "module",
   "author": "Eugene Lesnov",

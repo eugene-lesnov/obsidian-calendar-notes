@@ -1,4 +1,4 @@
-.calendar-notes-date-format-setting {
+.vault-agenda-date-format-setting {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   column-gap: 16px;
@@ -6,12 +6,12 @@
   align-items: start;
 }
 
-.calendar-notes-date-format-setting .setting-item-control {
+.vault-agenda-date-format-setting .setting-item-control {
   align-self: start;
   gap: 8px;
 }
 
-.calendar-notes-format-details {
+.vault-agenda-format-details {
   grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
@@ -21,15 +21,15 @@
   line-height: var(--line-height-tight);
 }
 
-.calendar-notes-format-preview {
+.vault-agenda-format-preview {
   color: var(--text-muted);
 }
 
-.calendar-notes-format-error {
+.vault-agenda-format-error {
   color: var(--text-error);
 }
 
-.calendar-notes-format-warning {
+.vault-agenda-format-warning {
   margin-top: 4px;
   padding-left: 8px;
   border-left: 2px solid var(--text-warning);
@@ -37,25 +37,25 @@
 }
 
 @media (max-width: 520px) {
-  .calendar-notes-date-format-setting {
+  .vault-agenda-date-format-setting {
     grid-template-columns: 1fr;
   }
 
-  .calendar-notes-date-format-setting .setting-item-control,
-  .calendar-notes-format-details {
+  .vault-agenda-date-format-setting .setting-item-control,
+  .vault-agenda-format-details {
     grid-column: 1;
   }
 
-  .calendar-notes-date-format-setting .setting-item-control {
+  .vault-agenda-date-format-setting .setting-item-control {
     margin-top: 8px;
   }
 }
 
-.calendar-notes-week-start-setting {
+.vault-agenda-week-start-setting {
   align-items: center;
 }
 
-.calendar-task-list-settings-group {
+.vault-agenda-task-list-settings-group {
   margin: 12px 0 16px;
   padding: 8px;
   border: 1px solid var(--background-modifier-border);
@@ -63,20 +63,20 @@
   background: var(--background-secondary-alt);
 }
 
-.calendar-task-list-settings-header {
+.vault-agenda-task-list-settings-header {
   padding: 4px 8px 8px;
   border-top: 0;
 }
 
-.calendar-task-list-settings-header .setting-item-info {
+.vault-agenda-task-list-settings-header .setting-item-info {
   display: none;
 }
 
-.calendar-task-list-settings-header .setting-item-control {
+.vault-agenda-task-list-settings-header .setting-item-control {
   flex: 1 1 auto;
 }
 
-.calendar-task-list-settings-header .calendar-task-list-name-input {
+.vault-agenda-task-list-settings-header .vault-agenda-task-list-name-input {
   flex: 1 1 auto;
   width: auto;
   min-width: 0;
@@ -87,65 +87,65 @@
   font-weight: var(--font-semibold);
 }
 
-.calendar-task-list-settings-header .calendar-task-list-name-input:hover,
-.calendar-task-list-settings-header .calendar-task-list-name-input:focus {
+.vault-agenda-task-list-settings-header .vault-agenda-task-list-name-input:hover,
+.vault-agenda-task-list-settings-header .vault-agenda-task-list-name-input:focus {
   border-color: var(--background-modifier-border);
   background: var(--background-modifier-form-field);
 }
 
-.calendar-task-list-name-feedback {
+.vault-agenda-task-list-name-feedback {
   display: none;
   padding: 0 8px 8px;
   color: var(--text-warning);
   font-size: var(--font-ui-smaller);
 }
 
-.calendar-task-list-name-feedback.is-visible {
+.vault-agenda-task-list-name-feedback.is-visible {
   display: block;
 }
 
-.calendar-task-list-setting .setting-item-control {
+.vault-agenda-task-list-setting .setting-item-control {
   flex: 0 1 214px;
 }
 
-.calendar-task-list-setting select {
+.vault-agenda-task-list-setting select {
   width: 100%;
 }
 
-.calendar-folder-feedback {
+.vault-agenda-folder-feedback {
   display: none;
   margin-top: 6px;
   color: var(--text-muted);
   font-size: var(--font-ui-smaller);
 }
 
-.calendar-folder-feedback.is-visible {
+.vault-agenda-folder-feedback.is-visible {
   display: block;
 }
 
-.calendar-folder-feedback.is-error {
+.vault-agenda-folder-feedback.is-error {
   color: var(--text-error);
 }
 
-.calendar-folder-feedback.is-warning {
+.vault-agenda-folder-feedback.is-warning {
   color: var(--text-warning);
 }
 
 @media (max-width: 520px) {
-  .calendar-task-list-settings-header .setting-item-control {
+  .vault-agenda-task-list-settings-header .setting-item-control {
     width: 100%;
   }
 
-  .calendar-task-list-setting .setting-item-control {
+  .vault-agenda-task-list-setting .setting-item-control {
     flex-basis: auto;
     width: 100%;
   }
 }
 
-.calendar-notes-root {
-  --calendar-day-height: 34px;
-  --calendar-note-marker-color: var(--text-faint);
-  --calendar-control-size: 32px;
+.vault-agenda-root {
+  --vault-agenda-day-height: 34px;
+  --vault-agenda-note-marker-color: var(--text-faint);
+  --vault-agenda-control-size: 32px;
 
   box-sizing: border-box;
   padding: 12px;
@@ -154,22 +154,22 @@
   font-size: var(--font-ui-small);
 }
 
-.calendar-notes-root button {
+.vault-agenda-root button {
   touch-action: manipulation;
   user-select: none;
   cursor: pointer;
   font-family: inherit;
 }
 
-.calendar-notes-root .calendar-header {
+.vault-agenda-root .vault-agenda-header {
   display: grid;
-  grid-template-columns: var(--calendar-control-size) minmax(0, 1fr) auto var(--calendar-control-size);
+  grid-template-columns: var(--vault-agenda-control-size) minmax(0, 1fr) auto var(--vault-agenda-control-size);
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
 }
 
-.calendar-notes-root .calendar-month-label {
+.vault-agenda-root .vault-agenda-month-label {
   min-width: 0;
   overflow: hidden;
   font-weight: var(--font-semibold);
@@ -178,9 +178,9 @@
   white-space: nowrap;
 }
 
-.calendar-notes-root .calendar-nav-button,
-.calendar-notes-root .calendar-today-button,
-.calendar-notes-root .calendar-day {
+.vault-agenda-root .vault-agenda-nav-button,
+.vault-agenda-root .vault-agenda-today-button,
+.vault-agenda-root .vault-agenda-day {
   border: 1px solid var(--background-modifier-border);
   border-radius: 6px;
   background: transparent;
@@ -188,71 +188,71 @@
   box-shadow: none;
 }
 
-.calendar-notes-root .calendar-nav-button {
+.vault-agenda-root .vault-agenda-nav-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--calendar-control-size);
-  height: var(--calendar-control-size);
+  width: var(--vault-agenda-control-size);
+  height: var(--vault-agenda-control-size);
   padding: 0;
 }
 
-.calendar-notes-root .calendar-today-button {
-  height: var(--calendar-control-size);
+.vault-agenda-root .vault-agenda-today-button {
+  height: var(--vault-agenda-control-size);
   padding: 0 8px;
   font-size: var(--font-ui-smaller);
   white-space: nowrap;
 }
 
-.calendar-notes-root .calendar-weekdays,
-.calendar-notes-root .calendar-grid {
+.vault-agenda-root .vault-agenda-weekdays,
+.vault-agenda-root .vault-agenda-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
 }
 
-.calendar-notes-root .calendar-weekdays {
+.vault-agenda-root .vault-agenda-weekdays {
   margin-bottom: 4px;
   color: var(--text-muted);
   font-size: var(--font-ui-smaller);
   text-align: center;
 }
 
-.calendar-notes-root .calendar-day {
+.vault-agenda-root .vault-agenda-day {
   position: relative;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: var(--calendar-day-height);
+  height: var(--vault-agenda-day-height);
   padding: 0 0 5px;
   text-align: center;
 }
 
-.calendar-notes-root .calendar-nav-button:hover,
-.calendar-notes-root .calendar-today-button:hover,
-.calendar-notes-root .calendar-day:not(.calendar-day-empty):hover {
+.vault-agenda-root .vault-agenda-nav-button:hover,
+.vault-agenda-root .vault-agenda-today-button:hover,
+.vault-agenda-root .vault-agenda-day:not(.vault-agenda-day-empty):hover {
   background: var(--background-modifier-hover);
 }
 
-.calendar-notes-root .calendar-day-empty {
+.vault-agenda-root .vault-agenda-day-empty {
   border: none;
   background: transparent;
   cursor: default;
 }
 
-.calendar-notes-root .calendar-day.is-today {
+.vault-agenda-root .vault-agenda-day.is-today {
   outline: 1px solid var(--interactive-accent);
   outline-offset: -1px;
 }
 
-.calendar-notes-root .calendar-day.is-selected {
+.vault-agenda-root .vault-agenda-day.is-selected {
   background: var(--background-modifier-hover);
   outline: 1px solid var(--text-muted);
   outline-offset: -1px;
 }
 
-.calendar-notes-root .calendar-day-markers {
+.vault-agenda-root .vault-agenda-day-markers {
   position: absolute;
   left: 50%;
   bottom: 4px;
@@ -261,26 +261,26 @@
   transform: translateX(-50%);
 }
 
-.calendar-notes-root .calendar-day-marker {
+.vault-agenda-root .vault-agenda-day-marker {
   width: 4px;
   height: 4px;
   border-radius: 50%;
   opacity: 0.75;
 }
 
-.calendar-notes-root .calendar-note-marker {
-  background: var(--calendar-note-marker-color);
+.vault-agenda-root .vault-agenda-note-marker {
+  background: var(--vault-agenda-note-marker-color);
 }
 
-.calendar-notes-root .calendar-task-active-marker {
+.vault-agenda-root .vault-agenda-task-active-marker {
   background: var(--color-orange);
 }
 
-.calendar-notes-root .calendar-task-done-marker {
+.vault-agenda-root .vault-agenda-task-done-marker {
   background: var(--color-green);
 }
 
-.calendar-notes-root .calendar-selected-day {
+.vault-agenda-root .vault-agenda-selected-day {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -289,30 +289,30 @@
   border-top: 1px solid var(--background-modifier-border);
 }
 
-.calendar-notes-root .calendar-selected-day-title {
+.vault-agenda-root .vault-agenda-selected-day-title {
   font-weight: var(--font-semibold);
 }
 
-.calendar-notes-root .calendar-day-section {
+.vault-agenda-root .vault-agenda-day-section {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.calendar-notes-root .calendar-section-header {
+.vault-agenda-root .vault-agenda-section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
 }
 
-.calendar-notes-root .calendar-section-title {
+.vault-agenda-root .vault-agenda-section-title {
   color: var(--text-muted);
   font-weight: var(--font-semibold);
   font-size: var(--font-ui-smaller);
 }
 
-.calendar-notes-root .calendar-icon-button {
+.vault-agenda-root .vault-agenda-icon-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -327,16 +327,16 @@
   box-shadow: none;
 }
 
-.calendar-notes-root .calendar-icon-button:hover {
+.vault-agenda-root .vault-agenda-icon-button:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
-.calendar-notes-root .calendar-item-menu-button {
+.vault-agenda-root .vault-agenda-item-menu-button {
   color: var(--text-faint);
 }
 
-.calendar-notes-root .calendar-item-list {
+.vault-agenda-root .vault-agenda-item-list {
   list-style: none;
   display: flex;
   flex-direction: column;
@@ -347,7 +347,7 @@
   overflow-y: auto;
 }
 
-.calendar-notes-root .calendar-item {
+.vault-agenda-root .vault-agenda-item {
   display: block;
   width: 100%;
   padding: 6px 8px;
@@ -363,16 +363,16 @@
   white-space: nowrap;
 }
 
-.calendar-notes-root .calendar-item:hover {
+.vault-agenda-root .vault-agenda-item:hover {
   background: var(--background-modifier-hover);
 }
 
-.calendar-notes-root .calendar-empty-label {
+.vault-agenda-root .vault-agenda-empty-label {
   color: var(--text-faint);
   font-size: var(--font-ui-smaller);
 }
 
-.calendar-notes-root .calendar-overdue-section {
+.vault-agenda-root .vault-agenda-overdue-section {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -381,7 +381,7 @@
   border-top: 1px solid var(--background-modifier-border);
 }
 
-.calendar-notes-root .calendar-task-lists {
+.vault-agenda-root .vault-agenda-task-lists {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -390,17 +390,17 @@
   border-top: 1px solid var(--background-modifier-border);
 }
 
-.calendar-notes-root .calendar-task-lists-title {
+.vault-agenda-root .vault-agenda-task-lists-title {
   margin-bottom: 2px;
 }
 
-.calendar-notes-root .calendar-task-list {
+.vault-agenda-root .vault-agenda-task-list {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
-.calendar-notes-root .calendar-task-list-toggle {
+.vault-agenda-root .vault-agenda-task-list-toggle {
   min-width: 0;
   display: inline-flex;
   flex: 1 1 auto;
@@ -417,54 +417,54 @@
   text-align: left;
 }
 
-.calendar-notes-root .calendar-task-list-toggle:hover {
+.vault-agenda-root .vault-agenda-task-list-toggle:hover {
   background: var(--background-modifier-hover);
 }
 
-.calendar-notes-root .calendar-task-list-toggle-icon {
+.vault-agenda-root .vault-agenda-task-list-toggle-icon {
   display: inline-flex;
   flex: 0 0 auto;
 }
 
-.calendar-notes-root .calendar-task-list-toggle-icon svg {
+.vault-agenda-root .vault-agenda-task-list-toggle-icon svg {
   width: 16px;
   height: 16px;
 }
 
-.calendar-notes-root .calendar-task-list-color-marker {
+.vault-agenda-root .vault-agenda-task-list-color-marker {
   flex: 0 0 auto;
   width: 3px;
   height: 12px;
   border-radius: 2px;
-  background: var(--calendar-task-list-color);
+  background: var(--vault-agenda-task-list-color);
 }
 
-.calendar-notes-root .calendar-task-list-count {
+.vault-agenda-root .vault-agenda-task-list-count {
   color: var(--text-muted);
 }
 
-.calendar-notes-root .calendar-item-row.is-list-colored .calendar-item-title {
+.vault-agenda-root .vault-agenda-item-row.is-list-colored .vault-agenda-item-title {
   border-left-width: 2px;
-  border-left-color: var(--calendar-task-list-color);
+  border-left-color: var(--vault-agenda-task-list-color);
 }
 
-.calendar-notes-root .calendar-overdue-title {
+.vault-agenda-root .vault-agenda-overdue-title {
   color: var(--text-error);
 }
 
-.calendar-notes-root .calendar-item-row {
+.vault-agenda-root .vault-agenda-item-row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.calendar-notes-root .calendar-task-checkbox {
+.vault-agenda-root .vault-agenda-task-checkbox {
   flex: 0 0 auto;
   margin: 0;
   cursor: pointer;
 }
 
-.calendar-notes-root .calendar-item-body {
+.vault-agenda-root .vault-agenda-item-body {
   min-width: 0;
   flex: 1 1 auto;
   display: flex;
@@ -472,12 +472,12 @@
   gap: 2px;
 }
 
-.calendar-notes-root .calendar-item-title {
+.vault-agenda-root .vault-agenda-item-title {
   min-width: 0;
   width: 100%;
 }
 
-.calendar-notes-root .calendar-task-repeat-meta {
+.vault-agenda-root .vault-agenda-task-repeat-meta {
   color: var(--text-muted);
   font-size: var(--font-ui-smaller);
   overflow: hidden;
@@ -485,39 +485,39 @@
   white-space: nowrap;
 }
 
-.calendar-notes-root .calendar-task-date-prefix {
+.vault-agenda-root .vault-agenda-task-date-prefix {
   margin-right: 6px;
   color: var(--text-muted);
   font-size: var(--font-ui-smaller);
 }
 
-.calendar-notes-root .calendar-item-row.is-completed .calendar-item-title {
+.vault-agenda-root .vault-agenda-item-row.is-completed .vault-agenda-item-title {
   color: var(--text-muted);
   text-decoration: line-through;
 }
 
-body.is-mobile .calendar-notes-root {
-  --calendar-day-height: 44px;
-  --calendar-control-size: 40px;
+body.is-mobile .vault-agenda-root {
+  --vault-agenda-day-height: 44px;
+  --vault-agenda-control-size: 40px;
 }
 
-body.is-mobile .calendar-notes-root .calendar-icon-button {
+body.is-mobile .vault-agenda-root .vault-agenda-icon-button {
   width: 40px;
   height: 40px;
 }
 
-body.is-mobile .calendar-notes-root .calendar-item {
+body.is-mobile .vault-agenda-root .vault-agenda-item {
   padding: 10px 8px;
 }
 
-body.is-mobile .calendar-notes-root .calendar-item-list {
+body.is-mobile .vault-agenda-root .vault-agenda-item-list {
   max-height: none;
 }
 
-body.is-mobile .calendar-notes-root .calendar-item-row {
+body.is-mobile .vault-agenda-root .vault-agenda-item-row {
   min-height: 40px;
 }
 
-body.is-mobile .calendar-notes-root .calendar-task-checkbox {
+body.is-mobile .vault-agenda-root .vault-agenda-task-checkbox {
   --checkbox-size: 22px;
 }

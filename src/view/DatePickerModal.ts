@@ -8,14 +8,14 @@ import {
   parseDateId,
 } from "../core/dateUtils";
 import strings, { formatLocalizedString } from "../core/localization";
-import type { CalendarSettings } from "../core/types";
+import type { VaultAgendaSettings } from "../core/types";
 
 export class DatePickerModal extends Modal {
   private value: string;
 
   constructor(
     app: App,
-    private readonly settings: CalendarSettings,
+    private readonly settings: VaultAgendaSettings,
     currentDateId: string,
     private readonly onSubmit: (dateId: string) => void,
   ) {

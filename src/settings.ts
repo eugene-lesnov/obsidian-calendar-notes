@@ -29,7 +29,7 @@ import {
 import type { TaskList, WeekStart } from "./core/types";
 import { applyDateFormatMigration, planDateFormatMigration } from "./data/dateFormatMigration";
 import { normalizeFolderPath, validateTaskLists } from "./data/itemScopes";
-import type CalendarNotesPlugin from "./main";
+import type VaultAgendaPlugin from "./main";
 import { DateFormatMigrationModal } from "./view/DateFormatMigrationModal";
 import { FolderSuggest } from "./view/FolderSuggest";
 import { MarkdownFileSuggest } from "./view/MarkdownFileSuggest";
@@ -83,7 +83,7 @@ class ConfirmTaskListDeleteModal extends Modal {
   }
 }
 
-export class CalendarNotesSettingTab extends PluginSettingTab {
+export class VaultAgendaSettingTab extends PluginSettingTab {
   private readonly saveAndReindex = debounce(
     () => {
       void this.plugin.saveSettingsAndReindex().catch((error) => {
@@ -95,7 +95,7 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
     true,
   );
 
-  constructor(app: App, private plugin: CalendarNotesPlugin) {
+  constructor(app: App, private plugin: VaultAgendaPlugin) {
     super(app, plugin);
   }
 
@@ -174,10 +174,10 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
     taskList: TaskList,
     index: number,
   ): void {
-    const group = containerEl.createDiv({ cls: "calendar-task-list-settings-group" });
+    const group = containerEl.createDiv({ cls: "vault-agenda-task-list-settings-group" });
     const heading = new Setting(group);
-    heading.settingEl.addClass("calendar-task-list-settings-header");
-    const nameFeedback = group.createDiv({ cls: "calendar-task-list-name-feedback" });
+    heading.settingEl.addClass("vault-agenda-task-list-settings-header");
+    const nameFeedback = group.createDiv({ cls: "vault-agenda-task-list-name-feedback" });
 
     const updateDuplicateNameWarning = (): void => {
       const normalizedName = taskList.name.trim().toLocaleLowerCase();
@@ -219,7 +219,7 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
         }
       });
       text.inputEl.setAttribute("aria-label", strings.taskListNameLabel);
-      text.inputEl.addClass("calendar-task-list-name-input");
+      text.inputEl.addClass("vault-agenda-task-list-name-input");
     });
     heading.addExtraButton((button) => button
       .setIcon("arrow-up")
@@ -254,7 +254,7 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
         }
       },
     });
-    activeFolderSetting.settingEl.addClass("calendar-task-list-setting");
+    activeFolderSetting.settingEl.addClass("vault-agenda-task-list-setting");
 
     const completionSetting = new Setting(group)
       .setName(strings.taskListCompletionLabel)
@@ -288,7 +288,7 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
           this.saveAndReindex();
           this.display();
         }));
-    completionSetting.settingEl.addClass("calendar-task-list-setting");
+    completionSetting.settingEl.addClass("vault-agenda-task-list-setting");
 
     if (taskList.completionBehavior.type === "move") {
       const completedFolderSetting = new Setting(group)
@@ -482,13 +482,13 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
       .setName(strings.dateFormatLabel)
       .setDesc(strings.dateFormatDescription);
 
-    setting.settingEl.addClass("calendar-notes-date-format-setting");
+    setting.settingEl.addClass("vault-agenda-date-format-setting");
 
-    const detailsEl = setting.settingEl.createDiv({ cls: "calendar-notes-format-details" });
-    const feedbackEl = detailsEl.createDiv({ cls: "calendar-notes-format-preview" });
+    const detailsEl = setting.settingEl.createDiv({ cls: "vault-agenda-format-details" });
+    const feedbackEl = detailsEl.createDiv({ cls: "vault-agenda-format-preview" });
 
     detailsEl.createDiv({
-      cls: "calendar-notes-format-warning",
+      cls: "vault-agenda-format-warning",
       text: strings.dateFormatWarning,
     });
 
@@ -496,7 +496,7 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
     let applyButton: ButtonComponent | null = null;
 
     const updateFeedback = (format: string, valid: boolean): void => {
-      feedbackEl.toggleClass("calendar-notes-format-error", !valid);
+      feedbackEl.toggleClass("vault-agenda-format-error", !valid);
       feedbackEl.setText(
         valid
           ? formatLocalizedString(strings.dateFormatPreview, { date: this.previewDate(format) })
@@ -595,7 +595,7 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
           }),
       );
 
-    setting.settingEl.addClass("calendar-notes-week-start-setting");
+    setting.settingEl.addClass("vault-agenda-week-start-setting");
   }
 
   private addFolderSetting(
@@ -631,7 +631,7 @@ export class CalendarNotesSettingTab extends PluginSettingTab {
       onCommit: (value: string) => Promise<void>;
     },
   ): FolderInputController {
-    const feedback = setting.descEl.createDiv({ cls: "calendar-folder-feedback" });
+    const feedback = setting.descEl.createDiv({ cls: "vault-agenda-folder-feedback" });
 
     let controller: FolderInputController | null = null;
 

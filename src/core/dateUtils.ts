@@ -1,5 +1,5 @@
 import { getLocales } from "./localization";
-import type { CalendarDate, WeekStart } from "./types";
+import type { DateParts, WeekStart } from "./types";
 
 export const DEFAULT_DATE_FORMAT = "YYYY-MM-DD";
 export const DEFAULT_DATE_PATTERN = `{{${DEFAULT_DATE_FORMAT}}}`;
@@ -41,7 +41,7 @@ export function getTodayDateId(): string {
   return formatDateId(today.getFullYear(), today.getMonth(), today.getDate());
 }
 
-export function parseDateId(dateId: string): CalendarDate {
+export function parseDateId(dateId: string): DateParts {
   const [year, month, day] = dateId.split("-").map(Number);
 
   return {
@@ -166,7 +166,7 @@ export function buildDateMatcher(format: string): DateMatcher | null {
   return { source, fields };
 }
 
-export function parseDateByPattern(value: string, pattern: string): CalendarDate | null {
+export function parseDateByPattern(value: string, pattern: string): DateParts | null {
   const compiled = getCompiledDatePattern(pattern);
 
   if (!compiled) {
@@ -217,7 +217,7 @@ export function momentFormatToPattern(format: string): string {
   return `{{${normalized}}}`;
 }
 
-function getDateTokenValues(date: CalendarDate): Array<[string, string]> {
+function getDateTokenValues(date: DateParts): Array<[string, string]> {
   const year = String(date.year);
   const shortYear = year.slice(-2);
   const month = date.month + 1;
@@ -266,18 +266,18 @@ function formatExpression(
   return result;
 }
 
-function formatDateExpression(date: CalendarDate, expression: string): string {
+function formatDateExpression(date: DateParts, expression: string): string {
   return formatExpression(getDateTokenValues(date), expression);
 }
 
-function renderDatePattern(date: CalendarDate, pattern: string): string {
+function renderDatePattern(date: DateParts, pattern: string): string {
   return pattern.replace(
     DATE_FORMAT_EXPRESSION_PATTERN,
     (_match, expression: string) => formatDateExpression(date, expression.trim()),
   );
 }
 
-export function formatDateByPattern(date: CalendarDate, pattern: string): string {
+export function formatDateByPattern(date: DateParts, pattern: string): string {
   const source = pattern.trim();
   const normalizedPattern = source || DEFAULT_DATE_PATTERN;
   const normalized = renderDatePattern(date, normalizedPattern).trim();

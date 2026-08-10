@@ -1,11 +1,11 @@
 import { App, TAbstractFile, TFile, TFolder } from "obsidian";
 
-import type { CalendarSettings } from "../core/types";
+import type { VaultAgendaSettings } from "../core/types";
 import type { Item, Task } from "./item";
 import { classifyItemFile } from "./item";
 import { configuredScopeFolders } from "./itemScopes";
 
-export type CalendarDayCounts = {
+export type AgendaDayCounts = {
   notes: number;
   tasks: number;
   hasActiveTasks: boolean;
@@ -58,7 +58,7 @@ export class ItemIndex {
 
   constructor(
     private readonly app: App,
-    private readonly getSettings: () => CalendarSettings,
+    private readonly getSettings: () => VaultAgendaSettings,
   ) {}
 
   rebuild(): void {
@@ -79,7 +79,7 @@ export class ItemIndex {
     return this.activeTasksByListId.get(taskListId) ?? [];
   }
 
-  getDayCounts(dateId: string): CalendarDayCounts {
+  getDayCounts(dateId: string): AgendaDayCounts {
     const items = this.itemsByDate.get(dateId) ?? [];
     let notes = 0;
     let tasks = 0;

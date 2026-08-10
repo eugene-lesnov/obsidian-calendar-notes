@@ -4,16 +4,16 @@ import {
   buildDefaultNotesFolder,
   buildDefaultTaskListFolders,
 } from "./pathDefaults";
-import type { CalendarSettings } from "./types";
+import type { VaultAgendaSettings } from "./types";
 
-export const VIEW_TYPE_CALENDAR = "calendar-notes-view";
+export const VIEW_TYPE_AGENDA = "vault-agenda-view";
 export const RIBBON_ICON = "calendar-days";
-export const COMMAND_TOGGLE_CALENDAR = "toggle-calendar-notes";
-export const HOVER_LINK_SOURCE = "calendar-notes";
+export const COMMAND_TOGGLE_AGENDA = "toggle-vault-agenda";
+export const HOVER_LINK_SOURCE = "vault-agenda";
 export const MARKDOWN_EXTENSION = "md";
 export const DEFAULT_TASK_LIST_ID = "tasks";
 
-export function createDefaultSettings(): CalendarSettings {
+export function createDefaultSettings(): VaultAgendaSettings {
   const taskListFolders = buildDefaultTaskListFolders({
     taskLists: strings.taskListsFolderName,
     defaultTaskList: strings.defaultTaskListFolderName,

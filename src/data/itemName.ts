@@ -6,7 +6,7 @@ import {
   momentFormatToPattern,
   parseDateId,
 } from "../core/dateUtils";
-import type { CalendarSettings } from "../core/types";
+import type { VaultAgendaSettings } from "../core/types";
 import { replaceForbiddenChars, sanitizeFileName } from "./fileNames";
 
 const NAME_SEPARATOR = " - ";
@@ -36,7 +36,7 @@ function resolveDateId(year: number, month: number, day: number): string | null 
   return formatDateId(fullYear, month - 1, day);
 }
 
-export function buildItemName(settings: CalendarSettings, dateId: string, title: string): string {
+export function buildItemName(settings: VaultAgendaSettings, dateId: string, title: string): string {
   const dateText = formatDateByPattern(
     parseDateId(dateId),
     momentFormatToPattern(settings.dateFormat),
@@ -61,7 +61,7 @@ function buildNameMatcher(dateFormat: string): NameMatcher | null {
   };
 }
 
-export function parseItemName(basename: string, settings: CalendarSettings): ParsedName {
+export function parseItemName(basename: string, settings: VaultAgendaSettings): ParsedName {
   const matcher = buildNameMatcher(settings.dateFormat);
 
   if (!matcher) {

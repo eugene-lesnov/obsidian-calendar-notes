@@ -2,7 +2,7 @@ import { App, TFile, normalizePath } from "obsidian";
 
 import { getTodayDateId } from "../core/dateUtils";
 import strings from "../core/localization";
-import type { CalendarSettings, TaskList } from "../core/types";
+import type { VaultAgendaSettings, TaskList } from "../core/types";
 import type { Task } from "./item";
 import { normalizeDateId } from "./item";
 import { MARKDOWN_SUFFIX, ensureFolderOrThrow, makeUniquePath } from "./fileNames";
@@ -54,7 +54,7 @@ async function moveTaskForCompletion(
     ? makeUniquePath(app, targetFolder, baseName)
     : directTargetPath;
 
-  await ensureFolderOrThrow(app, targetFolder, strings.createCalendarTaskFolderError);
+  await ensureFolderOrThrow(app, targetFolder, strings.createAgendaTaskFolderError);
   const originalPath = file.path;
   await app.fileManager.renameFile(file, targetPath);
 
@@ -81,7 +81,7 @@ async function rollbackMove(
 
 export async function setTaskCompleted(
   app: App,
-  settings: CalendarSettings,
+  settings: VaultAgendaSettings,
   item: Task,
   completed: boolean,
   options: { stopRepeat?: boolean } = {},
@@ -148,7 +148,7 @@ export async function setTaskCompleted(
 
 export async function applyExternalTaskCompletion(
   app: App,
-  settings: CalendarSettings,
+  settings: VaultAgendaSettings,
   previous: Task,
   current: Task,
 ): Promise<void> {

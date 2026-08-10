@@ -24,13 +24,13 @@ export type TaskList = {
   completionBehavior: CompletionBehavior;
 };
 
-export type CalendarDate = {
+export type DateParts = {
   year: number;
   month: number;
   day: number;
 };
 
-export type CalendarSettings = {
+export type VaultAgendaSettings = {
   dateFormat: string;
   weekStart: WeekStart;
   notesFolder: string;

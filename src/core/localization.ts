@@ -59,13 +59,13 @@ export interface AppLocalization {
   noteTemplateDescription: string;
   taskTemplateLabel: string;
   taskTemplateDescription: string;
-  toggleCalendarCommandLabel: string;
-  calendarRibbonLabel: string;
+  toggleAgendaCommandLabel: string;
+  agendaRibbonLabel: string;
   createNoteTodayCommandLabel: string;
   createTaskTodayCommandLabel: string;
   reopenCurrentTaskCommandLabel: string;
   goToTodayCommandLabel: string;
-  calendarViewTitle: string;
+  agendaViewTitle: string;
   previousMonthTitle: string;
   nextMonthTitle: string;
   todayButtonLabel: string;
@@ -100,10 +100,10 @@ export interface AppLocalization {
   taskRepeatMonthlyLabel: string;
   taskRepeatYearlyLabel: string;
   taskRepeatMetaLabel: string;
-  createCalendarNoteFolderError: string;
-  createCalendarTaskFolderError: string;
-  createCalendarNoteTemplateReadError: string;
-  createCalendarTaskTemplateReadError: string;
+  createAgendaNoteFolderError: string;
+  createAgendaTaskFolderError: string;
+  createAgendaNoteTemplateReadError: string;
+  createAgendaTaskTemplateReadError: string;
   repeatAdvanceError: string;
   repeatOccurrenceConflictError: string;
   repeatRequiresDateError: string;
@@ -122,18 +122,18 @@ const defaultStrings: AppLocalization = {
   dateFormatMigrationTitle: "Change date format",
   dateFormatMigrationSummary: "Date format will change from {{from}} to {{to}}.",
   dateFormatMigrationCounts:
-    "Calendar notes and calendar tasks to update: {{items}}. Files to rename: {{renames}}.",
+    "Vault Agenda items to update: {{items}}. Files to rename: {{renames}}.",
   dateFormatMigrationSample: "For example: {{from}} becomes {{to}}.",
   dateFormatMigrationConfirmLabel: "Change format",
   dateFormatMigrationCancelLabel: "Cancel",
   dateFormatMigrationDone:
-    "Date format changed. Calendar notes and calendar tasks updated: {{items}}.",
+    "Date format changed. Vault Agenda items updated: {{items}}.",
   dateFormatMigrationFailed:
-    "Failed to update {{count}} calendar notes or calendar tasks. They keep the old format and may be unavailable in the calendar until fixed.",
+    "Failed to update {{count}} Vault Agenda items. They keep the old format and may be unavailable in Vault Agenda until fixed.",
   weekStartLabel: "Week starts on",
   notesFolderName: "Notes",
   notesFolderLabel: "Notes folder",
-  notesFolderDescription: "Folder where calendar notes are stored. Subfolders are included.",
+  notesFolderDescription: "Folder where Vault Agenda notes are stored. Subfolders are included.",
   taskListsSectionLabel: "Task lists",
   addTaskListLabel: "Add task list",
   newTaskListName: "Task List {{index}}",
@@ -146,7 +146,7 @@ const defaultStrings: AppLocalization = {
   noteTemplateName: "Note",
   taskTemplateName: "Task",
   taskListNameLabel: "Name",
-  taskListNameDescription: "Name shown in the Calendar Notes task lists section.",
+  taskListNameDescription: "Name shown in the Vault Agenda task lists section.",
   taskListColorLabel: "Color",
   taskListColorDescription: "Optional color marker for this list and its tasks.",
   taskListActiveFolderLabel: "Active folder",
@@ -179,13 +179,13 @@ const defaultStrings: AppLocalization = {
   noteTemplateDescription: "Path to the template used to create new notes.",
   taskTemplateLabel: "New task template",
   taskTemplateDescription: "Path to the template used to create new tasks in this list.",
-  toggleCalendarCommandLabel: "Toggle calendar",
-  calendarRibbonLabel: "Calendar Notes",
+  toggleAgendaCommandLabel: "Toggle Vault Agenda",
+  agendaRibbonLabel: "Vault Agenda",
   createNoteTodayCommandLabel: "Create note for today",
   createTaskTodayCommandLabel: "Create task for today",
   reopenCurrentTaskCommandLabel: "Reopen current task",
   goToTodayCommandLabel: "Go to today",
-  calendarViewTitle: "Calendar Notes",
+  agendaViewTitle: "Vault Agenda",
   previousMonthTitle: "Previous month",
   nextMonthTitle: "Next month",
   todayButtonLabel: "Today",
@@ -222,12 +222,12 @@ const defaultStrings: AppLocalization = {
   taskRepeatMonthlyLabel: "Every month",
   taskRepeatYearlyLabel: "Every year",
   taskRepeatMetaLabel: "Repeats: {{repeat}}",
-  createCalendarNoteFolderError: "Cannot create a calendar note: folder {{path}} is not available.",
-  createCalendarTaskFolderError: "Cannot create a task: folder {{path}} is not available.",
-  createCalendarNoteTemplateReadError:
-    "Cannot create a calendar note: failed to find or read template note {{path}}.",
-  createCalendarTaskTemplateReadError:
-    "Cannot create a calendar task: failed to find or read template note {{path}}.",
+  createAgendaNoteFolderError: "Cannot create a Vault Agenda note: folder {{path}} is not available.",
+  createAgendaTaskFolderError: "Cannot create a task: folder {{path}} is not available.",
+  createAgendaNoteTemplateReadError:
+    "Cannot create a Vault Agenda note: failed to find or read template note {{path}}.",
+  createAgendaTaskTemplateReadError:
+    "Cannot create a Vault Agenda task: failed to find or read template note {{path}}.",
   repeatAdvanceError: "Failed to move the repeating task to its next date.",
   repeatOccurrenceConflictError:
     "Cannot create the next occurrence of the task: {{path}} already exists.",
@@ -248,18 +248,18 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     dateFormatMigrationTitle: "Смена формата даты",
     dateFormatMigrationSummary: "Формат даты изменится с {{from}} на {{to}}.",
     dateFormatMigrationCounts:
-      "Календарных заметок и календарных задач будет обновлено: {{items}}. Файлов будет переименовано: {{renames}}.",
+      "Будет обновлено элементов Vault Agenda: {{items}}. Файлов будет переименовано: {{renames}}.",
     dateFormatMigrationSample: "Например: {{from}} станет {{to}}.",
     dateFormatMigrationConfirmLabel: "Сменить формат",
     dateFormatMigrationCancelLabel: "Отмена",
     dateFormatMigrationDone:
-      "Формат даты изменен. Обновлено календарных заметок и календарных задач: {{items}}.",
+      "Формат даты изменен. Обновлено элементов Vault Agenda: {{items}}.",
     dateFormatMigrationFailed:
-      "Не удалось обновить календарные заметки или календарные задачи: {{count}}. Они остались в старом формате и могут быть недоступны в календаре, пока это не исправлено.",
+      "Не удалось обновить элементы Vault Agenda: {{count}}. Они остались в старом формате и могут быть недоступны в Vault Agenda, пока это не исправлено.",
     weekStartLabel: "Первый день недели",
     notesFolderName: "Заметки",
     notesFolderLabel: "Папка заметок",
-    notesFolderDescription: "Папка для календарных заметок. Учитываются вложенные папки.",
+    notesFolderDescription: "Папка для заметок Vault Agenda. Учитываются вложенные папки.",
     taskListsSectionLabel: "Списки задач",
     addTaskListLabel: "Добавить список задач",
     newTaskListName: "Список задач {{index}}",
@@ -272,7 +272,7 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     noteTemplateName: "Заметка",
     taskTemplateName: "Задача",
     taskListNameLabel: "Название",
-    taskListNameDescription: "Название списка в блоке задач Calendar Notes.",
+    taskListNameDescription: "Название списка в блоке задач Vault Agenda.",
     taskListColorLabel: "Цвет",
     taskListColorDescription: "Необязательный цветовой маркер списка и его задач.",
     taskListActiveFolderLabel: "Папка активных задач",
@@ -308,12 +308,12 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     taskTemplateLabel: "Шаблон новой задачи",
     taskTemplateDescription:
       "Путь к шаблону, по которому будут создаваться новые задачи этого списка.",
-    toggleCalendarCommandLabel: "Открыть или закрыть календарь",
+    toggleAgendaCommandLabel: "Открыть или закрыть Vault Agenda",
     createNoteTodayCommandLabel: "Создать заметку на сегодня",
     createTaskTodayCommandLabel: "Создать задачу на сегодня",
     reopenCurrentTaskCommandLabel: "Вернуть текущую задачу в активные",
     goToTodayCommandLabel: "Перейти к сегодняшнему дню",
-    calendarViewTitle: "Calendar Notes",
+    agendaViewTitle: "Vault Agenda",
     previousMonthTitle: "Предыдущий месяц",
     nextMonthTitle: "Следующий месяц",
     todayButtonLabel: "Сегодня",
@@ -350,14 +350,14 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     taskRepeatMonthlyLabel: "Каждый месяц",
     taskRepeatYearlyLabel: "Каждый год",
     taskRepeatMetaLabel: "Повтор: {{repeat}}",
-    createCalendarNoteFolderError:
-      "Не удалось создать календарную заметку: папка {{path}} недоступна.",
-    createCalendarTaskFolderError:
+    createAgendaNoteFolderError:
+      "Не удалось создать заметку Vault Agenda: папка {{path}} недоступна.",
+    createAgendaTaskFolderError:
       "Не удалось создать задачу: папка {{path}} недоступна.",
-    createCalendarNoteTemplateReadError:
-      "Не удалось создать календарную заметку: не получилось найти или прочитать заметку-шаблон {{path}}.",
-    createCalendarTaskTemplateReadError:
-      "Не удалось создать календарную задачу: не получилось найти или прочитать заметку-шаблон {{path}}.",
+    createAgendaNoteTemplateReadError:
+      "Не удалось создать заметку Vault Agenda: не получилось найти или прочитать заметку-шаблон {{path}}.",
+    createAgendaTaskTemplateReadError:
+      "Не удалось создать задачу Vault Agenda: не получилось найти или прочитать заметку-шаблон {{path}}.",
     repeatAdvanceError: "Не удалось перенести повторяющуюся задачу на следующую дату.",
     repeatOccurrenceConflictError:
       "Не удалось создать следующее повторение задачи: {{path}} уже существует.",

@@ -8,7 +8,7 @@ import {
 } from "../core/dateUtils";
 import strings, { getLocales } from "../core/localization";
 import type { WeekStart } from "../core/types";
-import type { CalendarDayCounts } from "../data/itemIndex";
+import type { AgendaDayCounts } from "../data/itemIndex";
 
 export type MonthGridParams = {
   year: number;
@@ -16,7 +16,7 @@ export type MonthGridParams = {
   weekStart: WeekStart;
   selectedDateId: string | null;
   todayDateId: string;
-  getDayCounts: (dateId: string) => CalendarDayCounts;
+  getDayCounts: (dateId: string) => AgendaDayCounts;
   formatDayLabel: (dateId: string) => string;
   onSelectDate: (dateId: string) => void;
   onPrevMonth: () => void;
@@ -41,7 +41,7 @@ function createNavButton(
   label: string,
   onClick: () => void,
 ): void {
-  const button = parent.createEl("button", { cls: "calendar-nav-button" });
+  const button = parent.createEl("button", { cls: "vault-agenda-nav-button" });
 
   button.setAttribute("aria-label", label);
   setIcon(button, icon);
@@ -49,17 +49,17 @@ function createNavButton(
 }
 
 function renderHeader(container: HTMLElement, params: MonthGridParams): void {
-  const header = container.createDiv({ cls: "calendar-header" });
+  const header = container.createDiv({ cls: "vault-agenda-header" });
 
   createNavButton(header, "chevron-left", strings.previousMonthTitle, params.onPrevMonth);
 
   header.createDiv({
-    cls: "calendar-month-label",
+    cls: "vault-agenda-month-label",
     text: formatMonthLabel(params.year, params.month),
   });
 
   const todayButton = header.createEl("button", {
-    cls: "calendar-today-button",
+    cls: "vault-agenda-today-button",
     text: strings.todayButtonLabel,
   });
 
@@ -70,48 +70,48 @@ function renderHeader(container: HTMLElement, params: MonthGridParams): void {
 }
 
 function renderWeekdays(container: HTMLElement, weekStart: WeekStart): void {
-  const weekdays = container.createDiv({ cls: "calendar-weekdays" });
+  const weekdays = container.createDiv({ cls: "vault-agenda-weekdays" });
 
   weekdayLabels(weekStart).forEach((label) => {
     weekdays.createDiv({ text: label });
   });
 }
 
-function renderDayMarkers(dayButton: HTMLElement, counts: CalendarDayCounts): void {
+function renderDayMarkers(dayButton: HTMLElement, counts: AgendaDayCounts): void {
   if (counts.notes <= 0 && counts.tasks <= 0) {
     return;
   }
 
-  const markers = dayButton.createSpan({ cls: "calendar-day-markers" });
+  const markers = dayButton.createSpan({ cls: "vault-agenda-day-markers" });
 
   if (counts.notes > 0) {
-    markers.createSpan({ cls: "calendar-day-marker calendar-note-marker" });
+    markers.createSpan({ cls: "vault-agenda-day-marker vault-agenda-note-marker" });
   }
 
   if (counts.tasks > 0) {
     const taskMarkerClass = counts.hasActiveTasks
-      ? "calendar-task-active-marker"
-      : "calendar-task-done-marker";
+      ? "vault-agenda-task-active-marker"
+      : "vault-agenda-task-done-marker";
 
-    markers.createSpan({ cls: `calendar-day-marker ${taskMarkerClass}` });
+    markers.createSpan({ cls: `vault-agenda-day-marker ${taskMarkerClass}` });
   }
 }
 
 function renderDays(container: HTMLElement, params: MonthGridParams): void {
-  const grid = container.createDiv({ cls: "calendar-grid" });
+  const grid = container.createDiv({ cls: "vault-agenda-grid" });
   const firstDayOffset = weekOffset(new Date(params.year, params.month, 1), params.weekStart);
   const totalDays = daysInMonth(params.year, params.month);
 
   for (let index = 0; index < firstDayOffset; index++) {
-    grid.createDiv({ cls: "calendar-day calendar-day-empty" });
+    grid.createDiv({ cls: "vault-agenda-day vault-agenda-day-empty" });
   }
 
   for (let day = 1; day <= totalDays; day++) {
     const dateId = formatDateId(params.year, params.month, day);
     const counts = params.getDayCounts(dateId);
-    const dayButton = grid.createEl("button", { cls: "calendar-day" });
+    const dayButton = grid.createEl("button", { cls: "vault-agenda-day" });
 
-    dayButton.createSpan({ cls: "calendar-day-number", text: String(day) });
+    dayButton.createSpan({ cls: "vault-agenda-day-number", text: String(day) });
     renderDayMarkers(dayButton, counts);
 
     dayButton.toggleClass("is-today", dateId === params.todayDateId);

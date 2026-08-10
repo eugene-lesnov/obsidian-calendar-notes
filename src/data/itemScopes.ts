@@ -1,7 +1,7 @@
 import { TFile, normalizePath } from "obsidian";
 
 import strings, { formatLocalizedString } from "../core/localization";
-import type { CalendarSettings, TaskList, TaskLocation } from "../core/types";
+import type { VaultAgendaSettings, TaskList, TaskLocation } from "../core/types";
 import { joinPath } from "./folders";
 
 export type TaskScopeMatch = {
@@ -34,7 +34,7 @@ function relativePath(path: string, scopePath: string): string {
 
 export function findTaskScope(
   file: TFile,
-  settings: CalendarSettings,
+  settings: VaultAgendaSettings,
 ): TaskScopeMatch | null {
   for (const taskList of settings.taskLists) {
     const activePath = normalizeFolderPath(taskList.activeFolder);
@@ -65,11 +65,11 @@ export function findTaskScope(
   return null;
 }
 
-export function getTaskList(settings: CalendarSettings, id: string): TaskList | null {
+export function getTaskList(settings: VaultAgendaSettings, id: string): TaskList | null {
   return settings.taskLists.find((list) => list.id === id) ?? null;
 }
 
-export function configuredScopeFolders(settings: CalendarSettings): string[] {
+export function configuredScopeFolders(settings: VaultAgendaSettings): string[] {
   const paths = [settings.notesFolder];
 
   settings.taskLists.forEach((taskList) => {
@@ -101,7 +101,7 @@ function scopesOverlap(first: string, second: string): boolean {
     || Boolean(second && first.startsWith(`${second}/`));
 }
 
-export function validateTaskLists(settings: CalendarSettings): void {
+export function validateTaskLists(settings: VaultAgendaSettings): void {
   const ids = new Set<string>();
   const scopes: string[] = [];
 
