@@ -428,6 +428,23 @@
   height: 16px;
 }
 
+.calendar-notes-root .calendar-task-list-color-marker {
+  flex: 0 0 auto;
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--calendar-task-list-color);
+}
+
+.calendar-notes-root .calendar-task-list-count {
+  color: var(--text-muted);
+}
+
+.calendar-notes-root .calendar-item-row.is-list-colored .calendar-item-title {
+  border-left-width: 2px;
+  border-left-color: var(--calendar-task-list-color);
+}
+
 .calendar-notes-root .calendar-overdue-title {
   color: var(--text-error);
 }

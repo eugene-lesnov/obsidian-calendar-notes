@@ -16,7 +16,7 @@ import {
   parseDateId,
 } from "../core/dateUtils";
 import strings from "../core/localization";
-import type { RepeatFrequency, TaskList } from "../core/types";
+import type { RepeatFrequency, TaskList, TaskListColor } from "../core/types";
 import type { Item, ItemKind, Task } from "../data/item";
 import {
   createDatedItem,
@@ -112,6 +112,7 @@ export class CalendarView extends ItemView {
       items: overdue.items,
       total: overdue.total,
       expanded: this.overdueExpanded,
+      getTaskListColor: (taskListId) => this.getTaskListColor(taskListId),
       onToggleExpanded: () => this.toggleOverdueExpanded(),
       onToggleTaskCompleted: (item, completed) =>
         void this.toggleTaskCompleted(item, completed),
@@ -124,6 +125,7 @@ export class CalendarView extends ItemView {
       app: this.app,
       hoverParent: this,
       taskLists: this.plugin.settings.taskLists,
+      getTaskListColor: (taskListId) => this.getTaskListColor(taskListId),
       getTasks: (taskListId) => this.plugin.itemIndex.getActiveTasks(taskListId),
       isExpanded: (taskListId) => this.expandedTaskLists.has(taskListId),
       onToggleExpanded: (taskListId) => this.toggleTaskList(taskListId),
@@ -139,6 +141,7 @@ export class CalendarView extends ItemView {
       hoverParent: this,
       dateId: this.selectedDateId,
       items: this.plugin.itemIndex.getItemsByDate(this.selectedDateId),
+      getTaskListColor: (taskListId) => this.getTaskListColor(taskListId),
       onCreateNote: () => void this.createDatedItem("note"),
       onCreateTask: () => void this.createDatedItem("task"),
       onToggleTaskCompleted: (item, completed) =>
@@ -147,6 +150,11 @@ export class CalendarView extends ItemView {
       onMenu: (item, event) => this.openItemMenu(item, event),
       formatDayLabel: (dateId) => this.formatDayLabel(dateId),
     });
+  }
+
+  private getTaskListColor(taskListId: string): TaskListColor {
+    return this.plugin.settings.taskLists.find((taskList) => taskList.id === taskListId)?.color
+      ?? null;
   }
 
   selectDay(dateId: string): void {

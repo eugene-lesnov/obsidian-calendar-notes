@@ -2,11 +2,13 @@ import { App, HoverParent, TFile, setIcon } from "obsidian";
 
 import { HOVER_LINK_SOURCE } from "../core/constants";
 import strings, { formatLocalizedString, getRepeatLabel } from "../core/localization";
+import type { TaskListColor } from "../core/types";
 import type { Item, Task } from "../data/item";
 
 const COLLAPSED_OVERDUE_TASK_COUNT = 3;
 
 export type ItemCallbacks = {
+  getTaskListColor: (taskListId: string) => TaskListColor;
   onToggleTaskCompleted: (item: Task, completed: boolean) => void;
   onOpen: (item: Item, event: MouseEvent) => void;
   onMenu: (item: Item, event: MouseEvent) => void;
@@ -89,6 +91,15 @@ function renderItemRow(
   datePrefix: string,
 ): void {
   const item = list.createEl("li", { cls: "calendar-item-row" });
+
+  if (entry.kind === "task") {
+    const color = callbacks.getTaskListColor(entry.taskListId);
+
+    if (color !== null) {
+      item.addClass("is-list-colored");
+      item.style.setProperty("--calendar-task-list-color", color);
+    }
+  }
 
   item.toggleClass("is-completed", entry.kind === "task" && entry.done);
 

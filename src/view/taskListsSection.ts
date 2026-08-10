@@ -70,14 +70,27 @@ export function renderTaskListsSection(
     const tasks = params.getTasks(taskList.id);
     const expanded = params.isExpanded(taskList.id);
     const section = root.createDiv({ cls: "calendar-task-list" });
+
+    if (taskList.color !== null) {
+      section.style.setProperty("--calendar-task-list-color", taskList.color);
+    }
+
     const header = section.createDiv({ cls: "calendar-section-header" });
     const toggle = header.createEl("button", {
       cls: "calendar-task-list-toggle",
-      text: `${taskList.name} (${tasks.length})`,
     });
     const icon = toggle.createSpan({ cls: "calendar-task-list-toggle-icon" });
-    toggle.prepend(icon);
     setIcon(icon, expanded ? "chevron-down" : "chevron-right");
+
+    if (taskList.color !== null) {
+      toggle.createSpan({ cls: "calendar-task-list-color-marker" });
+    }
+
+    toggle.createSpan({ text: taskList.name });
+    toggle.createSpan({
+      cls: "calendar-task-list-count",
+      text: `(${tasks.length})`,
+    });
     toggle.addEventListener("click", () => params.onToggleExpanded(taskList.id));
 
     const addButton = header.createEl("button", {
