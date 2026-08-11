@@ -160,6 +160,7 @@ export class TaskListSetupModal extends Modal {
 
     new Setting(details)
       .setName(strings.taskOrderLabel)
+      .setDesc(strings.taskOrderDescription)
       .addDropdown((dropdown) => dropdown
         .addOption("title-asc", strings.taskOrderTitleAscLabel)
         .addOption("title-desc", strings.taskOrderTitleDescLabel)

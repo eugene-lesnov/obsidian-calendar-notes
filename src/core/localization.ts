@@ -57,6 +57,7 @@ export interface AppLocalization {
   taskListDuplicateNameWarning: string;
   taskListRequiredError: string;
   taskOrderLabel: string;
+  taskOrderDescription: string;
   taskOrderTitleAscLabel: string;
   taskOrderTitleDescLabel: string;
   taskOrderDateAscLabel: string;
@@ -191,6 +192,7 @@ const defaultStrings: AppLocalization = {
   taskListDuplicateNameWarning: "Another task list has the same name.",
   taskListRequiredError: "Create a task list before creating or changing tasks.",
   taskOrderLabel: "Task order",
+  taskOrderDescription: "Controls how tasks in this list are displayed.",
   taskOrderTitleAscLabel: "Name: A to Z",
   taskOrderTitleDescLabel: "Name: Z to A",
   taskOrderDateAscLabel: "Date: earliest first",
@@ -336,6 +338,7 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     taskListDuplicateNameWarning: "У другого списка задач такое же название.",
     taskListRequiredError: "Сначала создайте список задач.",
     taskOrderLabel: "Порядок задач",
+    taskOrderDescription: "Определяет порядок отображения задач этого списка.",
     taskOrderTitleAscLabel: "Название: А → Я",
     taskOrderTitleDescLabel: "Название: Я → А",
     taskOrderDateAscLabel: "Дата: раньше → позже",
