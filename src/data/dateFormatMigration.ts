@@ -12,6 +12,8 @@ export type DateFormatMigrationEntry = {
   originalPath: string;
   originalDateSignature: string;
   originalCompletedSignature: string;
+  originalDate: unknown;
+  originalCompleted: unknown;
   date: string | null;
   completed: string | null;
   targetPath: string | null;
@@ -83,6 +85,8 @@ function buildEntry(
     originalPath: file.path,
     originalDateSignature: valueSignature(frontmatter.date),
     originalCompletedSignature: valueSignature(frontmatter.completed),
+    originalDate: frontmatter.date,
+    originalCompleted: frontmatter.completed,
     date,
     completed,
     targetPath,
@@ -203,6 +207,7 @@ export async function applyDateFormatMigration(
   plan: DateFormatMigrationPlan,
 ): Promise<DateFormatMigrationResult> {
   const failures: string[] = [];
+  const applied: DateFormatMigrationEntry[] = [];
   let migrated = 0;
   let renamed = 0;
 
@@ -215,11 +220,57 @@ export async function applyDateFormatMigration(
       if (wasRenamed) {
         renamed += 1;
       }
+
+      applied.push(entry);
     } catch (error) {
       console.error("Failed to migrate Vault Agenda item to the new date format.", error);
+      failures.push(entry.file.path);
+      break;
+    }
+  }
+
+  if (failures.length > 0) {
+    failures.push(...await rollbackDateFormatMigration(app, { ...plan, entries: applied }));
+
+    return { migrated: 0, renamed: 0, failures: Array.from(new Set(failures)) };
+  }
+
+  return { migrated, renamed, failures };
+}
+
+export async function rollbackDateFormatMigration(
+  app: App,
+  plan: DateFormatMigrationPlan,
+): Promise<string[]> {
+  const failures: string[] = [];
+
+  for (const entry of [...plan.entries].reverse()) {
+    try {
+      await app.fileManager.processFrontMatter(
+        entry.file,
+        (frontmatter: Record<string, unknown>) => {
+          if (entry.originalDate === undefined) {
+            delete frontmatter.date;
+          } else {
+            frontmatter.date = entry.originalDate;
+          }
+
+          if (entry.originalCompleted === undefined) {
+            delete frontmatter.completed;
+          } else {
+            frontmatter.completed = entry.originalCompleted;
+          }
+        },
+      );
+
+      if (entry.file.path !== entry.originalPath) {
+        await app.fileManager.renameFile(entry.file, entry.originalPath);
+      }
+    } catch (error) {
+      console.error("Failed to roll back Vault Agenda date migration.", error);
       failures.push(entry.file.path);
     }
   }
 
-  return { migrated, renamed, failures };
+  return failures;
 }

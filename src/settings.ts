@@ -23,7 +23,11 @@ import {
 import strings, { formatLocalizedString } from "./core/localization";
 import { buildDefaultTemplatePath } from "./core/pathDefaults";
 import type { TaskList, WeekStart } from "./core/types";
-import { applyDateFormatMigration, planDateFormatMigration } from "./data/dateFormatMigration";
+import {
+  applyDateFormatMigration,
+  planDateFormatMigration,
+  rollbackDateFormatMigration,
+} from "./data/dateFormatMigration";
 import { normalizeFolderPath, validateTaskLists } from "./data/itemScopes";
 import type VaultAgendaPlugin from "./main";
 import { DateFormatMigrationModal } from "./view/DateFormatMigrationModal";
@@ -487,7 +491,9 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
     const plan = planDateFormatMigration(this.app, this.plugin.settings, nextFormat);
 
     const apply = (): void => {
-      void this.applyDateFormat(nextFormat);
+      void this.applyDateFormat(nextFormat).catch((error) => {
+        new Notice(String(error instanceof Error ? error.message : error));
+      });
     };
 
     if (plan.entries.length === 0) {
@@ -512,8 +518,41 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
       const plan = planDateFormatMigration(this.app, this.plugin.settings, nextFormat);
       const result = await applyDateFormatMigration(this.app, plan);
 
+      if (result.failures.length > 0) {
+        new Notice(
+          formatLocalizedString(strings.dateFormatMigrationFailed, {
+            count: String(result.failures.length),
+          }),
+        );
+        return;
+      }
+
+      const previousFormat = this.plugin.settings.dateFormat;
       this.plugin.settings.dateFormat = nextFormat;
-      await this.plugin.saveSettingsAndReindex();
+
+      try {
+        await this.plugin.saveSettingsAndReindex();
+      } catch (error) {
+        this.plugin.settings.dateFormat = previousFormat;
+        const rollbackFailures = await rollbackDateFormatMigration(this.app, plan);
+
+        try {
+          await this.plugin.saveSettingsAndReindex();
+        } catch (rollbackSettingsError) {
+          console.error("Failed to restore Vault Agenda settings after migration error.", rollbackSettingsError);
+          this.plugin.itemIndex.rebuild();
+        }
+
+        if (rollbackFailures.length > 0) {
+          new Notice(
+            formatLocalizedString(strings.dateFormatMigrationFailed, {
+              count: String(rollbackFailures.length),
+            }),
+          );
+        }
+
+        throw error;
+      }
 
       new Notice(
         formatLocalizedString(strings.dateFormatMigrationDone, {
@@ -521,13 +560,6 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
         }),
       );
 
-      if (result.failures.length > 0) {
-        new Notice(
-          formatLocalizedString(strings.dateFormatMigrationFailed, {
-            count: String(result.failures.length),
-          }),
-        );
-      }
     } finally {
       await this.plugin.finishDateFormatMigration();
       this.display();
