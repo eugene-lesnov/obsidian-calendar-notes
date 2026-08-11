@@ -123,9 +123,9 @@ export function registerItemTitleTooltip(title: HTMLElement, text: string): void
   title.addEventListener("mouseleave", removeItemTitleTooltip);
 }
 
-function renderTaskRepeatIcon(container: HTMLElement, task: Task): void {
+function renderTaskRepeatIcon(container: HTMLElement, task: Task): string | null {
   if (!task.repeat) {
-    return;
+    return null;
   }
 
   const label = formatLocalizedString(strings.taskRepeatMetaLabel, {
@@ -133,10 +133,11 @@ function renderTaskRepeatIcon(container: HTMLElement, task: Task): void {
   });
   const icon = container.createSpan({ cls: "vault-agenda-task-repeat-icon" });
 
-  icon.tabIndex = 0;
-  icon.setAttribute("aria-label", label);
+  icon.setAttribute("aria-hidden", "true");
   setIcon(icon, "repeat-2");
   setTooltip(icon, label);
+
+  return label;
 }
 
 function renderItemRow(
@@ -174,14 +175,16 @@ function renderItemRow(
     title.createSpan({ cls: "vault-agenda-task-date-prefix", text: datePrefix });
   }
 
-  title.createSpan({ text: entry.title });
-  registerItemTitleTooltip(title, entry.title);
+  const titleText = title.createSpan({
+    cls: "vault-agenda-item-title-text",
+    text: entry.title,
+  });
+  const repeatLabel = entry.kind === "task" ? renderTaskRepeatIcon(title, entry) : null;
+
+  title.setAttribute("aria-label", repeatLabel ? `${entry.title}. ${repeatLabel}` : entry.title);
+  registerItemTitleTooltip(titleText, entry.title);
   title.addEventListener("click", (event: MouseEvent) => callbacks.onOpen(entry, event));
   registerHoverPreview(app, hoverParent, title, entry.file);
-
-  if (entry.kind === "task") {
-    renderTaskRepeatIcon(titleRow, entry);
-  }
 
   const menuButton = item.createEl("button", {
     cls: "vault-agenda-icon-button vault-agenda-item-menu-button",

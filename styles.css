@@ -587,13 +587,28 @@
   width: 100%;
 }
 
+.vault-agenda-root .vault-agenda-item-title-row .vault-agenda-item-title {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.vault-agenda-root .vault-agenda-item-title-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .vault-agenda-root .vault-agenda-task-repeat-icon {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
+  margin-inline-start: 6px;
   color: var(--text-muted);
 }
 
