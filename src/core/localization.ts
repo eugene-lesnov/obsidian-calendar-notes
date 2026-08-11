@@ -168,7 +168,7 @@ const defaultStrings: AppLocalization = {
   taskListNameLabel: "Name",
   taskListNameDescription: "Name shown in the Vault Agenda task lists section.",
   taskListColorLabel: "Color",
-  taskListColorDescription: "Optional color marker for this list and its tasks.",
+  taskListColorDescription: "Color marker for this list and its tasks.",
   taskListActiveFolderLabel: "Active folder",
   taskListActiveFolderDescription:
     "Active tasks are indexed in this folder and its subfolders. New tasks are created here.",
@@ -311,7 +311,7 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     taskListNameLabel: "Название",
     taskListNameDescription: "Название списка в блоке задач Vault Agenda.",
     taskListColorLabel: "Цвет",
-    taskListColorDescription: "Необязательный цветовой маркер списка и его задач.",
+    taskListColorDescription: "Цветовой маркер списка и его задач.",
     taskListActiveFolderLabel: "Папка активных задач",
     taskListActiveFolderDescription:
       "Активные задачи индексируются в этой папке и ее подпапках. Новые задачи создаются здесь.",
