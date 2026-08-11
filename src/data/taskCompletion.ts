@@ -164,6 +164,8 @@ export async function applyExternalTaskCompletion(
   }
 
   transitions.add(current.file);
+  const originalCompleted: unknown = app.metadataCache
+    .getFileCache(current.file)?.frontmatter?.completed;
 
   try {
     await app.fileManager.processFrontMatter(current.file, (frontmatter: Record<string, unknown>) => {
@@ -180,7 +182,25 @@ export async function applyExternalTaskCompletion(
       }
     });
 
-    await moveTaskForCompletion(app, taskList, current.file, match.relativePath, current.done);
+    try {
+      await moveTaskForCompletion(app, taskList, current.file, match.relativePath, current.done);
+    } catch (error) {
+      await app.fileManager.processFrontMatter(
+        current.file,
+        (frontmatter: Record<string, unknown>) => {
+          if (frontmatter.done !== current.done) {
+            throw new Error(`Task changed during completion rollback: ${current.file.path}`);
+          }
+
+          if (originalCompleted === undefined) {
+            delete frontmatter.completed;
+          } else {
+            frontmatter.completed = originalCompleted;
+          }
+        },
+      );
+      throw error;
+    }
   } finally {
     transitions.delete(current.file);
   }

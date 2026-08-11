@@ -351,8 +351,15 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
   ): Promise<void> {
     const candidate = { ...taskList, activeFolder };
     this.validateTaskListUpdate(taskList, candidate);
+    const previousFolder = taskList.activeFolder;
     taskList.activeFolder = activeFolder;
-    await this.plugin.saveSettingsAndReindex();
+
+    try {
+      await this.plugin.saveSettingsAndReindex();
+    } catch (error) {
+      taskList.activeFolder = previousFolder;
+      throw error;
+    }
   }
 
   private async enableMoveCompletion(taskList: TaskList, completedFolder: string): Promise<void> {
@@ -379,8 +386,15 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
     const completionBehavior = { type: "move" as const, completedFolder };
     const candidate = { ...taskList, completionBehavior };
     this.validateTaskListUpdate(taskList, candidate);
+    const previousCompletionBehavior = taskList.completionBehavior;
     taskList.completionBehavior = completionBehavior;
-    await this.plugin.saveSettingsAndReindex();
+
+    try {
+      await this.plugin.saveSettingsAndReindex();
+    } catch (error) {
+      taskList.completionBehavior = previousCompletionBehavior;
+      throw error;
+    }
   }
 
   private validateTaskListUpdate(taskList: TaskList, candidate: TaskList): void {
@@ -402,11 +416,14 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
   private confirmRemoveTaskList(index: number): void {
     new ConfirmTaskListDeleteModal(this.app, () => {
       const [removed] = this.plugin.settings.taskLists.splice(index, 1);
+      const previousExpandedTaskListIds = this.plugin.settings.expandedTaskListIds;
       this.plugin.settings.expandedTaskListIds = this.plugin.settings.expandedTaskListIds
         .filter((id) => id !== removed.id);
       void this.plugin.saveSettingsAndReindex()
         .then(() => this.display())
         .catch((error) => {
+          this.plugin.settings.taskLists.splice(index, 0, removed);
+          this.plugin.settings.expandedTaskListIds = previousExpandedTaskListIds;
           new Notice(String(error instanceof Error ? error.message : error));
           this.display();
         });
