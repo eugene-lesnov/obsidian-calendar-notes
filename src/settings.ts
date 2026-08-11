@@ -35,7 +35,7 @@ import { FolderSuggest } from "./view/FolderSuggest";
 import { MarkdownFileSuggest } from "./view/MarkdownFileSuggest";
 
 const REINDEX_DEBOUNCE_MS = 600;
-const FOLDER_BLUR_COMMIT_DELAY_MS = 150;
+const INPUT_BLUR_COMMIT_DELAY_MS = 150;
 type TextSettingKey = "newNoteName";
 
 type TemplateSettingKey = "noteTemplate";
@@ -296,27 +296,27 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
           void this.plugin.saveSettings();
         }));
 
-    new Setting(group)
+    const taskTemplateSetting = new Setting(group)
       .setName(strings.taskTemplateLabel)
-      .setDesc(strings.taskTemplateDescription)
-      .addText((text) => {
-        text
-          .setPlaceholder(buildDefaultTemplatePath(
-            strings.templatesFolderName,
-            strings.taskTemplateName,
-          ))
-          .setValue(taskList.taskTemplate)
-          .onChange((value) => {
-            taskList.taskTemplate = value.trim();
-            void this.plugin.saveSettings();
-          });
+      .setDesc(strings.taskTemplateDescription);
+    this.addTemplateInput(taskTemplateSetting, {
+      value: taskList.taskTemplate,
+      placeholder: buildDefaultTemplatePath(
+        strings.templatesFolderName,
+        strings.taskTemplateName,
+      ),
+      onCommit: async (value) => {
+        const previousValue = taskList.taskTemplate;
+        taskList.taskTemplate = value;
 
-        new MarkdownFileSuggest(this.app, text.inputEl).onSelect((file) => {
-          text.setValue(file.path);
-          taskList.taskTemplate = file.path;
-          void this.plugin.saveSettings();
-        });
-      });
+        try {
+          await this.plugin.saveSettings();
+        } catch (error) {
+          taskList.taskTemplate = previousValue;
+          throw error;
+        }
+      },
+    });
   }
 
   private addTaskListColorSetting(group: HTMLElement, taskList: TaskList): void {
@@ -720,7 +720,7 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
         blurTimer = window.setTimeout(() => {
           blurTimer = null;
           void commit(text.inputEl.value);
-        }, FOLDER_BLUR_COMMIT_DELAY_MS);
+        }, INPUT_BLUR_COMMIT_DELAY_MS);
       });
 
       new FolderSuggest(this.app, text.inputEl).onSelect((folder) => {
@@ -771,24 +771,99 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
       key: TemplateSettingKey;
     },
   ): void {
-    new Setting(containerEl)
+    const setting = new Setting(containerEl)
       .setName(options.name)
-      .setDesc(options.description)
-      .addText((text) => {
-        text
-          .setPlaceholder(options.placeholder)
-          .setValue(this.plugin.settings[options.key])
-          .onChange((value) => {
-            this.plugin.settings[options.key] = value.trim();
-            void this.plugin.saveSettings();
-          });
+      .setDesc(options.description);
+    this.addTemplateInput(setting, {
+      value: this.plugin.settings[options.key],
+      placeholder: options.placeholder,
+      onCommit: async (value) => {
+        const previousValue = this.plugin.settings[options.key];
+        this.plugin.settings[options.key] = value;
 
-        new MarkdownFileSuggest(this.app, text.inputEl).onSelect((file) => {
-          text.setValue(file.path);
-          this.plugin.settings[options.key] = file.path;
-          void this.plugin.saveSettings();
-        });
+        try {
+          await this.plugin.saveSettings();
+        } catch (error) {
+          this.plugin.settings[options.key] = previousValue;
+          throw error;
+        }
+      },
+    });
+  }
+
+  private addTemplateInput(
+    setting: Setting,
+    options: {
+      value: string;
+      placeholder: string;
+      onCommit: (value: string) => Promise<void>;
+    },
+  ): void {
+    setting.addText((text) => {
+      let committedValue = options.value;
+      let blurTimer: number | null = null;
+      let commitVersion = 0;
+
+      const clearBlurTimer = (): void => {
+        if (blurTimer !== null) {
+          window.clearTimeout(blurTimer);
+          blurTimer = null;
+        }
+      };
+
+      const commit = async (rawValue: string): Promise<void> => {
+        clearBlurTimer();
+        const version = ++commitVersion;
+        const value = rawValue.trim();
+
+        if (value === committedValue) {
+          return;
+        }
+
+        try {
+          await options.onCommit(value);
+
+          if (version !== commitVersion) {
+            return;
+          }
+
+          committedValue = value;
+          text.setValue(value);
+        } catch (error) {
+          if (version === commitVersion) {
+            new Notice(String(error instanceof Error ? error.message : error));
+          }
+        }
+      };
+
+      text
+        .setPlaceholder(options.placeholder)
+        .setValue(options.value);
+      text.inputEl.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          void commit(text.inputEl.value);
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          ++commitVersion;
+          clearBlurTimer();
+          text.setValue(committedValue);
+          text.inputEl.blur();
+        }
       });
+      text.inputEl.addEventListener("blur", () => {
+        blurTimer = window.setTimeout(() => {
+          blurTimer = null;
+          void commit(text.inputEl.value);
+        }, INPUT_BLUR_COMMIT_DELAY_MS);
+      });
+
+      new MarkdownFileSuggest(this.app, text.inputEl).onSelect((file) => {
+        clearBlurTimer();
+        text.setValue(file.path);
+        void commit(file.path);
+      });
+    });
   }
 
   private previewDate(format: string): string {

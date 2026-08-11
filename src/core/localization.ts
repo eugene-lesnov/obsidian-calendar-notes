@@ -159,7 +159,7 @@ const defaultStrings: AppLocalization = {
   taskListSetupAdvancedLabel: "Additional options",
   taskListSetupFolderDescription:
     "Select an existing folder or enter a path to create when the first task is added.",
-  taskListSetupFolderPlaceholder: "Choose or enter a folder",
+  taskListSetupFolderPlaceholder: "Select or enter a folder name",
   taskListsEmptyDescription: "Choose where active task files are stored to start using tasks.",
   newTaskListName: "Task List {{index}}",
   templatesFolderName: "Templates",
@@ -301,7 +301,7 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     taskListSetupAdvancedLabel: "Дополнительные параметры",
     taskListSetupFolderDescription:
       "Выберите существующую папку или укажите путь, который будет создан вместе с первой задачей.",
-    taskListSetupFolderPlaceholder: "Выберите или введите папку",
+    taskListSetupFolderPlaceholder: "Выберите или введите название папки",
     taskListsEmptyDescription:
       "Выберите папку для активных задач, чтобы начать работу со списками.",
     newTaskListName: "Список задач {{index}}",
