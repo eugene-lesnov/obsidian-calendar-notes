@@ -130,6 +130,8 @@ export class AgendaView extends ItemView {
       hoverParent: this,
       taskLists: this.plugin.settings.taskLists,
       expanded: this.taskListsExpanded,
+      todayDateId,
+      formatDayLabel: (dateId) => this.formatDayLabel(dateId),
       getTaskListColor: (taskListId) => this.getTaskListColor(taskListId),
       getTasks: (taskListId) => {
         const taskList = this.plugin.settings.taskLists.find((list) => list.id === taskListId);

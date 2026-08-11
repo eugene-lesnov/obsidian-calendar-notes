@@ -1,4 +1,4 @@
-import { App, HoverParent, TFile, displayTooltip, setIcon } from "obsidian";
+import { App, HoverParent, TFile, displayTooltip, setIcon, setTooltip } from "obsidian";
 
 import { HOVER_LINK_SOURCE } from "../core/constants";
 import strings, { formatLocalizedString, getRepeatLabel } from "../core/localization";
@@ -89,17 +89,24 @@ function renderCheckbox(item: HTMLElement, entry: Task, callbacks: ItemCallbacks
   checkbox.addEventListener("change", () => callbacks.onToggleTaskCompleted(entry, checkbox.checked));
 }
 
-export function renderTaskRepeatMeta(body: HTMLElement, task: Task): void {
+export function renderTaskRepeatMeta(
+  body: HTMLElement,
+  task: Task,
+  occurrence?: { text: string; overdue: boolean },
+): void {
   if (!task.repeat) {
     return;
   }
 
-  body.createDiv({
+  const meta = body.createDiv({
     cls: "vault-agenda-task-repeat-meta",
-    text: formatLocalizedString(strings.taskRepeatMetaLabel, {
+    text: occurrence?.text ?? formatLocalizedString(strings.taskRepeatMetaLabel, {
       repeat: getRepeatLabel(task.repeat.frequency),
     }),
   });
+
+  meta.toggleClass("is-overdue", occurrence?.overdue ?? false);
+  meta.setAttribute("title", meta.textContent ?? "");
 }
 
 export function registerItemTitleTooltip(title: HTMLElement, text: string): void {
@@ -114,6 +121,22 @@ export function registerItemTitleTooltip(title: HTMLElement, text: string): void
     }
   });
   title.addEventListener("mouseleave", removeItemTitleTooltip);
+}
+
+function renderTaskRepeatIcon(container: HTMLElement, task: Task): void {
+  if (!task.repeat) {
+    return;
+  }
+
+  const label = formatLocalizedString(strings.taskRepeatMetaLabel, {
+    repeat: getRepeatLabel(task.repeat.frequency),
+  });
+  const icon = container.createSpan({ cls: "vault-agenda-task-repeat-icon" });
+
+  icon.tabIndex = 0;
+  icon.setAttribute("aria-label", label);
+  setIcon(icon, "repeat-2");
+  setTooltip(icon, label);
 }
 
 function renderItemRow(
@@ -142,7 +165,10 @@ function renderItemRow(
   }
 
   const body = item.createDiv({ cls: "vault-agenda-item-body" });
-  const title = body.createEl("button", { cls: "vault-agenda-item vault-agenda-item-title" });
+  const titleRow = body.createDiv({ cls: "vault-agenda-item-title-row" });
+  const title = titleRow.createEl("button", {
+    cls: "vault-agenda-item vault-agenda-item-title",
+  });
 
   if (datePrefix) {
     title.createSpan({ cls: "vault-agenda-task-date-prefix", text: datePrefix });
@@ -154,7 +180,7 @@ function renderItemRow(
   registerHoverPreview(app, hoverParent, title, entry.file);
 
   if (entry.kind === "task") {
-    renderTaskRepeatMeta(body, entry);
+    renderTaskRepeatIcon(titleRow, entry);
   }
 
   const menuButton = item.createEl("button", {

@@ -1,7 +1,7 @@
 import { App, HoverParent, Menu, setIcon, setTooltip } from "obsidian";
 
 import { HOVER_LINK_SOURCE } from "../core/constants";
-import strings from "../core/localization";
+import strings, { formatLocalizedString, getRepeatLabel } from "../core/localization";
 import type { TaskList, TaskOrder } from "../core/types";
 import type { Task } from "../data/item";
 import {
@@ -84,6 +84,8 @@ export type TaskListsSectionParams = Omit<ItemCallbacks, "onMenu"> & {
   getTasks: (taskListId: string) => Task[];
   isExpanded: (taskListId: string) => boolean;
   onToggleSectionExpanded: () => void;
+  todayDateId: string;
+  formatDayLabel: (dateId: string) => string;
   onToggleTaskListExpanded: (taskListId: string) => void;
   onSetupTaskList: () => void;
   onCreateTask: (taskList: TaskList) => void;
@@ -96,6 +98,38 @@ export type TaskListsSectionParams = Omit<ItemCallbacks, "onMenu"> & {
   ) => void;
   onTaskMenu: (taskList: TaskList, task: Task, event: MouseEvent) => void;
 };
+
+function getRepeatOccurrenceMeta(
+  task: Task,
+  todayDateId: string,
+  formatDayLabel: (dateId: string) => string,
+): { text: string; overdue: boolean } | undefined {
+  if (!task.repeat || !task.dateId) {
+    return undefined;
+  }
+
+  const repeat = getRepeatLabel(task.repeat.frequency);
+
+  if (task.dateId === todayDateId) {
+    return {
+      text: formatLocalizedString(strings.taskRepeatTodayMetaLabel, { repeat }),
+      overdue: false,
+    };
+  }
+
+  const overdue = task.dateId < todayDateId;
+  const label = overdue
+    ? strings.taskRepeatOverdueMetaLabel
+    : strings.taskRepeatNextMetaLabel;
+
+  return {
+    text: formatLocalizedString(label, {
+      repeat,
+      date: formatDayLabel(task.dateId),
+    }),
+    overdue,
+  };
+}
 
 function renderTask(
   list: HTMLElement,
@@ -269,7 +303,11 @@ function renderTask(
       linktext: task.file.path,
     });
   });
-  renderTaskRepeatMeta(body, task);
+  renderTaskRepeatMeta(
+    body,
+    task,
+    getRepeatOccurrenceMeta(task, params.todayDateId, params.formatDayLabel),
+  );
 
   const menuButton = item.createEl("button", {
     cls: "vault-agenda-icon-button vault-agenda-item-menu-button",

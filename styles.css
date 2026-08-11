@@ -574,9 +574,32 @@
   gap: 2px;
 }
 
+.vault-agenda-root .vault-agenda-item-title-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .vault-agenda-root .vault-agenda-item-title {
+  flex: 1 1 auto;
   min-width: 0;
   width: 100%;
+}
+
+.vault-agenda-root .vault-agenda-task-repeat-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--text-muted);
+}
+
+.vault-agenda-root .vault-agenda-task-repeat-icon svg {
+  width: 14px;
+  height: 14px;
 }
 
 .vault-agenda-root .vault-agenda-task-repeat-meta {
@@ -585,6 +608,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.vault-agenda-root .vault-agenda-task-repeat-meta.is-overdue {
+  color: var(--text-error);
 }
 
 .vault-agenda-root .vault-agenda-task-date-prefix {

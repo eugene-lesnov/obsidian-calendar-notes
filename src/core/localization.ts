@@ -116,6 +116,9 @@ export interface AppLocalization {
   taskRepeatMonthlyLabel: string;
   taskRepeatYearlyLabel: string;
   taskRepeatMetaLabel: string;
+  taskRepeatNextMetaLabel: string;
+  taskRepeatTodayMetaLabel: string;
+  taskRepeatOverdueMetaLabel: string;
   createAgendaNoteFolderError: string;
   createAgendaTaskFolderError: string;
   createAgendaNoteTemplateReadError: string;
@@ -255,6 +258,9 @@ const defaultStrings: AppLocalization = {
   taskRepeatMonthlyLabel: "Every month",
   taskRepeatYearlyLabel: "Every year",
   taskRepeatMetaLabel: "Repeats: {{repeat}}",
+  taskRepeatNextMetaLabel: "{{repeat}} · Next: {{date}}",
+  taskRepeatTodayMetaLabel: "{{repeat}} · Today",
+  taskRepeatOverdueMetaLabel: "{{repeat}} · Overdue: {{date}}",
   createAgendaNoteFolderError: "Cannot create a Vault Agenda note: folder {{path}} is not available.",
   createAgendaTaskFolderError: "Cannot create a task: folder {{path}} is not available.",
   createAgendaNoteTemplateReadError:
@@ -401,6 +407,9 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     taskRepeatMonthlyLabel: "Каждый месяц",
     taskRepeatYearlyLabel: "Каждый год",
     taskRepeatMetaLabel: "Повтор: {{repeat}}",
+    taskRepeatNextMetaLabel: "{{repeat}} · Следующее: {{date}}",
+    taskRepeatTodayMetaLabel: "{{repeat}} · Сегодня",
+    taskRepeatOverdueMetaLabel: "{{repeat}} · Просрочено: {{date}}",
     createAgendaNoteFolderError:
       "Не удалось создать заметку Vault Agenda: папка {{path}} недоступна.",
     createAgendaTaskFolderError:
