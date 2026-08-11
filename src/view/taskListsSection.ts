@@ -19,6 +19,8 @@ const TASK_ORDER_OPTIONS: Array<{ order: TaskOrder; label: () => string }> = [
 ];
 const TASK_PATH_DRAG_TYPE = "application/x-vault-agenda-task-path";
 const activeDropTargets = new WeakMap<HTMLElement, HTMLElement>();
+const DRAG_SCROLL_EDGE = 48;
+const DRAG_SCROLL_STEP = 12;
 
 function clearDropIndicators(list: HTMLElement): void {
   activeDropTargets.get(list)?.removeClass("is-drop-before", "is-drop-after");
@@ -39,6 +41,39 @@ function setDropIndicator(list: HTMLElement, item: HTMLElement, after: boolean):
 
 function getTaskOrderLabel(order: TaskOrder): string {
   return TASK_ORDER_OPTIONS.find((option) => option.order === order)?.label() ?? "";
+}
+
+function getScrollableParent(element: HTMLElement): HTMLElement | null {
+  let parent = element.parentElement;
+
+  while (parent) {
+    const { overflowY } = getComputedStyle(parent);
+
+    if (
+      (overflowY === "auto" || overflowY === "scroll")
+      && parent.scrollHeight > parent.clientHeight
+    ) {
+      return parent;
+    }
+
+    parent = parent.parentElement;
+  }
+
+  return null;
+}
+
+function scrollDuringDrag(container: HTMLElement | null, clientY: number): void {
+  if (!container) {
+    return;
+  }
+
+  const bounds = container.getBoundingClientRect();
+
+  if (clientY < bounds.top + DRAG_SCROLL_EDGE) {
+    container.scrollTop -= DRAG_SCROLL_STEP;
+  } else if (clientY > bounds.bottom - DRAG_SCROLL_EDGE) {
+    container.scrollTop += DRAG_SCROLL_STEP;
+  }
 }
 
 export type TaskListsSectionParams = Omit<ItemCallbacks, "onMenu"> & {
@@ -71,6 +106,7 @@ function renderTask(
 
   if (taskList.order === "manual") {
     item.addClass("is-manually-ordered");
+    item.dataset.taskPath = task.file.path;
 
     const dragHandle = item.createSpan({ cls: "vault-agenda-task-drag-handle" });
     dragHandle.draggable = true;
@@ -138,6 +174,74 @@ function renderTask(
         task.file.path,
         event.clientY > bounds.top + bounds.height / 2,
       );
+    });
+
+    let pointerId: number | null = null;
+    let pointerDropTarget: HTMLElement | null = null;
+    let scrollContainer: HTMLElement | null = null;
+    let dropAfter = false;
+
+    const finishPointerDrag = (event: PointerEvent, cancelled: boolean): void => {
+      if (event.pointerId !== pointerId) {
+        return;
+      }
+
+      const targetPath = pointerDropTarget?.dataset.taskPath;
+
+      pointerId = null;
+      pointerDropTarget = null;
+      scrollContainer = null;
+      delete list.dataset.draggedTaskPath;
+      clearDropIndicators(list);
+      item.removeClass("is-dragging");
+
+      if (!cancelled && targetPath && targetPath !== task.file.path) {
+        params.onReorderTask(taskList, task.file.path, targetPath, dropAfter);
+      }
+    };
+
+    dragHandle.addEventListener("pointerdown", (event: PointerEvent) => {
+      if (event.pointerType === "mouse" || pointerId !== null) {
+        return;
+      }
+
+      event.preventDefault();
+      pointerId = event.pointerId;
+      scrollContainer = getScrollableParent(list);
+      list.dataset.draggedTaskPath = task.file.path;
+      dragHandle.setPointerCapture(event.pointerId);
+      item.addClass("is-dragging");
+    });
+    dragHandle.addEventListener("pointermove", (event: PointerEvent) => {
+      if (event.pointerId !== pointerId) {
+        return;
+      }
+
+      event.preventDefault();
+      scrollDuringDrag(scrollContainer, event.clientY);
+
+      const target = document.elementFromPoint(event.clientX, event.clientY)
+        ?.closest<HTMLElement>(".vault-agenda-item-row[data-task-path]");
+
+      if (!target || !list.contains(target) || target === item) {
+        pointerDropTarget = null;
+        clearDropIndicators(list);
+        return;
+      }
+
+      const bounds = target.getBoundingClientRect();
+      dropAfter = event.clientY > bounds.top + bounds.height / 2;
+      pointerDropTarget = target;
+      setDropIndicator(list, target, dropAfter);
+    });
+    dragHandle.addEventListener("pointerup", (event: PointerEvent) => {
+      finishPointerDrag(event, false);
+    });
+    dragHandle.addEventListener("pointercancel", (event: PointerEvent) => {
+      finishPointerDrag(event, true);
+    });
+    dragHandle.addEventListener("lostpointercapture", (event: PointerEvent) => {
+      finishPointerDrag(event, true);
     });
   }
 

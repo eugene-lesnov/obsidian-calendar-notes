@@ -503,6 +503,7 @@
   flex: 0 0 auto;
   color: var(--text-faint);
   cursor: grab;
+  touch-action: none;
   transform: translateY(-50%);
 }
 
@@ -602,6 +603,13 @@ body.is-mobile .vault-agenda-root .vault-agenda-task-checkbox {
   --checkbox-size: 22px;
 }
 
+body.is-mobile .vault-agenda-root .vault-agenda-task-list {
+  --vault-agenda-task-drag-gutter: 32px;
+}
+
 body.is-mobile .vault-agenda-root .vault-agenda-task-drag-handle {
-  display: none;
+  width: 32px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
 }
