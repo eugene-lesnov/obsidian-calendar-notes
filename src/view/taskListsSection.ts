@@ -85,6 +85,7 @@ export type TaskListsSectionParams = Omit<ItemCallbacks, "onMenu"> & {
   isExpanded: (taskListId: string) => boolean;
   onToggleSectionExpanded: () => void;
   onToggleTaskListExpanded: (taskListId: string) => void;
+  onSetupTaskList: () => void;
   onCreateTask: (taskList: TaskList) => void;
   onSetOrder: (taskList: TaskList, order: TaskOrder) => void;
   onReorderTask: (
@@ -299,6 +300,18 @@ export function renderTaskListsSection(
   params: TaskListsSectionParams,
 ): void {
   if (params.taskLists.length === 0) {
+    const root = container.createDiv({ cls: "vault-agenda-task-lists" });
+    root.createDiv({
+      cls: "vault-agenda-section-title vault-agenda-task-lists-title",
+      text: strings.taskListsSectionLabel,
+    });
+    const empty = root.createDiv({ cls: "vault-agenda-task-lists-empty" });
+    empty.createDiv({ text: strings.taskListsEmptyDescription });
+    const setupButton = empty.createEl("button", {
+      cls: "mod-cta",
+      text: strings.setupTaskListLabel,
+    });
+    setupButton.addEventListener("click", params.onSetupTaskList);
     return;
   }
 

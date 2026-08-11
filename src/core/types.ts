@@ -28,6 +28,8 @@ export type TaskList = {
   completionBehavior: CompletionBehavior;
 };
 
+export type NewTaskListConfig = Omit<TaskList, "id" | "manualOrder">;
+
 export type DateParts = {
   year: number;
   month: number;

@@ -20,12 +20,15 @@ export interface AppLocalization {
   notesFolderDescription: string;
   taskListsSectionLabel: string;
   addTaskListLabel: string;
+  setupTaskListLabel: string;
+  setupAndCreateTaskLabel: string;
+  taskListSetupTitle: string;
+  taskListSetupDescription: string;
+  taskListSetupAdvancedLabel: string;
+  taskListSetupFolderDescription: string;
+  taskListSetupFolderPlaceholder: string;
+  taskListsEmptyDescription: string;
   newTaskListName: string;
-  taskListsFolderName: string;
-  defaultTaskListFolderName: string;
-  newTaskListFolderName: string;
-  activeTasksFolderName: string;
-  completedTasksFolderName: string;
   templatesFolderName: string;
   noteTemplateName: string;
   taskTemplateName: string;
@@ -49,6 +52,7 @@ export interface AppLocalization {
   taskListFoldersConflictError: string;
   notesFolderRequiredError: string;
   folderMissingWarning: string;
+  folderExistsStatus: string;
   taskListDuplicateNameWarning: string;
   taskListRequiredError: string;
   taskOrderLabel: string;
@@ -146,12 +150,16 @@ const defaultStrings: AppLocalization = {
   notesFolderDescription: "Folder where Vault Agenda notes are stored. Subfolders are included.",
   taskListsSectionLabel: "Task lists",
   addTaskListLabel: "Add task list",
+  setupTaskListLabel: "Set up task list",
+  setupAndCreateTaskLabel: "Save and create task",
+  taskListSetupTitle: "Set up task list",
+  taskListSetupDescription: "Configure how this task list stores and handles its files.",
+  taskListSetupAdvancedLabel: "Additional options",
+  taskListSetupFolderDescription:
+    "Select an existing folder or enter a path to create when the first task is added.",
+  taskListSetupFolderPlaceholder: "Choose or enter a folder",
+  taskListsEmptyDescription: "Choose where active task files are stored to start using tasks.",
   newTaskListName: "Task List {{index}}",
-  taskListsFolderName: "Task Lists",
-  defaultTaskListFolderName: "Tasks",
-  newTaskListFolderName: "Task List {{index}}",
-  activeTasksFolderName: "Active",
-  completedTasksFolderName: "Completed",
   templatesFolderName: "Templates",
   noteTemplateName: "Note",
   taskTemplateName: "Task",
@@ -177,6 +185,7 @@ const defaultStrings: AppLocalization = {
   taskListFoldersConflictError: "Task list folders must not overlap.",
   notesFolderRequiredError: "Notes folder must not be empty.",
   folderMissingWarning: "Folder does not exist yet. It will be created when needed.",
+  folderExistsStatus: "Folder found.",
   taskListDuplicateNameWarning: "Another task list has the same name.",
   taskListRequiredError: "Create a task list before creating or changing tasks.",
   taskOrderLabel: "Task order",
@@ -282,12 +291,17 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     notesFolderDescription: "Папка для заметок Vault Agenda. Учитываются вложенные папки.",
     taskListsSectionLabel: "Списки задач",
     addTaskListLabel: "Добавить список задач",
+    setupTaskListLabel: "Настроить список задач",
+    setupAndCreateTaskLabel: "Сохранить и создать задачу",
+    taskListSetupTitle: "Настройка списка задач",
+    taskListSetupDescription: "Настройте хранение и обработку файлов этого списка задач.",
+    taskListSetupAdvancedLabel: "Дополнительные параметры",
+    taskListSetupFolderDescription:
+      "Выберите существующую папку или укажите путь, который будет создан вместе с первой задачей.",
+    taskListSetupFolderPlaceholder: "Выберите или введите папку",
+    taskListsEmptyDescription:
+      "Выберите папку для активных задач, чтобы начать работу со списками.",
     newTaskListName: "Список задач {{index}}",
-    taskListsFolderName: "Списки задач",
-    defaultTaskListFolderName: "Задачи",
-    newTaskListFolderName: "Список задач {{index}}",
-    activeTasksFolderName: "Активные",
-    completedTasksFolderName: "Завершенные",
     templatesFolderName: "Шаблоны",
     noteTemplateName: "Заметка",
     taskTemplateName: "Задача",
@@ -315,6 +329,7 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     taskListFoldersConflictError: "Папки списков задач не должны пересекаться.",
     notesFolderRequiredError: "Папка заметок не должна быть пустой.",
     folderMissingWarning: "Папка пока не существует. Она будет создана при необходимости.",
+    folderExistsStatus: "Папка найдена.",
     taskListDuplicateNameWarning: "У другого списка задач такое же название.",
     taskListRequiredError: "Сначала создайте список задач.",
     taskOrderLabel: "Порядок задач",

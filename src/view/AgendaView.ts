@@ -86,6 +86,8 @@ export class AgendaView extends ItemView {
     const root = this.contentEl;
     const todayDateId = getTodayDateId();
 
+    this.syncExpandedTaskLists();
+
     root.empty();
     root.addClass("vault-agenda-root");
 
@@ -138,6 +140,7 @@ export class AgendaView extends ItemView {
       isExpanded: (taskListId) => this.expandedTaskLists.has(taskListId),
       onToggleSectionExpanded: () => this.toggleTaskListsExpanded(),
       onToggleTaskListExpanded: (taskListId) => this.toggleTaskList(taskListId),
+      onSetupTaskList: () => void this.setupTaskList(),
       onCreateTask: (taskList) => void this.createTaskInList(taskList),
       onSetOrder: (taskList, order) => void this.setTaskOrder(taskList, order),
       onReorderTask: (taskList, sourcePath, targetPath, after) =>
@@ -366,9 +369,42 @@ export class AgendaView extends ItemView {
 
   private async createDatedItem(kind: ItemKind): Promise<void> {
     await this.runMutation(async () => {
-      const file = await createDatedItem(this.app, this.plugin.settings, kind, this.selectedDateId);
+      let file: TFile;
+
+      if (kind === "task" && this.plugin.settings.taskLists.length === 0) {
+        const taskList = await this.plugin.promptTaskListSetup(strings.setupAndCreateTaskLabel);
+
+        if (!taskList) {
+          return;
+        }
+
+        this.expandedTaskLists.add(taskList.id);
+        file = await createTask(this.app, this.plugin.settings, taskList, this.selectedDateId);
+      } else {
+        file = await createDatedItem(this.app, this.plugin.settings, kind, this.selectedDateId);
+      }
 
       await this.app.workspace.getLeaf(false).openFile(file);
+    });
+  }
+
+  private async setupTaskList(): Promise<void> {
+    const taskList = await this.plugin.promptTaskListSetup(strings.setupTaskListLabel);
+
+    if (taskList) {
+      this.expandedTaskLists.add(taskList.id);
+      this.render();
+    }
+  }
+
+  private syncExpandedTaskLists(): void {
+    const taskListIds = new Set(this.plugin.settings.taskLists.map((taskList) => taskList.id));
+
+    this.expandedTaskLists.clear();
+    this.plugin.settings.expandedTaskListIds.forEach((id) => {
+      if (taskListIds.has(id)) {
+        this.expandedTaskLists.add(id);
+      }
     });
   }
 

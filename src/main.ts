@@ -16,7 +16,12 @@ import {
 } from "./core/constants";
 import { getTodayDateId } from "./core/dateUtils";
 import strings, { formatLocalizedString, getLocales, setLocale } from "./core/localization";
-import type { VaultAgendaSettings, TaskList, TaskOrder } from "./core/types";
+import type {
+  NewTaskListConfig,
+  VaultAgendaSettings,
+  TaskList,
+  TaskOrder,
+} from "./core/types";
 import type { ItemKind, Task } from "./data/item";
 import { classifyItemFile } from "./data/item";
 import type { ItemUpsertResult } from "./data/itemIndex";
@@ -35,6 +40,7 @@ import {
 } from "./data/taskCompletion";
 import { VaultAgendaSettingTab } from "./settings";
 import { AgendaView } from "./view/AgendaView";
+import { TaskListSetupModal } from "./view/TaskListSetupModal";
 
 const DATE_CHANGE_CHECK_MS = 60000;
 const TASK_ORDERS: readonly TaskOrder[] = [
@@ -123,6 +129,7 @@ export default class VaultAgendaPlugin extends Plugin {
   private readonly pendingRepeatFiles = new Set<TFile>();
   private readonly taskCompletionQueues = new WeakMap<TFile, Promise<void>>();
   private settingsSaveQueue = Promise.resolve();
+  private taskListSetupPromise: Promise<TaskList | null> | null = null;
 
   async onload(): Promise<void> {
     setLocale([getLanguage(), ...getLocales()]);
@@ -217,6 +224,14 @@ export default class VaultAgendaPlugin extends Plugin {
 
   private async createItemForToday(kind: ItemKind): Promise<void> {
     try {
+      if (kind === "task" && this.settings.taskLists.length === 0) {
+        const taskList = await this.promptTaskListSetup(strings.setupAndCreateTaskLabel);
+
+        if (!taskList) {
+          return;
+        }
+      }
+
       const file = await createDatedItem(this.app, this.settings, kind, getTodayDateId());
 
       await this.app.workspace.getLeaf(false).openFile(file);
@@ -473,6 +488,77 @@ export default class VaultAgendaPlugin extends Plugin {
       this.itemIndex.rebuild();
       this.refreshViews();
     });
+  }
+
+  promptTaskListSetup(submitLabel = strings.addTaskListLabel): Promise<TaskList | null> {
+    if (this.taskListSetupPromise) {
+      return this.taskListSetupPromise;
+    }
+
+    this.taskListSetupPromise = new Promise<TaskList | null>((resolve) => {
+      new TaskListSetupModal(
+        this.app,
+        this.newTaskListDefaults(),
+        submitLabel,
+        (config) => this.createTaskList(config),
+        resolve,
+      ).open();
+    }).finally(() => {
+      this.taskListSetupPromise = null;
+    });
+
+    return this.taskListSetupPromise;
+  }
+
+  private newTaskListDefaults(): NewTaskListConfig {
+    const configuredNames = new Set(this.settings.taskLists.map((taskList) =>
+      taskList.name.trim().toLocaleLowerCase()));
+    let index = Math.max(2, this.settings.taskLists.length + 1);
+    let name = this.settings.taskLists.length === 0
+      ? strings.tasksSectionLabel
+      : formatLocalizedString(strings.newTaskListName, { index: String(index) });
+
+    while (configuredNames.has(name.toLocaleLowerCase())) {
+      index += 1;
+      name = formatLocalizedString(strings.newTaskListName, { index: String(index) });
+    }
+
+    return {
+      name,
+      color: null,
+      activeFolder: "",
+      newTaskName: strings.newTaskDefaultTitle,
+      taskTemplate: "",
+      order: "title-asc",
+      completionBehavior: { type: "keep" },
+    };
+  }
+
+  private async createTaskList(config: NewTaskListConfig): Promise<TaskList> {
+    const taskList: TaskList = {
+      id: crypto.randomUUID(),
+      ...config,
+      manualOrder: [],
+    };
+    const candidate = {
+      ...this.settings,
+      taskLists: [...this.settings.taskLists, taskList],
+      expandedTaskListIds: [...this.settings.expandedTaskListIds, taskList.id],
+    };
+    validateTaskLists(candidate);
+    this.settings.taskLists.push(taskList);
+    this.settings.expandedTaskListIds.push(taskList.id);
+
+    try {
+      await this.saveSettingsAndReindex();
+      return taskList;
+    } catch (error) {
+      this.settings.taskLists = this.settings.taskLists.filter((current) => current.id !== taskList.id);
+      this.settings.expandedTaskListIds = this.settings.expandedTaskListIds.filter(
+        (id) => id !== taskList.id,
+      );
+      throw error;
+    }
   }
 
   private enqueueSettingsSave(action: () => Promise<void>): Promise<void> {

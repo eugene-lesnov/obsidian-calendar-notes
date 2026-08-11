@@ -11,7 +11,7 @@ import {
   debounce,
 } from "obsidian";
 
-import { createDefaultSettings } from "./core/constants";
+import { DEFAULT_TASK_LIST_COLOR, createDefaultSettings } from "./core/constants";
 import {
   formatDateByPattern,
   getTodayDateId,
@@ -21,11 +21,7 @@ import {
   weekdayLongName,
 } from "./core/dateUtils";
 import strings, { formatLocalizedString } from "./core/localization";
-import {
-  buildAdditionalTaskListFolders,
-  buildDefaultTemplatePath,
-  suggestCompletedFolder,
-} from "./core/pathDefaults";
+import { buildDefaultTemplatePath } from "./core/pathDefaults";
 import type { TaskList, WeekStart } from "./core/types";
 import { applyDateFormatMigration, planDateFormatMigration } from "./data/dateFormatMigration";
 import { normalizeFolderPath, validateTaskLists } from "./data/itemScopes";
@@ -36,25 +32,11 @@ import { MarkdownFileSuggest } from "./view/MarkdownFileSuggest";
 
 const REINDEX_DEBOUNCE_MS = 600;
 const FOLDER_BLUR_COMMIT_DELAY_MS = 150;
-const DEFAULT_TASK_LIST_COLOR = "#7e57c2";
-
-function taskFolderNames() {
-  return {
-    taskLists: strings.taskListsFolderName,
-    active: strings.activeTasksFolderName,
-    completed: strings.completedTasksFolderName,
-  };
-}
-
 type TextSettingKey = "newNoteName";
 
 type TemplateSettingKey = "noteTemplate";
 
 type FolderSettingKey = "notesFolder";
-
-type FolderInputController = {
-  setCommittedValue: (value: string) => void;
-};
 
 class ConfirmTaskListDeleteModal extends Modal {
   constructor(app: App, private readonly onConfirm: () => void) {
@@ -84,6 +66,8 @@ class ConfirmTaskListDeleteModal extends Modal {
 }
 
 export class VaultAgendaSettingTab extends PluginSettingTab {
+  private readonly pendingMoveTaskListIds = new Set<string>();
+
   private readonly saveAndReindex = debounce(
     () => {
       void this.plugin.saveSettingsAndReindex().catch((error) => {
@@ -97,6 +81,11 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
 
   constructor(app: App, private plugin: VaultAgendaPlugin) {
     super(app, plugin);
+  }
+
+  hide(): void {
+    this.pendingMoveTaskListIds.clear();
+    super.hide();
   }
 
   display(): void {
@@ -136,7 +125,7 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
       .setHeading()
       .addButton((button) => button
         .setButtonText(strings.addTaskListLabel)
-        .onClick(() => this.addTaskList()));
+        .onClick(() => void this.addTaskList()));
 
     this.plugin.settings.taskLists.forEach((taskList, index) => {
       this.addTaskListSettings(containerEl, taskList, index);
@@ -144,30 +133,8 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
 
   }
 
-  private addTaskList(): void {
-    const id = crypto.randomUUID();
-    const { folders, index } = this.nextTaskListDefaults();
-
-    const taskList: TaskList = {
-      id,
-      name: formatLocalizedString(strings.newTaskListName, { index: String(index) }),
-      color: null,
-      activeFolder: folders.activeFolder,
-      newTaskName: strings.newTaskDefaultTitle,
-      taskTemplate: "",
-      order: "title-asc",
-      manualOrder: [],
-      completionBehavior: { type: "keep" },
-    };
-    validateTaskLists({
-      ...this.plugin.settings,
-      taskLists: [...this.plugin.settings.taskLists, taskList],
-    });
-    this.plugin.settings.taskLists.push(taskList);
-    void this.plugin.saveSettingsAndReindex().catch((error) => {
-      new Notice(String(error instanceof Error ? error.message : error));
-      this.display();
-    });
+  private async addTaskList(): Promise<void> {
+    await this.plugin.promptTaskListSetup();
     this.display();
   }
 
@@ -239,7 +206,6 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
 
     this.addTaskListColorSetting(group, taskList);
 
-    let completedFolderInput: FolderInputController | null = null;
     const activeFolderSetting = new Setting(group)
       .setName(strings.taskListActiveFolderLabel)
       .setDesc(strings.taskListActiveFolderDescription);
@@ -248,13 +214,7 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
       emptyError: formatLocalizedString(strings.taskListFolderRequiredError, {
         name: taskList.name,
       }),
-      onCommit: async (value) => {
-        const completedFolder = await this.commitActiveFolder(taskList, value);
-
-        if (completedFolder) {
-          completedFolderInput?.setCommittedValue(completedFolder);
-        }
-      },
+      onCommit: (value) => this.commitActiveFolder(taskList, value),
     });
     activeFolderSetting.settingEl.addClass("vault-agenda-task-list-setting");
 
@@ -264,20 +224,26 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
       .addDropdown((dropdown) => dropdown
         .addOption("keep", strings.taskListKeepLabel)
         .addOption("move", strings.taskListMoveLabel)
-        .setValue(taskList.completionBehavior.type)
+        .setValue(
+          taskList.completionBehavior.type === "move"
+            || this.pendingMoveTaskListIds.has(taskList.id)
+            ? "move"
+            : "keep",
+        )
         .onChange((value) => {
-          const folderNames = taskFolderNames();
+          if (value === "move") {
+            this.pendingMoveTaskListIds.add(taskList.id);
+            this.display();
+            return;
+          }
 
-          const completionBehavior = value === "move"
-            ? {
-                type: "move" as const,
-                completedFolder: suggestCompletedFolder(
-                  taskList.activeFolder,
-                  folderNames.active,
-                  folderNames.completed,
-                ),
-              }
-            : { type: "keep" as const };
+          if (taskList.completionBehavior.type === "keep") {
+            this.pendingMoveTaskListIds.delete(taskList.id);
+            this.display();
+            return;
+          }
+
+          const completionBehavior = { type: "keep" as const };
           try {
             this.validateTaskListUpdate(taskList, { ...taskList, completionBehavior });
           } catch (error) {
@@ -287,21 +253,31 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
           }
 
           taskList.completionBehavior = completionBehavior;
+          this.pendingMoveTaskListIds.delete(taskList.id);
           this.saveAndReindex();
           this.display();
         }));
     completionSetting.settingEl.addClass("vault-agenda-task-list-setting");
 
-    if (taskList.completionBehavior.type === "move") {
+    if (
+      taskList.completionBehavior.type === "move"
+      || this.pendingMoveTaskListIds.has(taskList.id)
+    ) {
       const completedFolderSetting = new Setting(group)
         .setName(strings.taskListCompletedFolderLabel)
         .setDesc(strings.taskListCompletedFolderDescription);
-      completedFolderInput = this.addFolderInput(completedFolderSetting, {
-        value: taskList.completionBehavior.completedFolder,
+      this.addFolderInput(completedFolderSetting, {
+        value: taskList.completionBehavior.type === "move"
+          ? taskList.completionBehavior.completedFolder
+          : "",
+        placeholder: strings.taskListCompletedFolderLabel,
+        focus: taskList.completionBehavior.type === "keep",
         emptyError: formatLocalizedString(strings.taskListFolderRequiredError, {
           name: taskList.name,
         }),
-        onCommit: (value) => this.commitCompletedFolder(taskList, value),
+        onCommit: (value) => taskList.completionBehavior.type === "move"
+          ? this.commitCompletedFolder(taskList, value)
+          : this.enableMoveCompletion(taskList, value),
       });
     }
 
@@ -372,40 +348,27 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
   private async commitActiveFolder(
     taskList: TaskList,
     activeFolder: string,
-  ): Promise<string | null> {
-    const folderNames = taskFolderNames();
-    let completionBehavior = taskList.completionBehavior;
-    let completedFolderChanged = false;
-
-    if (
-      taskList.completionBehavior.type === "move"
-      && taskList.completionBehavior.completedFolder
-        === suggestCompletedFolder(
-          taskList.activeFolder,
-          folderNames.active,
-          folderNames.completed,
-        )
-    ) {
-      completionBehavior = {
-        type: "move",
-        completedFolder: suggestCompletedFolder(
-          activeFolder,
-          folderNames.active,
-          folderNames.completed,
-        ),
-      };
-      completedFolderChanged = true;
-    }
-
-    const candidate = { ...taskList, activeFolder, completionBehavior };
+  ): Promise<void> {
+    const candidate = { ...taskList, activeFolder };
     this.validateTaskListUpdate(taskList, candidate);
     taskList.activeFolder = activeFolder;
-    taskList.completionBehavior = completionBehavior;
     await this.plugin.saveSettingsAndReindex();
+  }
 
-    return completedFolderChanged && completionBehavior.type === "move"
-      ? completionBehavior.completedFolder
-      : null;
+  private async enableMoveCompletion(taskList: TaskList, completedFolder: string): Promise<void> {
+    const completionBehavior = { type: "move" as const, completedFolder };
+    const candidate = { ...taskList, completionBehavior };
+    this.validateTaskListUpdate(taskList, candidate);
+    const previousCompletionBehavior = taskList.completionBehavior;
+    taskList.completionBehavior = completionBehavior;
+
+    try {
+      await this.plugin.saveSettingsAndReindex();
+      this.pendingMoveTaskListIds.delete(taskList.id);
+    } catch (error) {
+      taskList.completionBehavior = previousCompletionBehavior;
+      throw error;
+    }
   }
 
   private async commitCompletedFolder(taskList: TaskList, completedFolder: string): Promise<void> {
@@ -427,35 +390,6 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
         current.id === taskList.id ? candidate : current,
       ),
     });
-  }
-
-  private nextTaskListDefaults(): {
-    folders: ReturnType<typeof buildAdditionalTaskListFolders>;
-    index: number;
-  } {
-    const configuredFolders = new Set(this.plugin.settings.taskLists.flatMap((taskList) => [
-      taskList.activeFolder,
-      ...(taskList.completionBehavior.type === "move"
-        ? [taskList.completionBehavior.completedFolder]
-        : []),
-    ]).map(normalizeFolderPath));
-    let index = 2;
-
-    while (true) {
-      const folderName = formatLocalizedString(strings.newTaskListFolderName, {
-        index: String(index),
-      });
-      const folders = buildAdditionalTaskListFolders(folderName, taskFolderNames());
-
-      if (
-        !configuredFolders.has(normalizeFolderPath(folders.activeFolder))
-        && !configuredFolders.has(normalizeFolderPath(folders.completedFolder))
-      ) {
-        return { folders, index };
-      }
-
-      index += 1;
-    }
   }
 
   private moveTaskList(index: number, delta: number): void {
@@ -629,13 +563,12 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
     options: {
       value: string;
       placeholder?: string;
+      focus?: boolean;
       emptyError: string;
       onCommit: (value: string) => Promise<void>;
     },
-  ): FolderInputController {
+  ): void {
     const feedback = setting.descEl.createDiv({ cls: "vault-agenda-folder-feedback" });
-
-    let controller: FolderInputController | null = null;
 
     setting.addText((text: TextComponent) => {
       let committedValue = options.value;
@@ -721,6 +654,20 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
         }
       });
       text.inputEl.addEventListener("blur", () => {
+        if (!text.inputEl.value.trim()) {
+          ++commitVersion;
+          clearBlurTimer();
+
+          if (committedValue) {
+            text.setValue(committedValue);
+            showFolderStatus(committedValue);
+          } else {
+            showFeedback(options.emptyError, "error");
+          }
+
+          return;
+        }
+
         blurTimer = window.setTimeout(() => {
           blurTimer = null;
           void commit(text.inputEl.value);
@@ -733,23 +680,14 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
         void commit(folder.path);
       });
 
-      showFolderStatus(options.value);
-      controller = {
-        setCommittedValue: (value) => {
-          ++commitVersion;
-          clearBlurTimer();
-          committedValue = value;
-          text.setValue(value);
-          showFolderStatus(value);
-        },
-      };
+      if (options.focus) {
+        window.setTimeout(() => text.inputEl.focus());
+      }
+
+      if (options.value) {
+        showFolderStatus(options.value);
+      }
     });
-
-    if (!controller) {
-      throw new Error("Failed to initialize folder input.");
-    }
-
-    return controller;
   }
 
   private addTextSetting(
