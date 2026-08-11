@@ -10,6 +10,8 @@ export type TaskLocation = "active" | "completed";
 
 export type TaskListColor = string | null;
 
+export type TaskOrder = "title-asc" | "title-desc" | "date-asc" | "date-desc" | "manual";
+
 export type CompletionBehavior =
   | { type: "keep" }
   | { type: "move"; completedFolder: string };
@@ -21,6 +23,8 @@ export type TaskList = {
   activeFolder: string;
   newTaskName: string;
   taskTemplate: string;
+  order: TaskOrder;
+  manualOrder: string[];
   completionBehavior: CompletionBehavior;
 };
 

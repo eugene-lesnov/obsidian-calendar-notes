@@ -16,7 +16,7 @@ import {
 } from "./core/constants";
 import { getTodayDateId } from "./core/dateUtils";
 import strings, { formatLocalizedString, getLocales, setLocale } from "./core/localization";
-import type { VaultAgendaSettings, TaskList } from "./core/types";
+import type { VaultAgendaSettings, TaskList, TaskOrder } from "./core/types";
 import type { ItemKind, Task } from "./data/item";
 import { classifyItemFile } from "./data/item";
 import type { ItemUpsertResult } from "./data/itemIndex";
@@ -37,6 +37,13 @@ import { VaultAgendaSettingTab } from "./settings";
 import { AgendaView } from "./view/AgendaView";
 
 const DATE_CHANGE_CHECK_MS = 60000;
+const TASK_ORDERS: readonly TaskOrder[] = [
+  "title-asc",
+  "title-desc",
+  "date-asc",
+  "date-desc",
+  "manual",
+];
 
 function isTaskList(value: unknown): value is TaskList {
   if (!value || typeof value !== "object") {
@@ -56,6 +63,10 @@ function isTaskList(value: unknown): value is TaskList {
     && typeof taskList.activeFolder === "string"
     && typeof taskList.newTaskName === "string"
     && typeof taskList.taskTemplate === "string"
+    && typeof taskList.order === "string"
+    && TASK_ORDERS.includes(taskList.order)
+    && Array.isArray(taskList.manualOrder)
+    && taskList.manualOrder.every((path) => typeof path === "string")
     && Boolean(completionBehavior)
     && (
       completionBehavior?.type === "keep"
@@ -82,6 +93,8 @@ function normalizeSettings(savedSettings: Partial<VaultAgendaSettings>): VaultAg
       activeFolder: taskList.activeFolder,
       newTaskName: taskList.newTaskName,
       taskTemplate: taskList.taskTemplate,
+      order: taskList.order,
+      manualOrder: [...taskList.manualOrder],
       completionBehavior: taskList.completionBehavior.type === "move"
         ? {
             type: "move",
@@ -234,13 +247,19 @@ export default class VaultAgendaPlugin extends Plugin {
 
     this.registerEvent(
       vault.on("create", (file: TAbstractFile) => {
-        this.applyItemIndexChange(this.handleFileEvent(file, () => this.itemIndex.upsert(file)).changed);
+        const result = this.handleFileEvent(file, () => this.itemIndex.upsert(file));
+
+        this.applyItemIndexChange(result.changed);
+        this.syncManualOrder(result);
       }),
     );
 
     this.registerEvent(
       vault.on("delete", (file: TAbstractFile) => {
-        this.applyItemIndexChange(this.handleFileEvent(file, () => this.itemIndex.remove(file.path)).changed);
+        const result = this.handleFileEvent(file, () => this.itemIndex.remove(file.path));
+
+        this.applyItemIndexChange(result.changed);
+        this.syncManualOrder(result);
       }),
     );
 
@@ -249,6 +268,7 @@ export default class VaultAgendaPlugin extends Plugin {
         const result = this.handleFileEvent(file, () => this.itemIndex.rename(file, oldPath));
 
         this.applyItemIndexChange(result.changed);
+        this.syncManualOrder(result, oldPath);
         this.reconcile(file, "name");
       }),
     );
@@ -258,6 +278,7 @@ export default class VaultAgendaPlugin extends Plugin {
         const result = this.handleFileEvent(file, () => this.itemIndex.upsert(file));
 
         this.applyItemIndexChange(result.changed);
+        this.syncManualOrder(result);
         this.reconcile(file, "frontmatter");
       }),
     );
@@ -290,6 +311,57 @@ export default class VaultAgendaPlugin extends Plugin {
     }
 
     return result;
+  }
+
+  private syncManualOrder(
+    result: ItemUpsertResult,
+    previousPath = result.previous?.file.path ?? null,
+  ): void {
+    const { previous, current } = result;
+    let changed = false;
+
+    if (previous?.kind === "task" && previousPath) {
+      const previousList = this.settings.taskLists.find((list) => list.id === previous.taskListId);
+      const previousIndex = previousList?.manualOrder.indexOf(previousPath) ?? -1;
+
+      if (previousList && previousIndex >= 0) {
+        if (current?.kind === "task" && current.taskListId === previous.taskListId) {
+          if (previousPath !== current.file.path) {
+            if (previousList.manualOrder.includes(current.file.path)) {
+              previousList.manualOrder.splice(previousIndex, 1);
+            } else {
+              previousList.manualOrder[previousIndex] = current.file.path;
+            }
+            changed = true;
+          }
+        } else {
+          previousList.manualOrder.splice(previousIndex, 1);
+          changed = true;
+        }
+      }
+    }
+
+    if (current?.kind === "task" && current.taskLocation === "active") {
+      const currentList = this.settings.taskLists.find((list) => list.id === current.taskListId);
+      const tracksManualOrder = currentList
+        && (currentList.order === "manual" || currentList.manualOrder.length > 0);
+
+      if (tracksManualOrder && !currentList.manualOrder.includes(current.file.path)) {
+        currentList.manualOrder.push(current.file.path);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      this.saveManualOrder();
+    }
+  }
+
+  private saveManualOrder(): void {
+    void this.saveSettings().catch((error) => {
+      console.error("Failed to update manual task order.", error);
+      new Notice(String(error instanceof Error ? error.message : error));
+    });
   }
 
   private enqueueTaskCompletionUpdate(

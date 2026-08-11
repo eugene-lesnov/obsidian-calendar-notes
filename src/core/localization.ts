@@ -51,6 +51,16 @@ export interface AppLocalization {
   folderMissingWarning: string;
   taskListDuplicateNameWarning: string;
   taskListRequiredError: string;
+  taskOrderLabel: string;
+  taskOrderTitleAscLabel: string;
+  taskOrderTitleDescLabel: string;
+  taskOrderDateAscLabel: string;
+  taskOrderDateDescLabel: string;
+  taskOrderManualLabel: string;
+  moveTaskToTopLabel: string;
+  moveTaskUpLabel: string;
+  moveTaskDownLabel: string;
+  moveTaskToBottomLabel: string;
   newNoteNameLabel: string;
   newNoteNameDescription: string;
   newTaskNameLabel: string;
@@ -169,6 +179,16 @@ const defaultStrings: AppLocalization = {
   folderMissingWarning: "Folder does not exist yet. It will be created when needed.",
   taskListDuplicateNameWarning: "Another task list has the same name.",
   taskListRequiredError: "Create a task list before creating or changing tasks.",
+  taskOrderLabel: "Task order",
+  taskOrderTitleAscLabel: "Name: A to Z",
+  taskOrderTitleDescLabel: "Name: Z to A",
+  taskOrderDateAscLabel: "Date: earliest first",
+  taskOrderDateDescLabel: "Date: latest first",
+  taskOrderManualLabel: "Manual",
+  moveTaskToTopLabel: "Move to top",
+  moveTaskUpLabel: "Move up",
+  moveTaskDownLabel: "Move down",
+  moveTaskToBottomLabel: "Move to bottom",
   newNoteNameLabel: "New note name",
   newNoteNameDescription:
     "The note's date is added as a prefix using the format selected in the settings.",
@@ -297,6 +317,16 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     folderMissingWarning: "Папка пока не существует. Она будет создана при необходимости.",
     taskListDuplicateNameWarning: "У другого списка задач такое же название.",
     taskListRequiredError: "Сначала создайте список задач.",
+    taskOrderLabel: "Порядок задач",
+    taskOrderTitleAscLabel: "Название: А → Я",
+    taskOrderTitleDescLabel: "Название: Я → А",
+    taskOrderDateAscLabel: "Дата: раньше → позже",
+    taskOrderDateDescLabel: "Дата: позже → раньше",
+    taskOrderManualLabel: "Вручную",
+    moveTaskToTopLabel: "Переместить в начало",
+    moveTaskUpLabel: "Переместить выше",
+    moveTaskDownLabel: "Переместить ниже",
+    moveTaskToBottomLabel: "Переместить в конец",
     newNoteNameLabel: "Название новой заметки",
     newNoteNameDescription:
       "К названию будет добавлен префикс с датой заметки в формате, выбранном в настройках.",

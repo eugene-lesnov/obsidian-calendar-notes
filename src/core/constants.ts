@@ -32,6 +32,8 @@ export function createDefaultSettings(): VaultAgendaSettings {
       activeFolder: taskListFolders.activeFolder,
       newTaskName: strings.newTaskDefaultTitle,
       taskTemplate: "",
+      order: "title-asc",
+      manualOrder: [],
       completionBehavior: {
         type: "move",
         completedFolder: taskListFolders.completedFolder,

@@ -7,6 +7,7 @@ import type { Item } from "../data/item";
 
 const DATE_MENU_SECTION = "vault-agenda-date";
 const REPEAT_MENU_SECTION = "vault-agenda-repeat";
+const ORDER_MENU_SECTION = "vault-agenda-order";
 
 const REPEAT_OPTIONS: Array<{ frequency: RepeatFrequency | null; label: () => string }> = [
   { frequency: null, label: () => strings.taskRepeatNoneLabel },
@@ -22,6 +23,14 @@ export type ItemMenuCallbacks = {
   onUnschedule: () => void;
   onSetRepeat: (frequency: RepeatFrequency | null) => void;
   onCompleteAndStopRepeat: () => void;
+  manualOrder?: {
+    canMoveUp: boolean;
+    canMoveDown: boolean;
+    onMoveToTop: () => void;
+    onMoveUp: () => void;
+    onMoveDown: () => void;
+    onMoveToBottom: () => void;
+  };
 };
 
 export function showItemMenu(
@@ -71,6 +80,35 @@ export function showItemMenu(
           .setIcon("check-check")
           .onClick(() => callbacks.onCompleteAndStopRepeat()),
       );
+    }
+
+    if (callbacks.manualOrder) {
+      const order = callbacks.manualOrder;
+
+      menu.addItem((menuItem) => menuItem
+        .setTitle(strings.moveTaskToTopLabel)
+        .setSection(ORDER_MENU_SECTION)
+        .setIcon("chevrons-up")
+        .setDisabled(!order.canMoveUp)
+        .onClick(order.onMoveToTop));
+      menu.addItem((menuItem) => menuItem
+        .setTitle(strings.moveTaskUpLabel)
+        .setSection(ORDER_MENU_SECTION)
+        .setIcon("chevron-up")
+        .setDisabled(!order.canMoveUp)
+        .onClick(order.onMoveUp));
+      menu.addItem((menuItem) => menuItem
+        .setTitle(strings.moveTaskDownLabel)
+        .setSection(ORDER_MENU_SECTION)
+        .setIcon("chevron-down")
+        .setDisabled(!order.canMoveDown)
+        .onClick(order.onMoveDown));
+      menu.addItem((menuItem) => menuItem
+        .setTitle(strings.moveTaskToBottomLabel)
+        .setSection(ORDER_MENU_SECTION)
+        .setIcon("chevrons-down")
+        .setDisabled(!order.canMoveDown)
+        .onClick(order.onMoveToBottom));
     }
   }
 

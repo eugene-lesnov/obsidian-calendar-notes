@@ -155,6 +155,8 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
       activeFolder: folders.activeFolder,
       newTaskName: strings.newTaskDefaultTitle,
       taskTemplate: "",
+      order: "title-asc",
+      manualOrder: [],
       completionBehavior: { type: "keep" },
     };
     validateTaskLists({

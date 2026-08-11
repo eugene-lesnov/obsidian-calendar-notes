@@ -16,7 +16,7 @@ import {
   parseDateId,
 } from "../core/dateUtils";
 import strings from "../core/localization";
-import type { RepeatFrequency, TaskList, TaskListColor } from "../core/types";
+import type { RepeatFrequency, TaskList, TaskListColor, TaskOrder } from "../core/types";
 import type { Item, ItemKind, Task } from "../data/item";
 import {
   createDatedItem,
@@ -26,6 +26,7 @@ import {
   unscheduleTask,
 } from "../data/itemMutations";
 import { setTaskCompleted } from "../data/taskCompletion";
+import { initializeManualOrder, orderTasks } from "../data/taskOrdering";
 import type VaultAgendaPlugin from "../main";
 import { renderDaySection, renderOverdueSection } from "./daySection";
 import { DatePickerModal } from "./DatePickerModal";
@@ -128,15 +129,23 @@ export class AgendaView extends ItemView {
       taskLists: this.plugin.settings.taskLists,
       expanded: this.taskListsExpanded,
       getTaskListColor: (taskListId) => this.getTaskListColor(taskListId),
-      getTasks: (taskListId) => this.plugin.itemIndex.getActiveTasks(taskListId),
+      getTasks: (taskListId) => {
+        const taskList = this.plugin.settings.taskLists.find((list) => list.id === taskListId);
+        const tasks = this.plugin.itemIndex.getActiveTasks(taskListId);
+
+        return taskList ? orderTasks(taskList, tasks) : tasks;
+      },
       isExpanded: (taskListId) => this.expandedTaskLists.has(taskListId),
       onToggleSectionExpanded: () => this.toggleTaskListsExpanded(),
       onToggleTaskListExpanded: (taskListId) => this.toggleTaskList(taskListId),
       onCreateTask: (taskList) => void this.createTaskInList(taskList),
+      onSetOrder: (taskList, order) => void this.setTaskOrder(taskList, order),
+      onReorderTask: (taskList, sourcePath, targetPath, after) =>
+        void this.reorderTask(taskList, sourcePath, targetPath, after),
+      onTaskMenu: (taskList, task, event) => this.openItemMenu(task, event, taskList),
       onToggleTaskCompleted: (item, completed) =>
         void this.toggleTaskCompleted(item, completed),
       onOpen: (item, event) => this.openFile(item.file, event),
-      onMenu: (item, event) => this.openItemMenu(item, event),
     });
 
     renderDaySection(root, {
@@ -169,14 +178,103 @@ export class AgendaView extends ItemView {
     this.render();
   }
 
-  private openItemMenu(item: Item, event: MouseEvent): void {
+  private openItemMenu(item: Item, event: MouseEvent, taskList?: TaskList): void {
+    const orderedTasks = taskList?.order === "manual"
+      ? orderTasks(taskList, this.plugin.itemIndex.getActiveTasks(taskList.id))
+      : [];
+    const taskIndex = item.kind === "task"
+      ? orderedTasks.findIndex((task) => task.file.path === item.file.path)
+      : -1;
+
     showItemMenu(this.app, event, item, {
       onOpen: (openEvent) => this.openFile(item.file, openEvent),
       onSetDate: () => this.openDatePicker(item),
       onUnschedule: () => this.unschedule(item),
       onSetRepeat: (frequency) => void this.applyRepeat(item, frequency),
       onCompleteAndStopRepeat: () => void this.stopRepeat(item),
+      ...(taskList?.order === "manual" && taskIndex >= 0 ? {
+        manualOrder: {
+          canMoveUp: taskIndex > 0,
+          canMoveDown: taskIndex < orderedTasks.length - 1,
+          onMoveToTop: () => void this.moveTask(taskList, orderedTasks, taskIndex, "top"),
+          onMoveUp: () => void this.moveTask(taskList, orderedTasks, taskIndex, "up"),
+          onMoveDown: () => void this.moveTask(taskList, orderedTasks, taskIndex, "down"),
+          onMoveToBottom: () => void this.moveTask(taskList, orderedTasks, taskIndex, "bottom"),
+        },
+      } : {}),
     });
+  }
+
+  private async setTaskOrder(taskList: TaskList, order: TaskOrder): Promise<void> {
+    if (taskList.order === order) {
+      return;
+    }
+
+    if (order === "manual") {
+      taskList.manualOrder = initializeManualOrder(
+        taskList,
+        this.plugin.itemIndex.getActiveTasks(taskList.id),
+      );
+    }
+
+    taskList.order = order;
+    await this.runMutation(() => this.plugin.saveSettings());
+  }
+
+  private async reorderTask(
+    taskList: TaskList,
+    sourcePath: string,
+    targetPath: string,
+    after: boolean,
+  ): Promise<void> {
+    if (taskList.order !== "manual" || sourcePath === targetPath) {
+      return;
+    }
+
+    const activePaths = this.plugin.itemIndex.getActiveTasks(taskList.id)
+      .map((task) => task.file.path);
+    const allPaths = [...taskList.manualOrder];
+
+    activePaths.forEach((path) => {
+      if (!allPaths.includes(path)) {
+        allPaths.push(path);
+      }
+    });
+
+    const sourceIndex = allPaths.indexOf(sourcePath);
+
+    if (sourceIndex < 0 || !allPaths.includes(targetPath)) {
+      return;
+    }
+
+    allPaths.splice(sourceIndex, 1);
+    const targetIndex = allPaths.indexOf(targetPath);
+    allPaths.splice(targetIndex + (after ? 1 : 0), 0, sourcePath);
+    taskList.manualOrder = allPaths;
+    await this.runMutation(() => this.plugin.saveSettings());
+  }
+
+  private async moveTask(
+    taskList: TaskList,
+    tasks: Task[],
+    index: number,
+    destination: "top" | "up" | "down" | "bottom",
+  ): Promise<void> {
+    const source = tasks[index];
+
+    if (!source) {
+      return;
+    }
+
+    if (destination === "top" && tasks[0]) {
+      await this.reorderTask(taskList, source.file.path, tasks[0].file.path, false);
+    } else if (destination === "up" && tasks[index - 1]) {
+      await this.reorderTask(taskList, source.file.path, tasks[index - 1].file.path, false);
+    } else if (destination === "down" && tasks[index + 1]) {
+      await this.reorderTask(taskList, source.file.path, tasks[index + 1].file.path, true);
+    } else if (destination === "bottom" && tasks.at(-1)) {
+      await this.reorderTask(taskList, source.file.path, tasks.at(-1)!.file.path, true);
+    }
   }
 
   private openDatePicker(item: Item): void {

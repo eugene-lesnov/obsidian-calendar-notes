@@ -417,6 +417,8 @@
 }
 
 .vault-agenda-root .vault-agenda-task-list {
+  --vault-agenda-task-drag-gutter: 20px;
+
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -425,7 +427,12 @@
 
 .vault-agenda-root .vault-agenda-task-list > .vault-agenda-item-list,
 .vault-agenda-root .vault-agenda-task-list > .vault-agenda-empty-label {
-  margin-inline-start: 20px;
+  margin-inline-start: var(--vault-agenda-task-drag-gutter);
+}
+
+.vault-agenda-root .vault-agenda-task-list > .vault-agenda-item-list.is-manually-ordered {
+  margin-inline-start: 0;
+  padding-inline-start: var(--vault-agenda-task-drag-gutter);
 }
 
 .vault-agenda-root .vault-agenda-task-list-toggle {
@@ -488,6 +495,55 @@
   cursor: pointer;
 }
 
+.vault-agenda-root .vault-agenda-task-drag-handle {
+  position: absolute;
+  inset-inline-start: calc(-1 * var(--vault-agenda-task-drag-gutter));
+  top: 50%;
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--text-faint);
+  cursor: grab;
+  transform: translateY(-50%);
+}
+
+.vault-agenda-root .vault-agenda-task-drag-handle:active {
+  cursor: grabbing;
+}
+
+.vault-agenda-root .vault-agenda-task-drag-handle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.vault-agenda-root .vault-agenda-item-row.is-dragging {
+  opacity: 0.5;
+}
+
+.vault-agenda-root .vault-agenda-item-row.is-manually-ordered {
+  position: relative;
+}
+
+.vault-agenda-root .vault-agenda-item-row.is-drop-before::before,
+.vault-agenda-root .vault-agenda-item-row.is-drop-after::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset-inline-start: calc(-1 * var(--vault-agenda-task-drag-gutter));
+  inset-inline-end: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--interactive-accent);
+  pointer-events: none;
+}
+
+.vault-agenda-root .vault-agenda-item-row.is-drop-before::before {
+  top: 0;
+}
+
+.vault-agenda-root .vault-agenda-item-row.is-drop-after::after {
+  bottom: 0;
+}
+
 .vault-agenda-root .vault-agenda-item-body {
   min-width: 0;
   flex: 1 1 auto;
@@ -544,4 +600,8 @@ body.is-mobile .vault-agenda-root .vault-agenda-item-row {
 
 body.is-mobile .vault-agenda-root .vault-agenda-task-checkbox {
   --checkbox-size: 22px;
+}
+
+body.is-mobile .vault-agenda-root .vault-agenda-task-drag-handle {
+  display: none;
 }
