@@ -22,6 +22,7 @@ export interface AppLocalization {
   addTaskListLabel: string;
   setupTaskListLabel: string;
   setupAndCreateTaskLabel: string;
+  selectTaskListPlaceholder: string;
   taskListSetupTitle: string;
   taskListSetupDescription: string;
   taskListSetupAdvancedLabel: string;
@@ -152,6 +153,7 @@ const defaultStrings: AppLocalization = {
   addTaskListLabel: "Add task list",
   setupTaskListLabel: "Set up task list",
   setupAndCreateTaskLabel: "Save and create task",
+  selectTaskListPlaceholder: "Choose a task list",
   taskListSetupTitle: "Set up task list",
   taskListSetupDescription: "Configure how this task list stores and handles its files.",
   taskListSetupAdvancedLabel: "Additional options",
@@ -293,6 +295,7 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     addTaskListLabel: "Добавить список задач",
     setupTaskListLabel: "Настроить список задач",
     setupAndCreateTaskLabel: "Сохранить и создать задачу",
+    selectTaskListPlaceholder: "Выберите список задач",
     taskListSetupTitle: "Настройка списка задач",
     taskListSetupDescription: "Настройте хранение и обработку файлов этого списка задач.",
     taskListSetupAdvancedLabel: "Дополнительные параметры",

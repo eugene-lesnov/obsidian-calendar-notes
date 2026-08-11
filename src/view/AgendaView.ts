@@ -371,8 +371,8 @@ export class AgendaView extends ItemView {
     await this.runMutation(async () => {
       let file: TFile;
 
-      if (kind === "task" && this.plugin.settings.taskLists.length === 0) {
-        const taskList = await this.plugin.promptTaskListSetup(strings.setupAndCreateTaskLabel);
+      if (kind === "task") {
+        const taskList = await this.plugin.selectTaskList(strings.setupAndCreateTaskLabel);
 
         if (!taskList) {
           return;

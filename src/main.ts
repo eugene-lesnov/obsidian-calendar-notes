@@ -30,6 +30,7 @@ import { validateTaskLists } from "./data/itemScopes";
 import {
   completeRepeatingOccurrence,
   createDatedItem,
+  createTask,
   reconcileItemName,
 } from "./data/itemMutations";
 import type { ReconcileTrigger } from "./data/itemMutations";
@@ -41,6 +42,7 @@ import {
 import { VaultAgendaSettingTab } from "./settings";
 import { AgendaView } from "./view/AgendaView";
 import { TaskListSetupModal } from "./view/TaskListSetupModal";
+import { TaskListPickerModal } from "./view/TaskListPickerModal";
 
 const DATE_CHANGE_CHECK_MS = 60000;
 const TASK_ORDERS: readonly TaskOrder[] = [
@@ -224,12 +226,16 @@ export default class VaultAgendaPlugin extends Plugin {
 
   private async createItemForToday(kind: ItemKind): Promise<void> {
     try {
-      if (kind === "task" && this.settings.taskLists.length === 0) {
-        const taskList = await this.promptTaskListSetup(strings.setupAndCreateTaskLabel);
+      if (kind === "task") {
+        const taskList = await this.selectTaskList(strings.setupAndCreateTaskLabel);
 
         if (!taskList) {
           return;
         }
+
+        const file = await createTask(this.app, this.settings, taskList, getTodayDateId());
+        await this.app.workspace.getLeaf(false).openFile(file);
+        return;
       }
 
       const file = await createDatedItem(this.app, this.settings, kind, getTodayDateId());
@@ -508,6 +514,20 @@ export default class VaultAgendaPlugin extends Plugin {
     });
 
     return this.taskListSetupPromise;
+  }
+
+  async selectTaskList(setupSubmitLabel = strings.addTaskListLabel): Promise<TaskList | null> {
+    if (this.settings.taskLists.length === 0) {
+      return this.promptTaskListSetup(setupSubmitLabel);
+    }
+
+    if (this.settings.taskLists.length === 1) {
+      return this.settings.taskLists[0];
+    }
+
+    return new Promise<TaskList | null>((resolve) => {
+      new TaskListPickerModal(this.app, this.settings.taskLists, resolve).open();
+    });
   }
 
   private newTaskListDefaults(): NewTaskListConfig {
