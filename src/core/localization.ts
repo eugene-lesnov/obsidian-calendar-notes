@@ -155,7 +155,7 @@ const defaultStrings: AppLocalization = {
   setupAndCreateTaskLabel: "Save and create task",
   selectTaskListPlaceholder: "Choose a task list",
   taskListSetupTitle: "Set up task list",
-  taskListSetupDescription: "Configure how this task list stores and handles its files.",
+  taskListSetupDescription: "Configure how this task list stores and handles its files",
   taskListSetupAdvancedLabel: "Additional options",
   taskListSetupFolderDescription:
     "Select an existing folder or enter a path to create when the first task is added.",
@@ -297,7 +297,7 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     setupAndCreateTaskLabel: "Сохранить и создать задачу",
     selectTaskListPlaceholder: "Выберите список задач",
     taskListSetupTitle: "Настройка списка задач",
-    taskListSetupDescription: "Настройте хранение и обработку файлов этого списка задач.",
+    taskListSetupDescription: "Настройте хранение и обработку файлов этого списка задач",
     taskListSetupAdvancedLabel: "Дополнительные параметры",
     taskListSetupFolderDescription:
       "Выберите существующую папку или укажите путь, который будет создан вместе с первой задачей.",
