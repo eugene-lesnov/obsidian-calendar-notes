@@ -110,12 +110,19 @@ function renderDays(container: HTMLElement, params: MonthGridParams): void {
     const dateId = formatDateId(params.year, params.month, day);
     const counts = params.getDayCounts(dateId);
     const dayButton = grid.createEl("button", { cls: "vault-agenda-day" });
+    const label = params.formatDayLabel(dateId);
 
     dayButton.createSpan({ cls: "vault-agenda-day-number", text: String(day) });
     renderDayMarkers(dayButton, counts);
 
     dayButton.toggleClass("is-today", dateId === params.todayDateId);
     dayButton.toggleClass("is-selected", dateId === params.selectedDateId);
+    dayButton.setAttribute("aria-label", label);
+    dayButton.setAttribute("aria-pressed", String(dateId === params.selectedDateId));
+
+    if (dateId === params.todayDateId) {
+      dayButton.setAttribute("aria-current", "date");
+    }
 
     dayButton.addEventListener("click", () => params.onSelectDate(dateId));
   }

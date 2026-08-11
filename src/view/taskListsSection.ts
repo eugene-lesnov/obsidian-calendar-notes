@@ -345,6 +345,7 @@ export function renderTaskListsSection(
       cls: "vault-agenda-task-list-toggle",
     });
     const icon = toggle.createSpan({ cls: "vault-agenda-task-list-toggle-icon" });
+    toggle.setAttribute("aria-expanded", String(expanded));
     setIcon(icon, expanded ? "chevron-down" : "chevron-right");
 
     if (taskList.color !== null) {
