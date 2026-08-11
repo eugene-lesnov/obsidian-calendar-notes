@@ -7,12 +7,18 @@ export class MarkdownFileSuggest extends AbstractInputSuggest<TFile> {
 
   protected getSuggestions(query: string): TFile[] {
     const normalizedQuery = query.trim();
-    const matches = normalizedQuery ? prepareSimpleSearch(normalizedQuery) : null;
+
+    if (!normalizedQuery) {
+      return [];
+    }
+
+    const matches = prepareSimpleSearch(normalizedQuery);
 
     return this.app.vault
       .getMarkdownFiles()
-      .filter((file) => !matches || matches(file.path) !== null)
-      .sort((left, right) => left.path.localeCompare(right.path));
+      .filter((file) => matches(file.path) !== null)
+      .sort((left, right) => left.path.localeCompare(right.path))
+      .slice(0, 20);
   }
 
   renderSuggestion(file: TFile, el: HTMLElement): void {
