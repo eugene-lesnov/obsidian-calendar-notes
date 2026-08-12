@@ -37,6 +37,7 @@ import type { ReconcileTrigger } from "./data/itemMutations";
 import {
   applyExternalTaskCompletion,
   isTaskCompletionTransitioning,
+  needsTaskCompletionReconciliation,
   setTaskCompleted,
 } from "./data/taskCompletion";
 import { VaultAgendaSettingTab } from "./settings";
@@ -316,18 +317,21 @@ export default class VaultAgendaPlugin extends Plugin {
     const result = action();
 
     const { previous, current } = result;
-    if (
-      previous?.kind === "task"
-      && current?.kind === "task"
-      && previous.done !== current.done
-    ) {
+
+    if (current?.kind === "task") {
       const pluginTransition = isTaskCompletionTransitioning(current.file);
-      const advanceRepeat = current.done && Boolean(current.repeat);
+      const completionChanged = previous?.kind === "task" && previous.done !== current.done;
+      const synchronizeExternal = !pluginTransition
+        && (
+          completionChanged
+          || (!this.isMigrating && needsTaskCompletionReconciliation(this.settings, current))
+        );
+      const advanceRepeat = completionChanged && current.done && Boolean(current.repeat);
 
       if (this.isMigrating && advanceRepeat) {
         this.pendingRepeatFiles.add(file);
-      } else {
-        this.enqueueTaskCompletionUpdate(previous, current, !pluginTransition, advanceRepeat);
+      } else if (synchronizeExternal || advanceRepeat) {
+        this.enqueueTaskCompletionUpdate(current, synchronizeExternal, advanceRepeat);
       }
     }
 
@@ -386,7 +390,6 @@ export default class VaultAgendaPlugin extends Plugin {
   }
 
   private enqueueTaskCompletionUpdate(
-    previous: Task,
     current: Task,
     synchronizeExternal: boolean,
     advanceRepeat: boolean,
@@ -394,12 +397,18 @@ export default class VaultAgendaPlugin extends Plugin {
     const queue = this.taskCompletionQueues.get(current.file) ?? Promise.resolve();
     const next = queue
       .then(async () => {
+        let latest = classifyItemFile(this.app, current.file, this.settings);
+
+        if (latest?.kind !== "task") {
+          return;
+        }
+
         if (synchronizeExternal) {
-          await applyExternalTaskCompletion(this.app, this.settings, previous, current);
+          await applyExternalTaskCompletion(this.app, this.settings, latest);
         }
 
         if (advanceRepeat) {
-          const latest = classifyItemFile(this.app, current.file, this.settings);
+          latest = classifyItemFile(this.app, current.file, this.settings);
 
           if (latest?.kind === "task" && latest.done && latest.repeat) {
             await this.advanceRepeatingTask(latest);

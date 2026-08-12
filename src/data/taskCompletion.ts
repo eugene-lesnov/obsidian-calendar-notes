@@ -16,6 +16,26 @@ export function isTaskCompletionTransitioning(file: TFile): boolean {
   return transitions.has(file);
 }
 
+export function needsTaskCompletionReconciliation(
+  settings: VaultAgendaSettings,
+  task: Task,
+): boolean {
+  const taskList = getTaskList(settings, task.taskListId);
+
+  if (!taskList) {
+    return false;
+  }
+
+  const completedDateMismatch = task.done
+    ? !task.completedDateId
+    : Boolean(task.completedDateId);
+  const expectedLocation = task.done ? "completed" : "active";
+  const locationMismatch = taskList.completionBehavior.type === "move"
+    && task.taskLocation !== expectedLocation;
+
+  return completedDateMismatch || locationMismatch;
+}
+
 function resolveCompletionFolder(taskList: TaskList, completed: boolean): string {
   if (!completed || taskList.completionBehavior.type === "keep") {
     return taskList.activeFolder;
@@ -149,10 +169,9 @@ export async function setTaskCompleted(
 export async function applyExternalTaskCompletion(
   app: App,
   settings: VaultAgendaSettings,
-  previous: Task,
   current: Task,
 ): Promise<void> {
-  if (previous.done === current.done || isTaskCompletionTransitioning(current.file)) {
+  if (isTaskCompletionTransitioning(current.file)) {
     return;
   }
 
@@ -163,44 +182,32 @@ export async function applyExternalTaskCompletion(
     return;
   }
 
-  transitions.add(current.file);
-  const originalCompleted: unknown = app.metadataCache
+  const storedCompleted: unknown = app.metadataCache
     .getFileCache(current.file)?.frontmatter?.completed;
+  const completedDateId = normalizeDateId(storedCompleted, settings);
+  const updateCompletedDate = current.done ? !completedDateId : storedCompleted !== undefined;
+
+  transitions.add(current.file);
 
   try {
-    await app.fileManager.processFrontMatter(current.file, (frontmatter: Record<string, unknown>) => {
-      if (frontmatter.done !== current.done) {
-        throw new Error(`Task changed during completion synchronization: ${current.file.path}`);
-      }
-
-      if (current.done) {
-        if (!normalizeDateId(frontmatter.completed, settings)) {
-          frontmatter.completed = buildDayIdentifier(getTodayDateId(), settings);
-        }
-      } else {
-        delete frontmatter.completed;
-      }
-    });
-
-    try {
-      await moveTaskForCompletion(app, taskList, current.file, match.relativePath, current.done);
-    } catch (error) {
+    if (updateCompletedDate) {
       await app.fileManager.processFrontMatter(
         current.file,
         (frontmatter: Record<string, unknown>) => {
           if (frontmatter.done !== current.done) {
-            throw new Error(`Task changed during completion rollback: ${current.file.path}`);
+            throw new Error(`Task changed during completion synchronization: ${current.file.path}`);
           }
 
-          if (originalCompleted === undefined) {
-            delete frontmatter.completed;
+          if (current.done) {
+            frontmatter.completed = buildDayIdentifier(getTodayDateId(), settings);
           } else {
-            frontmatter.completed = originalCompleted;
+            delete frontmatter.completed;
           }
         },
       );
-      throw error;
     }
+
+    await moveTaskForCompletion(app, taskList, current.file, match.relativePath, current.done);
   } finally {
     transitions.delete(current.file);
   }

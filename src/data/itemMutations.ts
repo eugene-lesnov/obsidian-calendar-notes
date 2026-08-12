@@ -297,15 +297,41 @@ export async function completeRepeatingOccurrence(
   const title = parseItemName(item.file.basename, settings).title;
   const nextName = buildItemName(settings, nextDateId, title);
   const targetPath = normalizePath(joinPath(folderPath, `${nextName}${MARKDOWN_SUFFIX}`));
+  const existing = app.vault.getAbstractFileByPath(targetPath);
 
-  if (app.vault.getAbstractFileByPath(targetPath)) {
-    throw new Error(formatLocalizedString(strings.repeatOccurrenceConflictError, {
-      path: targetPath,
-    }));
+  if (existing) {
+    const existingItem = existing instanceof TFile
+      ? classifyItemFile(app, existing, settings)
+      : null;
+    const isExpectedOccurrence = existingItem?.kind === "task"
+      && !existingItem.done
+      && existingItem.taskLocation === "active"
+      && existingItem.taskListId === item.taskListId
+      && existingItem.dateId === nextDateId
+      && existingItem.repeat?.frequency === item.repeat.frequency;
+
+    if (!isExpectedOccurrence) {
+      throw new Error(formatLocalizedString(strings.repeatOccurrenceConflictError, {
+        path: targetPath,
+      }));
+    }
+  } else {
+    await createOccurrence(app, settings, taskList, targetPath, nextDateId, item.repeat);
   }
 
-  await createOccurrence(app, settings, taskList, targetPath, nextDateId, item.repeat);
   await app.fileManager.processFrontMatter(item.file, (frontmatter: Record<string, unknown>) => {
+    const storedRepeat = typeof frontmatter.repeat === "string"
+      ? frontmatter.repeat.trim().toLowerCase()
+      : null;
+
+    if (
+      normalizeDateId(frontmatter.date, settings) !== item.dateId
+      || frontmatter.done !== true
+      || storedRepeat !== item.repeat?.frequency
+    ) {
+      throw new Error(`Task changed before its repeat could be advanced: ${item.file.path}`);
+    }
+
     delete frontmatter.repeat;
   });
 }
