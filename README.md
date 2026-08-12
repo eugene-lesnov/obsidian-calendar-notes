@@ -6,22 +6,17 @@ plain Markdown files in your vault.
 
 ## Features
 
-- Multiple notes and tasks per day.
-- Calendar markers for notes, active tasks, and completed tasks.
-- Overdue tasks shown directly below the calendar.
-- Multiple task lists with custom names, colors, folders, templates, and completion behavior.
-- Scheduled and unscheduled tasks.
-- Daily, weekly, monthly, and yearly recurring tasks.
-- Templates and configurable default names for new items.
-- Change dates, complete tasks, and manage repeats from the agenda.
-- Hover previews and standard Obsidian file actions.
-- English and Russian interface.
+- Multiple notes and tasks per day, with calendar markers and overdue tracking.
+- Task lists with custom names, colors, folders, templates, sorting, and completion behavior.
+- Scheduled, unscheduled, and recurring tasks (daily, weekly, monthly, or yearly).
+- Create, reschedule, complete, reorder, and manage repeats directly from the agenda.
+- Configurable templates, date format, week start, and default item names.
+- Hover previews and standard Obsidian file actions, with an English and Russian interface.
 
 ## How it works
 
-Each note or task is a regular Markdown file. Vault Agenda stores the item type,
-date, completion state, and repeat rule in frontmatter while keeping filenames and
-dates synchronized.
+Each note or task is a regular Markdown file. Vault Agenda stores its metadata in
+frontmatter. For notes, the date in the filename and frontmatter stays synchronized.
 
 Notes use one configured folder. Tasks are organized into configurable lists, each
 with its own active folder and optional completed folder. A completed task can
@@ -40,16 +35,8 @@ Removing a task's date keeps it in its task list without displaying it on a date
 day. Completing a recurring task creates its next future occurrence as a separate
 file.
 
-Folders, templates, task lists, date format, week start, and default item names are
-configured in **Settings → Vault Agenda**.
-
-## Commands
-
-- Toggle Vault Agenda
-- Create note for today
-- Create task for today
-- Go to today
-- Reopen current task
+Configure folders, templates, task lists, date format, week start, and default item
+names in **Settings → Vault Agenda**.
 
 ## Installation
 
@@ -62,12 +49,11 @@ Install [BRAT](https://github.com/TfTHacker/obsidian42-brat), run
 https://github.com/eugene-lesnov/obsidian-vault-agenda
 ```
 
-You can also use [Install Vault Agenda with BRAT](obsidian://brat?plugin=eugene-lesnov/obsidian-vault-agenda).
-
 ### Manual
 
-Download `main.js`, `manifest.json`, and `styles.css` from the latest release and
-copy them to:
+Download `main.js`, `manifest.json`, and `styles.css` from the
+[latest release](https://github.com/eugene-lesnov/obsidian-vault-agenda/releases/latest)
+and copy them to:
 
 ```text
 <vault>/.obsidian/plugins/vault-agenda/
@@ -78,8 +64,7 @@ Reload Obsidian and enable **Vault Agenda** under **Community plugins**.
 ## Development
 
 ```bash
-npm install
-npm run typecheck
+npm ci
 npm run lint
 npm run build
 ```
