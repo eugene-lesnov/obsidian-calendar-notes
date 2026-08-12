@@ -26,6 +26,7 @@ import type { ItemKind, Task } from "./data/item";
 import { classifyItemFile } from "./data/item";
 import type { ItemUpsertResult } from "./data/itemIndex";
 import { ItemIndex } from "./data/itemIndex";
+import { ItemReconciliationQueue } from "./data/itemReconciliation";
 import { validateTaskLists } from "./data/itemScopes";
 import {
   completeRepeatingOccurrence,
@@ -131,6 +132,10 @@ export default class VaultAgendaPlugin extends Plugin {
   private readonly reportedReconcileFailures = new Set<string>();
   private readonly pendingRepeatFiles = new Set<TFile>();
   private readonly taskCompletionQueues = new WeakMap<TFile, Promise<void>>();
+  private readonly itemReconciliationQueue = new ItemReconciliationQueue(
+    () => this.isMigrating,
+    (file, trigger) => reconcileItemName(this.app, this.settings, file, trigger),
+  );
   private settingsSaveQueue = Promise.resolve();
   private taskListSetupPromise: Promise<TaskList | null> | null = null;
 
@@ -430,7 +435,7 @@ export default class VaultAgendaPlugin extends Plugin {
 
     const path = file.path;
 
-    void reconcileItemName(this.app, this.settings, file, trigger)
+    void this.itemReconciliationQueue.enqueue(file, trigger)
       .then(() => this.reportedReconcileFailures.delete(path))
       .catch((error) => {
         console.error("Failed to synchronize Vault Agenda item name and date.", error);
