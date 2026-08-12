@@ -51,14 +51,16 @@ function createNavButton(
 function renderHeader(container: HTMLElement, params: MonthGridParams): void {
   const header = container.createDiv({ cls: "vault-agenda-header" });
 
-  createNavButton(header, "chevron-left", strings.previousMonthTitle, params.onPrevMonth);
-
   header.createDiv({
     cls: "vault-agenda-month-label",
     text: formatMonthLabel(params.year, params.month),
   });
 
-  const todayButton = header.createEl("button", {
+  const navigation = header.createDiv({ cls: "vault-agenda-navigation" });
+
+  createNavButton(navigation, "chevron-left", strings.previousMonthTitle, params.onPrevMonth);
+
+  const todayButton = navigation.createEl("button", {
     cls: "vault-agenda-today-button",
     text: strings.todayButtonLabel,
   });
@@ -66,7 +68,7 @@ function renderHeader(container: HTMLElement, params: MonthGridParams): void {
   todayButton.setAttribute("aria-label", params.formatDayLabel(params.todayDateId));
   todayButton.addEventListener("click", params.onToday);
 
-  createNavButton(header, "chevron-right", strings.nextMonthTitle, params.onNextMonth);
+  createNavButton(navigation, "chevron-right", strings.nextMonthTitle, params.onNextMonth);
 }
 
 function renderWeekdays(container: HTMLElement, weekStart: WeekStart): void {

@@ -184,28 +184,33 @@
 
 .vault-agenda-root .vault-agenda-header {
   display: grid;
-  grid-template-columns: var(--vault-agenda-control-size) minmax(0, 1fr) auto var(--vault-agenda-control-size);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .vault-agenda-root .vault-agenda-month-label {
   min-width: 0;
   overflow: hidden;
+  font-size: var(--font-ui-medium);
   font-weight: var(--font-semibold);
   text-overflow: ellipsis;
-  text-align: center;
   white-space: nowrap;
 }
 
+.vault-agenda-root .vault-agenda-navigation {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .vault-agenda-root .vault-agenda-nav-button,
-.vault-agenda-root .vault-agenda-today-button,
-.vault-agenda-root .vault-agenda-day {
-  border: 1px solid var(--background-modifier-border);
+.vault-agenda-root .vault-agenda-today-button {
+  border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--text-normal);
+  color: var(--text-muted);
   box-shadow: none;
 }
 
@@ -220,7 +225,7 @@
 
 .vault-agenda-root .vault-agenda-today-button {
   height: var(--vault-agenda-control-size);
-  padding: 0 8px;
+  padding: 0 10px;
   font-size: var(--font-ui-smaller);
   white-space: nowrap;
 }
@@ -229,11 +234,11 @@
 .vault-agenda-root .vault-agenda-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: 2px;
 }
 
 .vault-agenda-root .vault-agenda-weekdays {
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   color: var(--text-muted);
   font-size: var(--font-ui-smaller);
   text-align: center;
@@ -247,6 +252,11 @@
   justify-content: center;
   height: var(--vault-agenda-day-height);
   padding: 0 0 5px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-normal);
+  box-shadow: none;
   text-align: center;
 }
 
@@ -254,6 +264,7 @@
 .vault-agenda-root .vault-agenda-today-button:hover,
 .vault-agenda-root .vault-agenda-day:not(.vault-agenda-day-empty):hover {
   background: var(--background-modifier-hover);
+  color: var(--text-normal);
 }
 
 .vault-agenda-root .vault-agenda-day-empty {
@@ -271,6 +282,10 @@
   background: var(--background-modifier-hover);
   outline: 1px solid var(--text-muted);
   outline-offset: -1px;
+}
+
+.vault-agenda-root .vault-agenda-day.is-selected.is-today {
+  outline-color: var(--interactive-accent);
 }
 
 .vault-agenda-root .vault-agenda-day-markers {
