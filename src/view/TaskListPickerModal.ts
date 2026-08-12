@@ -28,8 +28,12 @@ export class TaskListPickerModal extends SuggestModal<TaskList> {
     element.setText(taskList.name);
   }
 
-  onChooseSuggestion(taskList: TaskList): void {
+  selectSuggestion(taskList: TaskList, event: MouseEvent | KeyboardEvent): void {
     this.settled = true;
+    super.selectSuggestion(taskList, event);
+  }
+
+  onChooseSuggestion(taskList: TaskList): void {
     this.onResult(taskList);
   }
 
