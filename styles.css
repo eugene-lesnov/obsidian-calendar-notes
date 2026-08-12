@@ -226,7 +226,7 @@
 .vault-agenda-root .vault-agenda-today-button {
   height: var(--vault-agenda-control-size);
   padding: 0 10px;
-  font-size: var(--font-ui-smaller);
+  font-size: var(--font-ui-small);
   white-space: nowrap;
 }
 
