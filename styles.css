@@ -677,6 +677,11 @@ body.is-mobile .vault-agenda-root .vault-agenda-task-drag-handle {
   justify-content: center;
 }
 
+body:not(.is-phone) .vault-agenda-task-list-picker-modal {
+  position: relative;
+  top: auto;
+}
+
 .vault-agenda-date-picker-modal .vault-agenda-date-picker-field {
   display: flex;
   flex-direction: column;
