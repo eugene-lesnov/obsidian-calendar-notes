@@ -1,42 +1,34 @@
-import { App, Modal, Notice, Setting } from "obsidian";
+import { App, ButtonComponent, Modal, Notice } from "obsidian";
 
 import {
-  formatDateByPattern,
+  DEFAULT_DATE_PATTERN,
   formatDateId,
-  momentFormatToPattern,
   parseDateByPattern,
-  parseDateId,
 } from "../core/dateUtils";
-import strings, { formatLocalizedString } from "../core/localization";
-import type { VaultAgendaSettings } from "../core/types";
+import strings from "../core/localization";
 
 export class DatePickerModal extends Modal {
   private value: string;
 
   constructor(
     app: App,
-    private readonly settings: VaultAgendaSettings,
     currentDateId: string,
     private readonly onSubmit: (dateId: string) => void,
   ) {
     super(app);
 
-    this.value = formatDateByPattern(
-      parseDateId(currentDateId),
-      momentFormatToPattern(settings.dateFormat),
-    );
+    this.value = currentDateId;
   }
 
   onOpen(): void {
     this.setTitle(strings.changeDateModalTitle);
+    this.modalEl.addClass("vault-agenda-date-picker-modal");
 
     const submit = (): void => {
       const dateId = this.parseValue();
 
       if (!dateId) {
-        new Notice(
-          formatLocalizedString(strings.invalidDateError, { format: this.settings.dateFormat }),
-        );
+        new Notice(strings.invalidDateError);
         return;
       }
 
@@ -44,30 +36,31 @@ export class DatePickerModal extends Modal {
       this.onSubmit(dateId);
     };
 
-    new Setting(this.contentEl)
-      .setName(
-        formatLocalizedString(strings.changeDateModalDescription, {
-          format: this.settings.dateFormat,
-        }),
-      )
-      .addText((text) =>
-        text
-          .setPlaceholder(this.settings.dateFormat)
-          .setValue(this.value)
-          .onChange((value) => {
-            this.value = value;
-          })
-          .inputEl.addEventListener("keydown", (event: KeyboardEvent) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              submit();
-            }
-          }),
-      );
+    const field = this.contentEl.createEl("label", {
+      cls: "vault-agenda-date-picker-field",
+    });
+    field.createSpan({ text: strings.changeDateModalDescription });
 
-    new Setting(this.contentEl).addButton((button) =>
-      button.setButtonText(strings.changeDateModalSubmitLabel).setCta().onClick(submit),
-    );
+    const input = field.createEl("input", {
+      cls: "vault-agenda-date-picker-input",
+      attr: { type: "date" },
+    });
+    input.value = this.value;
+    input.addEventListener("input", () => {
+      this.value = input.value;
+    });
+    input.addEventListener("keydown", (event: KeyboardEvent) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        submit();
+      }
+    });
+
+    const actions = this.contentEl.createDiv({ cls: "modal-button-container" });
+    new ButtonComponent(actions)
+      .setButtonText(strings.changeDateModalSubmitLabel)
+      .setCta()
+      .onClick(submit);
   }
 
   onClose(): void {
@@ -75,10 +68,7 @@ export class DatePickerModal extends Modal {
   }
 
   private parseValue(): string | null {
-    const parsed = parseDateByPattern(
-      this.value.trim(),
-      momentFormatToPattern(this.settings.dateFormat),
-    );
+    const parsed = parseDateByPattern(this.value, DEFAULT_DATE_PATTERN);
 
     return parsed ? formatDateId(parsed.year, parsed.month, parsed.day) : null;
   }

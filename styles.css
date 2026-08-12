@@ -676,3 +676,16 @@ body.is-mobile .vault-agenda-root .vault-agenda-task-drag-handle {
   align-items: center;
   justify-content: center;
 }
+
+.vault-agenda-date-picker-modal .vault-agenda-date-picker-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.vault-agenda-date-picker-modal .vault-agenda-date-picker-input {
+  box-sizing: border-box;
+  width: 100%;
+}

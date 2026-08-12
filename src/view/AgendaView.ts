@@ -283,7 +283,7 @@ export class AgendaView extends ItemView {
   }
 
   private openDatePicker(item: Item): void {
-    new DatePickerModal(this.app, this.plugin.settings, item.dateId ?? getTodayDateId(), (dateId) => {
+    new DatePickerModal(this.app, item.dateId ?? getTodayDateId(), (dateId) => {
       void this.setItemDate(item, dateId);
     }).open();
   }
