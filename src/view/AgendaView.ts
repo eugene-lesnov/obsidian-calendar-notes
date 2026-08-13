@@ -302,6 +302,15 @@ export class AgendaView extends ItemView {
 
     const rule = frequency ? { frequency } : null;
 
+    if (rule && !item.dateId) {
+      new DatePickerModal(this.app, getTodayDateId(), (dateId) => {
+        void this.runMutation(() =>
+          setTaskRepeat(this.app, this.plugin.settings, item, rule, dateId));
+      }).open();
+
+      return;
+    }
+
     await this.runMutation(() => setTaskRepeat(this.app, this.plugin.settings, item, rule));
   }
 

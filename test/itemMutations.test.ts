@@ -268,6 +268,58 @@ describe("item mutations", () => {
     ).rejects.toThrow();
   });
 
+  it("sets the initial date and repeat together for an unchanged unscheduled task", async () => {
+    const app = new FakeApp();
+    const file = await createTask(app as unknown as App, settings, settings.taskLists[0]);
+    const task: Task = {
+      kind: "task",
+      file,
+      title: "Task",
+      done: false,
+      taskListId: "list",
+      taskLocation: "active",
+    };
+
+    await setTaskRepeat(
+      app as unknown as App,
+      settings,
+      task,
+      { frequency: "weekly" },
+      "2026-08-17",
+    );
+
+    expect(app.frontmatter.get(file)).toMatchObject({
+      date: "2026-08-17",
+      repeat: "weekly",
+    });
+    expect(app.processFrontMatterCount).toBe(1);
+  });
+
+  it("does not overwrite a date added while initial repeat selection is open", async () => {
+    const app = new FakeApp();
+    const file = await createTask(app as unknown as App, settings, settings.taskLists[0]);
+    const task: Task = {
+      kind: "task",
+      file,
+      title: "Task",
+      done: false,
+      taskListId: "list",
+      taskLocation: "active",
+    };
+    app.frontmatter.get(file)!.date = "2026-08-16";
+
+    await expect(setTaskRepeat(
+      app as unknown as App,
+      settings,
+      task,
+      { frequency: "weekly" },
+      "2026-08-17",
+    )).rejects.toThrow("Task changed before its repeat rule could be updated");
+
+    expect(app.frontmatter.get(file)).toMatchObject({ date: "2026-08-16" });
+    expect(app.frontmatter.get(file)).not.toHaveProperty("repeat");
+  });
+
   it("reconciles note date from a renamed filename", async () => {
     const app = new FakeApp();
     const file = app.addFile("Notes/2026-08-13 - Note.md", {

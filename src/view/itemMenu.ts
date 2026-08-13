@@ -60,17 +60,15 @@ export function showItemMenu(
 
     const currentFrequency = item.repeat?.frequency ?? null;
 
-    if (item.dateId) {
-      REPEAT_OPTIONS.forEach((option) => {
-        menu.addItem((menuItem) =>
-          menuItem
-            .setTitle(option.label())
-            .setSection(REPEAT_MENU_SECTION)
-            .setChecked(option.frequency === currentFrequency)
-            .onClick(() => callbacks.onSetRepeat(option.frequency)),
-        );
-      });
-    }
+    REPEAT_OPTIONS.forEach((option) => {
+      menu.addItem((menuItem) =>
+        menuItem
+          .setTitle(option.label())
+          .setSection(REPEAT_MENU_SECTION)
+          .setChecked(option.frequency === currentFrequency)
+          .onClick(() => callbacks.onSetRepeat(option.frequency)),
+      );
+    });
 
     if (item.repeat) {
       menu.addItem((menuItem) =>

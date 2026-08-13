@@ -235,8 +235,11 @@ export async function setTaskRepeat(
   settings: VaultAgendaSettings,
   item: Task,
   rule: RepeatRule | null,
+  initialDateId?: string,
 ): Promise<void> {
-  if (rule && !item.dateId) {
+  const dateId = item.dateId ?? initialDateId;
+
+  if (rule && !dateId) {
     throw new Error(strings.repeatRequiresDateError);
   }
 
@@ -246,6 +249,10 @@ export async function setTaskRepeat(
     }
 
     if (rule) {
+      if (!item.dateId && initialDateId) {
+        frontmatter.date = buildDayIdentifier(initialDateId, settings);
+      }
+
       frontmatter.repeat = rule.frequency;
     } else {
       delete frontmatter.repeat;

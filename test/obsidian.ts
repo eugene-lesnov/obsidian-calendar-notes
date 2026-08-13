@@ -36,6 +36,57 @@ export class Notice {
   constructor(_message: string) {}
 }
 
+export class MenuItem {
+  title = "";
+  section = "";
+  checked = false;
+
+  setTitle(title: string): this {
+    this.title = title;
+    return this;
+  }
+
+  setSection(section: string): this {
+    this.section = section;
+    return this;
+  }
+
+  setIcon(_icon: string): this {
+    return this;
+  }
+
+  setChecked(checked: boolean): this {
+    this.checked = checked;
+    return this;
+  }
+
+  setDisabled(_disabled: boolean): this {
+    return this;
+  }
+
+  onClick(_callback: () => void): this {
+    return this;
+  }
+}
+
+export class Menu {
+  static instances: Menu[] = [];
+  readonly items: MenuItem[] = [];
+
+  constructor() {
+    Menu.instances.push(this);
+  }
+
+  addItem(configure: (item: MenuItem) => void): this {
+    const item = new MenuItem();
+    configure(item);
+    this.items.push(item);
+    return this;
+  }
+
+  showAtMouseEvent(_event: MouseEvent): void {}
+}
+
 export function normalizePath(path: string): string {
   const normalized = path.replace(/\\/g, "/").replace(/\/{2,}/g, "/");
 
@@ -81,6 +132,10 @@ export class FakeApp {
   renameCount = 0;
   failNextRename = false;
   failNextProcessFrontMatter = false;
+
+  readonly workspace = {
+    trigger: (): void => {},
+  };
 
   readonly metadataCache = {
     getFileCache: (file: TFile): { frontmatter?: Frontmatter } | null => {
