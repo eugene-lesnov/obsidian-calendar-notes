@@ -41,6 +41,7 @@ export type VaultAgendaSettings = {
   weekStart: WeekStart;
   notesFolder: string;
   taskLists: TaskList[];
+  taskListsExpanded: boolean;
   expandedTaskListIds: string[];
   newNoteName: string;
   noteTemplate: string;

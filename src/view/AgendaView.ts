@@ -45,7 +45,6 @@ export class AgendaView extends ItemView {
   private month: number;
   private selectedDateId: string;
   private overdueExpanded = false;
-  private taskListsExpanded = true;
   private readonly expandedTaskLists: Set<string>;
 
   readonly scheduleRender = debounce(() => this.render(), RENDER_DEBOUNCE_MS, false);
@@ -129,7 +128,7 @@ export class AgendaView extends ItemView {
       app: this.app,
       hoverParent: this,
       taskLists: this.plugin.settings.taskLists,
-      expanded: this.taskListsExpanded,
+      expanded: this.plugin.settings.taskListsExpanded,
       todayDateId,
       formatDayLabel: (dateId) => this.formatDayLabel(dateId),
       getTaskListColor: (taskListId) => this.getTaskListColor(taskListId),
@@ -330,7 +329,8 @@ export class AgendaView extends ItemView {
   }
 
   private toggleTaskListsExpanded(): void {
-    this.taskListsExpanded = !this.taskListsExpanded;
+    this.plugin.settings.taskListsExpanded = !this.plugin.settings.taskListsExpanded;
+    void this.plugin.saveSettings();
     this.render();
   }
 

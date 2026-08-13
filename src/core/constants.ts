@@ -15,6 +15,7 @@ export function createDefaultSettings(): VaultAgendaSettings {
     weekStart: "monday",
     notesFolder: buildDefaultNotesFolder(strings.notesFolderName),
     taskLists: [],
+    taskListsExpanded: false,
     expandedTaskListIds: [],
     newNoteName: strings.newNoteDefaultTitle,
     noteTemplate: "",

@@ -120,6 +120,10 @@ function normalizeSettings(savedSettings: Partial<VaultAgendaSettings>): VaultAg
     settings.expandedTaskListIds = [...settings.expandedTaskListIds];
   }
 
+  if (typeof settings.taskListsExpanded !== "boolean") {
+    settings.taskListsExpanded = defaults.taskListsExpanded;
+  }
+
   return settings;
 }
 

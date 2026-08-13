@@ -26,6 +26,7 @@ function createSettings(completionBehavior: TaskList["completionBehavior"]): Vau
       manualOrder: [],
       completionBehavior,
     }],
+    taskListsExpanded: false,
     expandedTaskListIds: [],
     newNoteName: "Note",
     noteTemplate: "",

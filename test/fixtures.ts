@@ -27,6 +27,7 @@ export function createSettings(
     weekStart: "monday",
     notesFolder: "Notes",
     taskLists: [createTaskList()],
+    taskListsExpanded: false,
     expandedTaskListIds: [],
     newNoteName: "Note",
     noteTemplate: "",

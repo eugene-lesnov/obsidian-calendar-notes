@@ -30,6 +30,7 @@ const settings: VaultAgendaSettings = {
     manualOrder: [],
     completionBehavior: { type: "move", completedFolder: "Completed" },
   }],
+  taskListsExpanded: false,
   expandedTaskListIds: [],
   newNoteName: "Note",
   noteTemplate: "",
