@@ -80,7 +80,6 @@ export interface AppLocalization {
   createNoteTodayCommandLabel: string;
   createTaskTodayCommandLabel: string;
   reopenCurrentTaskCommandLabel: string;
-  goToTodayCommandLabel: string;
   agendaViewTitle: string;
   previousMonthTitle: string;
   nextMonthTitle: string;
@@ -220,7 +219,6 @@ const defaultStrings: AppLocalization = {
   createNoteTodayCommandLabel: "Create note for today",
   createTaskTodayCommandLabel: "Create task for today",
   reopenCurrentTaskCommandLabel: "Reopen current task",
-  goToTodayCommandLabel: "Go to today",
   agendaViewTitle: "Vault Agenda",
   previousMonthTitle: "Previous month",
   nextMonthTitle: "Next month",
@@ -369,7 +367,6 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     createNoteTodayCommandLabel: "Создать заметку на сегодня",
     createTaskTodayCommandLabel: "Создать задачу на сегодня",
     reopenCurrentTaskCommandLabel: "Вернуть текущую задачу в активные",
-    goToTodayCommandLabel: "Перейти к сегодняшнему дню",
     agendaViewTitle: "Vault Agenda",
     previousMonthTitle: "Предыдущий месяц",
     nextMonthTitle: "Следующий месяц",

@@ -208,14 +208,6 @@ export default class VaultAgendaPlugin extends Plugin {
     });
 
     this.addCommand({
-      id: "go-to-today",
-      name: strings.goToTodayCommandLabel,
-      callback: () => {
-        void this.goToToday();
-      },
-    });
-
-    this.addCommand({
       id: "reopen-current-task",
       name: strings.reopenCurrentTaskCommandLabel,
       checkCallback: (checking) => {
@@ -254,12 +246,6 @@ export default class VaultAgendaPlugin extends Plugin {
     } catch (error) {
       new Notice(String(error instanceof Error ? error.message : error));
     }
-  }
-
-  private async goToToday(): Promise<void> {
-    await this.activateView();
-
-    this.forEachView((view) => view.selectDay(getTodayDateId()));
   }
 
   private checkDateChange(): void {
