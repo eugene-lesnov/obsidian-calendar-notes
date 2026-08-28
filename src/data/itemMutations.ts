@@ -8,7 +8,7 @@ import type {
   TaskList,
 } from "../core/types";
 import { getNextRepeatDateId } from "../tasks/repeat";
-import type { Item, ItemKind, Task } from "./item";
+import type { AgendaNote, Item, ItemKind, Task } from "./item";
 import { classifyItemFile, normalizeDateId } from "./item";
 import {
   MARKDOWN_SUFFIX,
@@ -18,7 +18,7 @@ import {
 } from "./fileNames";
 import { joinPath } from "./folders";
 import { getTaskList } from "./itemScopes";
-import { buildItemName, parseItemName } from "./itemName";
+import { buildItemName, buildItemNameFromExistingTitle, parseItemName } from "./itemName";
 import { buildDayIdentifier, readTemplateParts } from "./templates";
 
 export type ReconcileTrigger = "frontmatter" | "name";
@@ -133,7 +133,11 @@ export async function createTask(
 ): Promise<TFile> {
   const folderPath = joinPath(taskList.activeFolder);
   await ensureFolderOrThrow(app, folderPath, folderErrorFor("task"));
-  const path = makeUniquePath(app, folderPath, taskNameFor(taskList));
+  const title = taskNameFor(taskList);
+  const name = settings.syncTaskDateWithFilename && dateId
+    ? buildItemName(settings, dateId, title)
+    : title;
+  const path = makeUniquePath(app, folderPath, name);
   const template = await readTemplateBody(app, "task", taskList.taskTemplate);
   const frontmatter = buildFrontmatter("task", settings, template.fields, dateId);
 
@@ -196,27 +200,85 @@ export async function reconcileItemName(
   settings: VaultAgendaSettings,
   file: TFile,
   trigger: ReconcileTrigger,
+  previousDateId?: string,
 ): Promise<void> {
   const currentItem = classifyItemFile(app, file, settings);
 
-  if (!currentItem || currentItem.kind !== "note") {
+  if (!currentItem) {
+    return;
+  }
+
+  if (currentItem.kind === "note") {
+    await reconcileNoteName(app, settings, file, currentItem, trigger);
+
+    return;
+  }
+
+  await reconcileTaskName(app, settings, file, currentItem, trigger, previousDateId);
+}
+
+async function reconcileNoteName(
+  app: App,
+  settings: VaultAgendaSettings,
+  file: TFile,
+  item: AgendaNote,
+  trigger: ReconcileTrigger,
+): Promise<void> {
+  const parsed = parseItemName(file.basename, settings);
+
+  if (!parsed.dateId || parsed.dateId === item.dateId) {
+    return;
+  }
+
+  if (trigger === "name") {
+    await setItemDate(app, settings, item, parsed.dateId);
+
+    return;
+  }
+
+  await renameItemFile(app, settings, file, item.dateId, parsed.title);
+}
+
+async function reconcileTaskName(
+  app: App,
+  settings: VaultAgendaSettings,
+  file: TFile,
+  item: Task,
+  trigger: ReconcileTrigger,
+  previousDateId?: string,
+): Promise<void> {
+  if (!settings.syncTaskDateWithFilename) {
     return;
   }
 
   const parsed = parseItemName(file.basename, settings);
 
-  if (!parsed.dateId || parsed.dateId === currentItem.dateId) {
-    return;
-  }
-
-  if (trigger === "name") {
-    await setItemDate(app, settings, currentItem, parsed.dateId);
+  if (trigger === "name" && parsed.dateId && parsed.dateId !== item.dateId) {
+    await setItemDate(app, settings, item, parsed.dateId);
 
     return;
   }
 
+  if (item.dateId) {
+    await renameItemFile(app, settings, file, item.dateId, parsed.title);
+
+    return;
+  }
+
+  if (trigger === "frontmatter" && previousDateId && parsed.dateId === previousDateId) {
+    await renameItemFile(app, settings, file, null, parsed.title);
+  }
+}
+
+async function renameItemFile(
+  app: App,
+  settings: VaultAgendaSettings,
+  file: TFile,
+  dateId: string | null,
+  title: string,
+): Promise<void> {
   const folderPath = file.parent?.path ?? "";
-  const nextName = buildItemName(settings, currentItem.dateId, parsed.title);
+  const nextName = dateId ? buildItemNameFromExistingTitle(settings, dateId, title) : title;
   const targetPath = normalizePath(joinPath(folderPath, `${nextName}${MARKDOWN_SUFFIX}`));
 
   if (targetPath === file.path) {
@@ -302,7 +364,7 @@ export async function completeRepeatingOccurrence(
   const folderPath = joinPath(taskList.activeFolder);
   await ensureFolderOrThrow(app, folderPath, strings.createAgendaTaskFolderError);
   const title = parseItemName(item.file.basename, settings).title;
-  const nextName = buildItemName(settings, nextDateId, title);
+  const nextName = buildItemNameFromExistingTitle(settings, nextDateId, title);
   const targetPath = normalizePath(joinPath(folderPath, `${nextName}${MARKDOWN_SUFFIX}`));
   const existing = app.vault.getAbstractFileByPath(targetPath);
 

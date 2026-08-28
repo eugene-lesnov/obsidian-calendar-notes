@@ -18,6 +18,7 @@ import { FakeApp } from "./obsidian";
 const settings: VaultAgendaSettings = {
   dateFormat: "YYYY-MM-DD",
   weekStart: "monday",
+  syncTaskDateWithFilename: false,
   notesFolder: "Notes",
   taskLists: [{
     id: "list",
@@ -210,6 +211,21 @@ describe("item mutations", () => {
     expect(app.frontmatter.get(file)).not.toHaveProperty("date");
   });
 
+  it("adds the date to a scheduled task filename when synchronization is enabled", async () => {
+    const app = new FakeApp();
+    const configured = { ...settings, syncTaskDateWithFilename: true };
+
+    const file = await createTask(
+      app as unknown as App,
+      configured,
+      configured.taskLists[0],
+      "2026-08-12",
+    );
+
+    expect(file.path).toBe("Active/2026-08-12 - Task.md");
+    expect(app.frontmatter.get(file)).toHaveProperty("date", "2026-08-12");
+  });
+
   it("routes dated item creation and requires a configured task list", async () => {
     const app = new FakeApp();
     const note = await createDatedItem(
@@ -348,6 +364,88 @@ describe("item mutations", () => {
     );
 
     expect(file.path).toBe("Notes/2026-08-12 - Note.md");
+  });
+
+  it("reconciles a task date from its renamed filename", async () => {
+    const app = new FakeApp();
+    const configured = { ...settings, syncTaskDateWithFilename: true };
+    const file = app.addFile("Active/2026-08-13 - Task.md", {
+      vaultAgendaItem: "task",
+      date: "2026-08-12",
+      done: false,
+    });
+
+    await reconcileItemName(
+      app as unknown as App,
+      configured,
+      file as unknown as TFile,
+      "name",
+    );
+
+    expect(app.frontmatter.get(file)).toHaveProperty("date", "2026-08-13");
+    expect(file.path).toBe("Active/2026-08-13 - Task.md");
+  });
+
+  it("reconciles a task filename from frontmatter without replacing quotes", async () => {
+    const app = new FakeApp();
+    const configured = { ...settings, syncTaskDateWithFilename: true };
+    const file = app.addFile('Active/2026-08-12 - Task "Owner".md', {
+      vaultAgendaItem: "task",
+      date: "2026-08-13",
+      done: false,
+    });
+
+    await reconcileItemName(
+      app as unknown as App,
+      configured,
+      file as unknown as TFile,
+      "frontmatter",
+    );
+
+    expect(file.path).toBe('Active/2026-08-13 - Task "Owner".md');
+  });
+
+  it("replaces an invalid filename date with the valid frontmatter date", async () => {
+    const app = new FakeApp();
+    const configured = {
+      ...settings,
+      dateFormat: "DD.MM.YYYY",
+      syncTaskDateWithFilename: true,
+    };
+    const file = app.addFile('Active/32.08.2026 - Task "Owner".md', {
+      vaultAgendaItem: "task",
+      date: "31.08.2026",
+      done: false,
+    });
+
+    await reconcileItemName(
+      app as unknown as App,
+      configured,
+      file as unknown as TFile,
+      "name",
+    );
+
+    expect(file.path).toBe('Active/31.08.2026 - Task "Owner".md');
+    expect(app.frontmatter.get(file)).toHaveProperty("date", "31.08.2026");
+  });
+
+  it("removes only the synchronized date prefix when a task is unscheduled", async () => {
+    const app = new FakeApp();
+    const configured = { ...settings, syncTaskDateWithFilename: true };
+    const file = app.addFile('Active/2026-08-12 - Task "Owner".md', {
+      vaultAgendaItem: "task",
+      done: false,
+    });
+
+    await reconcileItemName(
+      app as unknown as App,
+      configured,
+      file as unknown as TFile,
+      "frontmatter",
+      "2026-08-12",
+    );
+
+    expect(file.path).toBe('Active/Task "Owner".md');
   });
 
   it("uses a unique name during frontmatter reconciliation conflicts", async () => {

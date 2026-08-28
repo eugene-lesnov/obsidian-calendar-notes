@@ -13,6 +13,7 @@ export function createDefaultSettings(): VaultAgendaSettings {
   return {
     dateFormat: DEFAULT_DATE_FORMAT,
     weekStart: "monday",
+    syncTaskDateWithFilename: false,
     notesFolder: buildDefaultNotesFolder(strings.notesFolderName),
     taskLists: [],
     taskListsExpanded: false,

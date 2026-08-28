@@ -99,7 +99,7 @@ export type TaskListsSectionParams = Omit<ItemCallbacks, "onMenu"> & {
   onTaskMenu: (taskList: TaskList, task: Task, event: MouseEvent) => void;
 };
 
-function getRepeatOccurrenceMeta(
+export function getRepeatOccurrenceMeta(
   task: Task,
   todayDateId: string,
   formatDayLabel: (dateId: string) => string,
@@ -118,6 +118,20 @@ function getRepeatOccurrenceMeta(
   }
 
   const overdue = task.dateId < todayDateId;
+  const dateInFilename = task.file.basename !== task.title;
+
+  if (dateInFilename) {
+    return {
+      text: formatLocalizedString(
+        overdue
+          ? strings.taskRepeatOverdueStatusMetaLabel
+          : strings.taskRepeatScheduledStatusMetaLabel,
+        { repeat },
+      ),
+      overdue,
+    };
+  }
+
   const label = overdue
     ? strings.taskRepeatOverdueMetaLabel
     : strings.taskRepeatNextMetaLabel;
@@ -280,19 +294,24 @@ function renderTask(
     });
   }
 
+  const displayTitle = task.file.basename;
   const checkbox = item.createEl("input", {
     cls: "vault-agenda-task-checkbox",
     type: "checkbox",
   });
-  checkbox.setAttribute("aria-label", task.title);
+  checkbox.setAttribute("aria-label", displayTitle);
   checkbox.addEventListener("change", () => params.onToggleTaskCompleted(task, checkbox.checked));
 
   const body = item.createDiv({ cls: "vault-agenda-item-body" });
-  const title = body.createEl("button", {
+  const titleRow = body.createDiv({ cls: "vault-agenda-item-title-row" });
+  const title = titleRow.createEl("button", {
     cls: "vault-agenda-item vault-agenda-item-title",
-    text: task.title,
   });
-  registerItemTitleTooltip(title, task.title);
+
+  title.createSpan({ cls: "vault-agenda-item-title-text", text: displayTitle });
+
+  title.setAttribute("aria-label", displayTitle);
+  registerItemTitleTooltip(title, displayTitle);
   title.addEventListener("click", (event) => params.onOpen(task, event));
   title.addEventListener("mouseover", (event) => {
     params.app.workspace.trigger("hover-link", {

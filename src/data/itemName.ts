@@ -36,13 +36,22 @@ function resolveDateId(year: number, month: number, day: number): string | null 
   return formatDateId(fullYear, month - 1, day);
 }
 
-export function buildItemName(settings: VaultAgendaSettings, dateId: string, title: string): string {
-  const dateText = formatDateByPattern(
-    parseDateId(dateId),
-    momentFormatToPattern(settings.dateFormat),
+function buildDateText(settings: VaultAgendaSettings, dateId: string): string {
+  return replaceForbiddenChars(
+    formatDateByPattern(parseDateId(dateId), momentFormatToPattern(settings.dateFormat)),
   );
+}
 
-  return sanitizeFileName(`${dateText}${NAME_SEPARATOR}${title}`);
+export function buildItemName(settings: VaultAgendaSettings, dateId: string, title: string): string {
+  return sanitizeFileName(`${buildDateText(settings, dateId)}${NAME_SEPARATOR}${title}`);
+}
+
+export function buildItemNameFromExistingTitle(
+  settings: VaultAgendaSettings,
+  dateId: string,
+  title: string,
+): string {
+  return `${buildDateText(settings, dateId)}${NAME_SEPARATOR}${title}`;
 }
 
 function buildNameMatcher(dateFormat: string): NameMatcher | null {
@@ -94,7 +103,7 @@ export function parseItemName(basename: string, settings: VaultAgendaSettings): 
   const title = match[matcher.nameGroup].trim();
 
   if (!dateId) {
-    return { dateId: null, title: basename };
+    return { dateId: null, title: title || basename };
   }
 
   return { dateId, title: title || basename };

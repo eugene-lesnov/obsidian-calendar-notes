@@ -4,7 +4,7 @@ import type { VaultAgendaSettings } from "../core/types";
 import { classifyItemFile, normalizeDateId } from "./item";
 import { MARKDOWN_SUFFIX } from "./fileNames";
 import { joinPath } from "./folders";
-import { buildItemName, parseItemName } from "./itemName";
+import { buildItemNameFromExistingTitle, parseItemName } from "./itemName";
 import { buildDayIdentifier } from "./templates";
 
 export type DateFormatMigrationEntry = {
@@ -51,7 +51,7 @@ function resolveTargetPath(
   nextSettings: VaultAgendaSettings,
 ): string | null {
   const parsed = parseItemName(file.basename, settings);
-  const nextName = buildItemName(nextSettings, dateId, parsed.title);
+  const nextName = buildItemNameFromExistingTitle(nextSettings, dateId, parsed.title);
   const folderPath = file.parent?.path ?? "";
   const targetPath = normalizePath(joinPath(folderPath, `${nextName}${MARKDOWN_SUFFIX}`));
 

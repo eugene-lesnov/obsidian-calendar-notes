@@ -89,6 +89,17 @@ describe("ItemReconciliationQueue", () => {
     expect(reconcile).toHaveBeenCalledTimes(2);
   });
 
+  it("forwards the previous task date to reconciliation", async () => {
+    const app = new FakeApp();
+    const file = asFile(app.addFile("Active/Task.md", {}));
+    const reconcile = vi.fn().mockResolvedValue(undefined);
+    const queue = new ItemReconciliationQueue(() => false, reconcile);
+
+    await queue.enqueue(file, "frontmatter", "2026-08-12");
+
+    expect(reconcile).toHaveBeenCalledWith(file, "frontmatter", "2026-08-12");
+  });
+
   it("skips a queued request if migration starts before execution", async () => {
     const app = new FakeApp();
     const file = asFile(app.addFile("Notes/Note.md", {}));

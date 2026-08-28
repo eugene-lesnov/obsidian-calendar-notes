@@ -25,6 +25,7 @@ export function createSettings(
   return {
     dateFormat: "YYYY-MM-DD",
     weekStart: "monday",
+    syncTaskDateWithFilename: false,
     notesFolder: "Notes",
     taskLists: [createTaskList()],
     taskListsExpanded: false,

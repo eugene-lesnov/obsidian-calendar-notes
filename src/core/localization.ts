@@ -15,6 +15,15 @@ export interface AppLocalization {
   dateFormatMigrationDone: string;
   dateFormatMigrationFailed: string;
   weekStartLabel: string;
+  taskFilenameDateLabel: string;
+  taskFilenameDateDescription: string;
+  taskFilenameMigrationTitle: string;
+  taskFilenameMigrationEnableSummary: string;
+  taskFilenameMigrationDisableSummary: string;
+  taskFilenameMigrationCount: string;
+  taskFilenameMigrationConfirmLabel: string;
+  taskFilenameMigrationDone: string;
+  taskFilenameMigrationFailed: string;
   notesFolderName: string;
   notesFolderLabel: string;
   notesFolderDescription: string;
@@ -118,6 +127,8 @@ export interface AppLocalization {
   taskRepeatNextMetaLabel: string;
   taskRepeatTodayMetaLabel: string;
   taskRepeatOverdueMetaLabel: string;
+  taskRepeatScheduledStatusMetaLabel: string;
+  taskRepeatOverdueStatusMetaLabel: string;
   createAgendaNoteFolderError: string;
   createAgendaTaskFolderError: string;
   createAgendaNoteTemplateReadError: string;
@@ -149,6 +160,19 @@ const defaultStrings: AppLocalization = {
   dateFormatMigrationFailed:
     "Failed to update {{count}} Vault Agenda items. They keep the old format and may be unavailable in Vault Agenda until fixed.",
   weekStartLabel: "Week starts on",
+  taskFilenameDateLabel: "Date in task file names",
+  taskFilenameDateDescription:
+    "Prefix scheduled task file names with their date. Existing files are renamed after confirmation.",
+  taskFilenameMigrationTitle: "Change task file names",
+  taskFilenameMigrationEnableSummary:
+    "Dates will be added to the names of existing scheduled task files.",
+  taskFilenameMigrationDisableSummary:
+    "Synchronized date prefixes will be removed from existing task file names.",
+  taskFilenameMigrationCount: "Task files to rename: {{count}}.",
+  taskFilenameMigrationConfirmLabel: "Rename files",
+  taskFilenameMigrationDone: "Task file names updated: {{count}}.",
+  taskFilenameMigrationFailed:
+    "Failed to update {{count}} task file names. The setting was not changed.",
   notesFolderName: "Notes",
   notesFolderLabel: "Notes folder",
   notesFolderDescription: "Folder where Vault Agenda notes are stored. Subfolders are included.",
@@ -259,6 +283,8 @@ const defaultStrings: AppLocalization = {
   taskRepeatNextMetaLabel: "{{repeat}} · Next: {{date}}",
   taskRepeatTodayMetaLabel: "{{repeat}} · Today",
   taskRepeatOverdueMetaLabel: "{{repeat}} · Overdue: {{date}}",
+  taskRepeatScheduledStatusMetaLabel: "{{repeat}} · Scheduled",
+  taskRepeatOverdueStatusMetaLabel: "{{repeat}} · Overdue",
   createAgendaNoteFolderError: "Cannot create a Vault Agenda note: folder {{path}} is not available.",
   createAgendaTaskFolderError: "Cannot create a task: folder {{path}} is not available.",
   createAgendaNoteTemplateReadError:
@@ -294,6 +320,19 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     dateFormatMigrationFailed:
       "Не удалось обновить элементы Vault Agenda: {{count}}. Они остались в старом формате и могут быть недоступны в Vault Agenda, пока это не исправлено.",
     weekStartLabel: "Первый день недели",
+    taskFilenameDateLabel: "Дата в именах файлов задач",
+    taskFilenameDateDescription:
+      "Добавлять дату в начало имени файла запланированной задачи. Существующие файлы будут переименованы после подтверждения.",
+    taskFilenameMigrationTitle: "Изменение имён файлов задач",
+    taskFilenameMigrationEnableSummary:
+      "В имена существующих файлов запланированных задач будут добавлены даты.",
+    taskFilenameMigrationDisableSummary:
+      "Из имён существующих файлов задач будут удалены синхронизированные префиксы с датами.",
+    taskFilenameMigrationCount: "Будет переименовано файлов задач: {{count}}.",
+    taskFilenameMigrationConfirmLabel: "Переименовать файлы",
+    taskFilenameMigrationDone: "Обновлено имён файлов задач: {{count}}.",
+    taskFilenameMigrationFailed:
+      "Не удалось обновить имена файлов задач: {{count}}. Настройка не изменена.",
     notesFolderName: "Заметки",
     notesFolderLabel: "Папка заметок",
     notesFolderDescription: "Папка для заметок Vault Agenda. Учитываются вложенные папки.",
@@ -407,6 +446,8 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     taskRepeatNextMetaLabel: "{{repeat}} · Следующее: {{date}}",
     taskRepeatTodayMetaLabel: "{{repeat}} · Сегодня",
     taskRepeatOverdueMetaLabel: "{{repeat}} · Просрочено: {{date}}",
+    taskRepeatScheduledStatusMetaLabel: "{{repeat}} · Запланировано",
+    taskRepeatOverdueStatusMetaLabel: "{{repeat}} · Просрочено",
     createAgendaNoteFolderError:
       "Не удалось создать заметку Vault Agenda: папка {{path}} недоступна.",
     createAgendaTaskFolderError:

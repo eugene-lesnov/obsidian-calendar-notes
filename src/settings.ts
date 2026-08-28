@@ -29,10 +29,16 @@ import {
   rollbackDateFormatMigration,
 } from "./data/dateFormatMigration";
 import { normalizeFolderPath, validateTaskLists } from "./data/itemScopes";
+import {
+  applyTaskFilenameMigration,
+  planTaskFilenameMigration,
+  rollbackTaskFilenameMigration,
+} from "./data/taskFilenameMigration";
 import type VaultAgendaPlugin from "./main";
 import { DateFormatMigrationModal } from "./view/DateFormatMigrationModal";
 import { FolderSuggest } from "./view/FolderSuggest";
 import { MarkdownFileSuggest } from "./view/MarkdownFileSuggest";
+import { TaskFilenameMigrationModal } from "./view/TaskFilenameMigrationModal";
 
 const REINDEX_DEBOUNCE_MS = 600;
 const INPUT_BLUR_COMMIT_DELAY_MS = 150;
@@ -97,6 +103,7 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
     containerEl.empty();
 
     this.addDateFormatSetting(containerEl);
+    this.addTaskFilenameDateSetting(containerEl);
     this.addWeekStartSetting(containerEl);
 
     new Setting(containerEl).setName(strings.notesSectionLabel).setHeading();
@@ -140,6 +147,99 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
   private async addTaskList(): Promise<void> {
     await this.plugin.promptTaskListSetup();
     this.display();
+  }
+
+  private addTaskFilenameDateSetting(containerEl: HTMLElement): void {
+    const currentValue = this.plugin.settings.syncTaskDateWithFilename;
+
+    new Setting(containerEl)
+      .setName(strings.taskFilenameDateLabel)
+      .setDesc(strings.taskFilenameDateDescription)
+      .addToggle((toggle) => toggle
+        .setValue(currentValue)
+        .onChange((enabled) => {
+          toggle.setValue(currentValue);
+          this.changeTaskFilenameDateSetting(enabled);
+        }));
+  }
+
+  private changeTaskFilenameDateSetting(enabled: boolean): void {
+    if (enabled === this.plugin.settings.syncTaskDateWithFilename) {
+      return;
+    }
+
+    const plan = planTaskFilenameMigration(this.app, this.plugin.settings, enabled);
+    const apply = (): void => {
+      void this.applyTaskFilenameDateSetting(enabled).catch((error) => {
+        new Notice(String(error instanceof Error ? error.message : error));
+      });
+    };
+
+    if (plan.entries.length === 0) {
+      apply();
+
+      return;
+    }
+
+    new TaskFilenameMigrationModal(this.app, plan, enabled, apply).open();
+  }
+
+  private async applyTaskFilenameDateSetting(enabled: boolean): Promise<void> {
+    this.plugin.isMigrating = true;
+
+    try {
+      const plan = planTaskFilenameMigration(this.app, this.plugin.settings, enabled);
+      const result = await applyTaskFilenameMigration(
+        this.app,
+        this.plugin.settings,
+        enabled,
+        plan,
+      );
+
+      if (result.failures.length > 0) {
+        new Notice(formatLocalizedString(strings.taskFilenameMigrationFailed, {
+          count: String(result.failures.length),
+        }));
+        return;
+      }
+
+      const previousValue = this.plugin.settings.syncTaskDateWithFilename;
+      this.plugin.settings.syncTaskDateWithFilename = enabled;
+
+      try {
+        await this.plugin.saveSettingsAndReindex();
+      } catch (error) {
+        this.plugin.settings.syncTaskDateWithFilename = previousValue;
+        const rollbackFailures = await rollbackTaskFilenameMigration(this.app, plan);
+
+        try {
+          await this.plugin.saveSettingsAndReindex();
+        } catch (rollbackSettingsError) {
+          console.error(
+            "Failed to restore Vault Agenda settings after task filename migration error.",
+            rollbackSettingsError,
+          );
+          this.plugin.itemIndex.rebuild();
+        }
+
+        if (rollbackFailures.length > 0) {
+          new Notice(formatLocalizedString(strings.taskFilenameMigrationFailed, {
+            count: String(rollbackFailures.length),
+          }));
+        }
+
+        throw error;
+      }
+
+      if (result.renamed > 0) {
+        new Notice(formatLocalizedString(strings.taskFilenameMigrationDone, {
+          count: String(result.renamed),
+        }));
+      }
+    } finally {
+      await this.plugin.finishMigration();
+      this.display();
+    }
   }
 
   private addTaskListSettings(
@@ -561,7 +661,7 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
       );
 
     } finally {
-      await this.plugin.finishDateFormatMigration();
+      await this.plugin.finishMigration();
       this.display();
     }
   }

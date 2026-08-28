@@ -124,6 +124,10 @@ function normalizeSettings(savedSettings: Partial<VaultAgendaSettings>): VaultAg
     settings.taskListsExpanded = defaults.taskListsExpanded;
   }
 
+  if (typeof settings.syncTaskDateWithFilename !== "boolean") {
+    settings.syncTaskDateWithFilename = false;
+  }
+
   return settings;
 }
 
@@ -138,7 +142,8 @@ export default class VaultAgendaPlugin extends Plugin {
   private readonly taskCompletionQueues = new WeakMap<TFile, Promise<void>>();
   private readonly itemReconciliationQueue = new ItemReconciliationQueue(
     () => this.isMigrating,
-    (file, trigger) => reconcileItemName(this.app, this.settings, file, trigger),
+    (file, trigger, previousDateId) =>
+      reconcileItemName(this.app, this.settings, file, trigger, previousDateId),
   );
   private settingsSaveQueue = Promise.resolve();
   private taskListSetupPromise: Promise<TaskList | null> | null = null;
@@ -296,7 +301,11 @@ export default class VaultAgendaPlugin extends Plugin {
 
         this.applyItemIndexChange(result.changed);
         this.syncManualOrder(result);
-        this.reconcile(file, "frontmatter");
+        const previousDateId = result.previous?.kind === "task"
+          ? result.previous.dateId
+          : undefined;
+
+        this.reconcile(file, "frontmatter", previousDateId);
       }),
     );
   }
@@ -418,14 +427,18 @@ export default class VaultAgendaPlugin extends Plugin {
     this.taskCompletionQueues.set(current.file, next);
   }
 
-  private reconcile(file: TAbstractFile, trigger: ReconcileTrigger): void {
+  private reconcile(
+    file: TAbstractFile,
+    trigger: ReconcileTrigger,
+    previousDateId?: string,
+  ): void {
     if (this.isMigrating || !(file instanceof TFile)) {
       return;
     }
 
     const path = file.path;
 
-    void this.itemReconciliationQueue.enqueue(file, trigger)
+    void this.itemReconciliationQueue.enqueue(file, trigger, previousDateId)
       .then(() => this.reportedReconcileFailures.delete(path))
       .catch((error) => {
         console.error("Failed to synchronize Vault Agenda item name and date.", error);
@@ -451,7 +464,7 @@ export default class VaultAgendaPlugin extends Plugin {
     }
   }
 
-  async finishDateFormatMigration(): Promise<void> {
+  async finishMigration(): Promise<void> {
     this.isMigrating = false;
 
     const pendingFiles = Array.from(this.pendingRepeatFiles);

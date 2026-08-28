@@ -39,6 +39,7 @@ export type DateParts = {
 export type VaultAgendaSettings = {
   dateFormat: string;
   weekStart: WeekStart;
+  syncTaskDateWithFilename: boolean;
   notesFolder: string;
   taskLists: TaskList[];
   taskListsExpanded: boolean;

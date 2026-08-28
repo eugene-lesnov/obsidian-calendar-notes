@@ -14,6 +14,7 @@ function createSettings(completionBehavior: TaskList["completionBehavior"]): Vau
   return {
     dateFormat: "YYYY-MM-DD",
     weekStart: "monday",
+    syncTaskDateWithFilename: false,
     notesFolder: "Notes",
     taskLists: [{
       id: "list",

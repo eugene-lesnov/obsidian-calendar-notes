@@ -7,10 +7,14 @@ export class ItemReconciliationQueue {
 
   constructor(
     private readonly isPaused: () => boolean,
-    private readonly reconcile: (file: TFile, trigger: ReconcileTrigger) => Promise<void>,
+    private readonly reconcile: (
+      file: TFile,
+      trigger: ReconcileTrigger,
+      previousDateId?: string,
+    ) => Promise<void>,
   ) {}
 
-  enqueue(file: TFile, trigger: ReconcileTrigger): Promise<void> {
+  enqueue(file: TFile, trigger: ReconcileTrigger, previousDateId?: string): Promise<void> {
     const previous = this.queues.get(file) ?? Promise.resolve();
     const next = previous
       .catch(() => undefined)
@@ -19,7 +23,7 @@ export class ItemReconciliationQueue {
           return;
         }
 
-        await this.reconcile(file, trigger);
+        await this.reconcile(file, trigger, previousDateId);
       });
 
     this.queues.set(file, next);
