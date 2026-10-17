@@ -1,7 +1,7 @@
 {
 	"id": "calendar-notes",
 	"name": "Calendar Notes",
-	"version": "0.6.8",
+	"version": "0.6.9",
 	"minAppVersion": "1.8.7",
 	"description": "Plan dated notes and file-based tasks in a compact calendar, with lists, repeats, and overdue tracking.",
 	"author": "Eugene Lesnov",
