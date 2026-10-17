@@ -386,6 +386,30 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
     }
 
     new Setting(group)
+      .setName(strings.newTaskPositionLabel)
+      .setDesc(strings.newTaskPositionDescription)
+      .addDropdown((dropdown) => dropdown
+        .addOption("start", strings.newTaskPositionStartLabel)
+        .addOption("end", strings.newTaskPositionEndLabel)
+        .setValue(taskList.newTaskPosition ?? "end")
+        .setDisabled(taskList.order !== "manual")
+        .onChange(async (value) => {
+          const previousValue = taskList.newTaskPosition ?? "end";
+          taskList.newTaskPosition = value === "start" ? "start" : "end";
+          dropdown.setDisabled(true);
+
+          try {
+            await this.plugin.saveSettings();
+          } catch (error) {
+            taskList.newTaskPosition = previousValue;
+            dropdown.setValue(previousValue);
+            new Notice(String(error instanceof Error ? error.message : error));
+          } finally {
+            dropdown.setDisabled(taskList.order !== "manual");
+          }
+        }));
+
+    new Setting(group)
       .setName(strings.newTaskNameLabel)
       .setDesc(strings.newTaskNameDescription)
       .addText((text) => text

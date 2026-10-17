@@ -72,6 +72,10 @@ export interface AppLocalization {
   taskOrderDateAscLabel: string;
   taskOrderDateDescLabel: string;
   taskOrderManualLabel: string;
+  newTaskPositionLabel: string;
+  newTaskPositionDescription: string;
+  newTaskPositionStartLabel: string;
+  newTaskPositionEndLabel: string;
   moveTaskToTopLabel: string;
   moveTaskUpLabel: string;
   moveTaskDownLabel: string;
@@ -224,6 +228,10 @@ const defaultStrings: AppLocalization = {
   taskOrderDateAscLabel: "Date: earliest first",
   taskOrderDateDescLabel: "Date: latest first",
   taskOrderManualLabel: "Manual",
+  newTaskPositionLabel: "Create new tasks",
+  newTaskPositionDescription: "Applies to manually ordered task lists.",
+  newTaskPositionStartLabel: "At the beginning",
+  newTaskPositionEndLabel: "At the end",
   moveTaskToTopLabel: "Move to top",
   moveTaskUpLabel: "Move up",
   moveTaskDownLabel: "Move down",
@@ -387,6 +395,10 @@ const localizations: Record<string, Partial<AppLocalization>> = {
     taskOrderDateAscLabel: "Дата: раньше → позже",
     taskOrderDateDescLabel: "Дата: позже → раньше",
     taskOrderManualLabel: "Вручную",
+    newTaskPositionLabel: "Создавать новую задачу",
+    newTaskPositionDescription: "Применяется при ручном порядке задач.",
+    newTaskPositionStartLabel: "В начале",
+    newTaskPositionEndLabel: "В конце",
     moveTaskToTopLabel: "Переместить в начало",
     moveTaskUpLabel: "Переместить выше",
     moveTaskDownLabel: "Переместить ниже",

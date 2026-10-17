@@ -65,16 +65,11 @@ export function orderTasks(taskList: TaskList, tasks: Task[]): Task[] {
 }
 
 export function initializeManualOrder(taskList: TaskList, tasks: Task[]): string[] {
-  const orderedPaths = orderTasks(taskList, tasks).map((task) => task.file.path);
-
-  if (taskList.manualOrder.length === 0) {
-    return orderedPaths;
-  }
-
   const knownPaths = new Set(taskList.manualOrder);
+  const missingTasks = tasks.filter((task) => !knownPaths.has(task.file.path));
 
   return [
     ...taskList.manualOrder,
-    ...orderedPaths.filter((path) => !knownPaths.has(path)),
+    ...orderTasks(taskList, missingTasks).map((task) => task.file.path),
   ];
 }

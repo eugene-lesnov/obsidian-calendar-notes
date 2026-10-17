@@ -1,10 +1,11 @@
-import { App, ColorComponent, Modal, Setting, TFolder } from "obsidian";
+import { App, ColorComponent, DropdownComponent, Modal, Setting, TFolder } from "obsidian";
 
 import { DEFAULT_TASK_LIST_COLOR } from "../core/constants";
 import strings, { formatLocalizedString } from "../core/localization";
 import { buildDefaultTemplatePath } from "../core/pathDefaults";
 import type {
   CompletionBehavior,
+  NewTaskPosition,
   NewTaskListConfig,
   TaskList,
   TaskListColor,
@@ -39,6 +40,7 @@ export class TaskListSetupModal extends Modal {
       ? completionBehavior.completedFolder
       : "";
     let newTaskName = this.initialConfig.newTaskName;
+    let newTaskPosition = this.initialConfig.newTaskPosition ?? "start";
     let taskTemplate = this.initialConfig.taskTemplate;
     let order = this.initialConfig.order;
 
@@ -158,6 +160,7 @@ export class TaskListSetupModal extends Modal {
         });
       });
 
+    let newTaskPositionDropdown: DropdownComponent;
     new Setting(details)
       .setName(strings.taskOrderLabel)
       .setDesc(strings.taskOrderDescription)
@@ -170,7 +173,23 @@ export class TaskListSetupModal extends Modal {
         .setValue(order)
         .onChange((value) => {
           order = value as TaskOrder;
+          newTaskPositionDropdown.setDisabled(order !== "manual");
         }));
+
+    new Setting(details)
+      .setName(strings.newTaskPositionLabel)
+      .setDesc(strings.newTaskPositionDescription)
+      .addDropdown((dropdown) => {
+        newTaskPositionDropdown = dropdown;
+        dropdown
+          .addOption("start", strings.newTaskPositionStartLabel)
+          .addOption("end", strings.newTaskPositionEndLabel)
+          .setValue(newTaskPosition)
+          .setDisabled(order !== "manual")
+          .onChange((value) => {
+            newTaskPosition = value === "start" ? "start" : "end";
+          });
+      });
 
     const feedback = this.contentEl.createDiv({ cls: "vault-agenda-folder-feedback" });
     let submitting = false;
@@ -185,6 +204,7 @@ export class TaskListSetupModal extends Modal {
         activeFolder,
         completionBehavior,
         newTaskName,
+        newTaskPosition,
         taskTemplate,
         order,
       });
@@ -290,6 +310,7 @@ export class TaskListSetupModal extends Modal {
     activeFolder: string;
     completionBehavior: CompletionBehavior;
     newTaskName: string;
+    newTaskPosition: NewTaskPosition;
     taskTemplate: string;
     order: TaskOrder;
   }): NewTaskListConfig {
@@ -306,6 +327,7 @@ export class TaskListSetupModal extends Modal {
           }
         : { type: "keep" },
       newTaskName: config.newTaskName.trim(),
+      newTaskPosition: config.newTaskPosition,
       taskTemplate: config.taskTemplate.trim(),
       order: config.order,
     };

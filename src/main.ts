@@ -41,6 +41,7 @@ import {
   needsTaskCompletionReconciliation,
   setTaskCompleted,
 } from "./data/taskCompletion";
+import { initializeManualOrder } from "./data/taskOrdering";
 import { VaultAgendaSettingTab } from "./settings";
 import { AgendaView } from "./view/AgendaView";
 import { TaskListSetupModal } from "./view/TaskListSetupModal";
@@ -102,6 +103,7 @@ function normalizeSettings(savedSettings: Partial<VaultAgendaSettings>): VaultAg
         : null,
       activeFolder: taskList.activeFolder,
       newTaskName: taskList.newTaskName,
+      newTaskPosition: taskList.newTaskPosition === "start" ? "start" : "end",
       taskTemplate: taskList.taskTemplate,
       order: taskList.order,
       manualOrder: [...taskList.manualOrder],
@@ -370,13 +372,29 @@ export default class VaultAgendaPlugin extends Plugin {
       }
     }
 
-    if (current?.kind === "task" && current.taskLocation === "active") {
+    if (current?.kind === "task" && current.taskLocation === "active" && !current.done) {
       const currentList = this.settings.taskLists.find((list) => list.id === current.taskListId);
       const tracksManualOrder = currentList
         && (currentList.order === "manual" || currentList.manualOrder.length > 0);
 
       if (tracksManualOrder && !currentList.manualOrder.includes(current.file.path)) {
-        currentList.manualOrder.push(current.file.path);
+        const existingTask = previous?.kind === "task"
+          && previous.taskListId === current.taskListId
+          && previous.taskLocation === "active"
+          && !previous.done;
+        const tasks = this.itemIndex.getActiveTasks(currentList.id);
+        currentList.manualOrder = initializeManualOrder(
+          currentList,
+          existingTask ? tasks : tasks.filter((task) => task.file.path !== current.file.path),
+        );
+
+        if (!existingTask) {
+          if (currentList.newTaskPosition === "start") {
+            currentList.manualOrder.unshift(current.file.path);
+          } else {
+            currentList.manualOrder.push(current.file.path);
+          }
+        }
         changed = true;
       }
     }
@@ -565,6 +583,7 @@ export default class VaultAgendaPlugin extends Plugin {
       color: null,
       activeFolder: "",
       newTaskName: strings.newTaskDefaultTitle,
+      newTaskPosition: "start",
       taskTemplate: "",
       order: "title-asc",
       completionBehavior: { type: "keep" },

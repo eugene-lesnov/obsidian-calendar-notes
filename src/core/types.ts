@@ -12,6 +12,8 @@ export type TaskListColor = string | null;
 
 export type TaskOrder = "title-asc" | "title-desc" | "date-asc" | "date-desc" | "manual";
 
+export type NewTaskPosition = "start" | "end";
+
 export type CompletionBehavior =
   | { type: "keep" }
   | { type: "move"; completedFolder: string };
@@ -22,6 +24,7 @@ export type TaskList = {
   color: TaskListColor;
   activeFolder: string;
   newTaskName: string;
+  newTaskPosition?: NewTaskPosition;
   taskTemplate: string;
   order: TaskOrder;
   manualOrder: string[];
