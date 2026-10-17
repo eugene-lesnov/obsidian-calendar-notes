@@ -1,6 +1,6 @@
 {
   "name": "obsidian-calendar-notes",
-  "version": "0.6.9",
+  "version": "0.7.0",
   "description": "Plan dated notes and file-based tasks in a compact calendar, with lists, repeats, and overdue tracking.",
   "main": "main.js",
   "type": "module",
