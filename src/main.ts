@@ -10,6 +10,7 @@ import {
 import {
   COMMAND_TOGGLE_CALENDAR_NOTES,
   HOVER_LINK_SOURCE,
+  MARKDOWN_EXTENSION,
   RIBBON_ICON,
   VIEW_TYPE_CALENDAR_NOTES,
   createDefaultSettings,
@@ -27,7 +28,7 @@ import { classifyItemFile } from "./data/item";
 import type { ItemUpsertResult } from "./data/itemIndex";
 import { ItemIndex } from "./data/itemIndex";
 import { ItemReconciliationQueue } from "./data/itemReconciliation";
-import { validateTaskLists } from "./data/itemScopes";
+import { findTaskScope, validateTaskLists } from "./data/itemScopes";
 import {
   completeRepeatingOccurrence,
   createDatedItem,
@@ -148,6 +149,7 @@ export default class CalendarNotesPlugin extends Plugin {
       reconcileItemName(this.app, this.settings, file, trigger, previousDateId),
   );
   private settingsSaveQueue = Promise.resolve();
+  private pendingReindexes = 0;
   private taskListSetupPromise: Promise<TaskList | null> | null = null;
 
   async onload(): Promise<void> {
@@ -185,6 +187,9 @@ export default class CalendarNotesPlugin extends Plugin {
 
       this.itemIndex.rebuild();
       this.registerVaultEvents();
+      if (this.pruneManualOrders()) {
+        this.saveManualOrder();
+      }
       this.refreshViews();
     });
   }
@@ -310,6 +315,14 @@ export default class CalendarNotesPlugin extends Plugin {
         this.reconcile(file, "frontmatter", previousDateId);
       }),
     );
+
+    this.registerEvent(
+      metadataCache.on("resolved", () => {
+        if (this.pruneManualOrders()) {
+          this.saveManualOrder();
+        }
+      }),
+    );
   }
 
   private handleFileEvent(
@@ -356,7 +369,12 @@ export default class CalendarNotesPlugin extends Plugin {
       const previousIndex = previousList?.manualOrder.indexOf(previousPath) ?? -1;
 
       if (previousList && previousIndex >= 0) {
-        if (current?.kind === "task" && current.taskListId === previous.taskListId) {
+        if (
+          current?.kind === "task"
+          && current.taskListId === previous.taskListId
+          && current.taskLocation === "active"
+          && !current.done
+        ) {
           if (previousPath !== current.file.path) {
             if (previousList.manualOrder.includes(current.file.path)) {
               previousList.manualOrder.splice(previousIndex, 1);
@@ -398,6 +416,70 @@ export default class CalendarNotesPlugin extends Plugin {
         changed = true;
       }
     }
+
+    if (changed) {
+      this.saveManualOrder();
+    }
+  }
+
+  private pruneManualOrders(settings = this.settings): boolean {
+    if (
+      !this.app.workspace.layoutReady
+      || (settings === this.settings && this.pendingReindexes > 0)
+    ) {
+      return false;
+    }
+
+    let changed = false;
+
+    for (const taskList of settings.taskLists) {
+      const seen = new Set<string>();
+      const manualOrder = taskList.manualOrder.filter((path) => {
+        if (seen.has(path)) {
+          return false;
+        }
+
+        seen.add(path);
+        const file = this.app.vault.getAbstractFileByPath(path);
+
+        if (!(file instanceof TFile) || file.extension !== MARKDOWN_EXTENSION) {
+          return false;
+        }
+
+        if (!this.app.metadataCache.getFileCache(file)) {
+          const scope = findTaskScope(file, settings);
+
+          return scope?.taskList.id === taskList.id && scope.location === "active";
+        }
+
+        const item = classifyItemFile(this.app, file, settings);
+
+        return item?.kind === "task"
+          && item.taskListId === taskList.id
+          && item.taskLocation === "active"
+          && !item.done;
+      });
+
+      if (manualOrder.length !== taskList.manualOrder.length) {
+        taskList.manualOrder = manualOrder;
+        changed = true;
+      }
+    }
+
+    return changed;
+  }
+
+  private syncSavedManualOrders(savedSettings: CalendarNotesSettings): void {
+    if (!this.pruneManualOrders()) {
+      return;
+    }
+
+    const changed = this.settings.taskLists.some((taskList) => {
+      const savedOrder = savedSettings.taskLists.find((saved) => saved.id === taskList.id)?.manualOrder;
+
+      return savedOrder?.length !== taskList.manualOrder.length
+        || taskList.manualOrder.some((path, index) => path !== savedOrder[index]);
+    });
 
     if (changed) {
       this.saveManualOrder();
@@ -513,9 +595,11 @@ export default class CalendarNotesPlugin extends Plugin {
 
   async saveSettings(): Promise<void> {
     const settings = normalizeSettings(this.settings);
+    this.pruneManualOrders(settings);
 
     await this.enqueueSettingsSave(async () => {
       await this.saveData(settings);
+      this.syncSavedManualOrders(settings);
       this.refreshViews();
     });
   }
@@ -523,9 +607,16 @@ export default class CalendarNotesPlugin extends Plugin {
   async saveSettingsAndReindex(): Promise<void> {
     const settings = normalizeSettings(this.settings);
     validateTaskLists(settings);
+    this.pruneManualOrders(settings);
+    this.pendingReindexes += 1;
 
     await this.enqueueSettingsSave(async () => {
-      await this.saveData(settings);
+      try {
+        await this.saveData(settings);
+      } finally {
+        this.pendingReindexes -= 1;
+      }
+      this.syncSavedManualOrders(settings);
       this.itemIndex.rebuild();
       this.refreshViews();
     });

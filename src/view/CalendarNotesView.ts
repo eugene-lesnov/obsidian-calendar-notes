@@ -235,15 +235,10 @@ export class CalendarNotesView extends ItemView {
       return;
     }
 
-    const activePaths = this.plugin.itemIndex.getActiveTasks(taskList.id)
-      .map((task) => task.file.path);
-    const allPaths = [...taskList.manualOrder];
-
-    activePaths.forEach((path) => {
-      if (!allPaths.includes(path)) {
-        allPaths.push(path);
-      }
-    });
+    const allPaths = initializeManualOrder(
+      taskList,
+      this.plugin.itemIndex.getActiveTasks(taskList.id),
+    );
 
     const sourceIndex = allPaths.indexOf(sourcePath);
 
