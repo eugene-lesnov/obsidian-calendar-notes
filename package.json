@@ -1,5 +1,5 @@
 {
-  "name": "obsidian-vault-agenda",
+  "name": "obsidian-calendar-notes",
   "version": "0.6.8",
   "description": "Plan dated notes and file-based tasks in a compact calendar, with lists, repeats, and overdue tracking.",
   "main": "main.js",

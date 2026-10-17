@@ -1,6 +1,6 @@
 import { App, TFile, normalizePath } from "obsidian";
 
-import type { VaultAgendaSettings } from "../core/types";
+import type { CalendarNotesSettings } from "../core/types";
 import { classifyItemFile } from "./item";
 import { MARKDOWN_SUFFIX, makeUniquePath } from "./fileNames";
 import { joinPath } from "./folders";
@@ -24,7 +24,7 @@ export type TaskFilenameMigrationResult = {
 function resolveTargetName(
   file: TFile,
   dateId: string | undefined,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   enabled: boolean,
 ): string | null {
   const parsed = parseItemName(file.basename, settings);
@@ -50,7 +50,7 @@ function resolveTargetName(
 
 export function planTaskFilenameMigration(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   enabled: boolean,
 ): TaskFilenameMigrationPlan {
   const entries: TaskFilenameMigrationEntry[] = [];
@@ -76,7 +76,7 @@ export function planTaskFilenameMigration(
 
 export async function applyTaskFilenameMigration(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   enabled: boolean,
   plan: TaskFilenameMigrationPlan,
 ): Promise<TaskFilenameMigrationResult> {
@@ -108,7 +108,7 @@ export async function applyTaskFilenameMigration(
       await app.fileManager.renameFile(entry.file, targetPath);
       applied.push(entry);
     } catch (error) {
-      console.error("Failed to migrate a Vault Agenda task filename.", error);
+      console.error("Failed to migrate a Calendar Notes task filename.", error);
       const rollbackFailures = await rollbackTaskFilenameMigration(app, { entries: applied });
 
       return {
@@ -139,7 +139,7 @@ export async function rollbackTaskFilenameMigration(
 
       await app.fileManager.renameFile(entry.file, entry.originalPath);
     } catch (error) {
-      console.error("Failed to roll back a Vault Agenda task filename migration.", error);
+      console.error("Failed to roll back a Calendar Notes task filename migration.", error);
       failures.push(entry.file.path);
     }
   }

@@ -1,6 +1,6 @@
 import type { TFile } from "obsidian";
 
-import type { TaskList, VaultAgendaSettings } from "../src/core/types";
+import type { TaskList, CalendarNotesSettings } from "../src/core/types";
 import type { Task } from "../src/data/item";
 import type { FakeApp } from "./obsidian";
 
@@ -20,8 +20,8 @@ export function createTaskList(overrides: Partial<TaskList> = {}): TaskList {
 }
 
 export function createSettings(
-  overrides: Partial<VaultAgendaSettings> = {},
-): VaultAgendaSettings {
+  overrides: Partial<CalendarNotesSettings> = {},
+): CalendarNotesSettings {
   return {
     dateFormat: "YYYY-MM-DD",
     weekStart: "monday",
@@ -50,7 +50,7 @@ export function addTask(
 ): Task {
   const done = options.done ?? false;
   const frontmatter: Record<string, unknown> = {
-    vaultAgendaItem: "task",
+    calendarNotesItem: "task",
     done,
   };
 

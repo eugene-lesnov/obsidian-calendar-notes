@@ -1,7 +1,7 @@
 import type { App, TFile } from "obsidian";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { TaskList, VaultAgendaSettings } from "../src/core/types";
+import type { TaskList, CalendarNotesSettings } from "../src/core/types";
 import type { Task } from "../src/data/item";
 import {
   applyExternalTaskCompletion,
@@ -10,7 +10,7 @@ import {
 } from "../src/data/taskCompletion";
 import { FakeApp } from "./obsidian";
 
-function createSettings(completionBehavior: TaskList["completionBehavior"]): VaultAgendaSettings {
+function createSettings(completionBehavior: TaskList["completionBehavior"]): CalendarNotesSettings {
   return {
     dateFormat: "YYYY-MM-DD",
     weekStart: "monday",
@@ -41,7 +41,7 @@ function addTask(
   completed?: string,
 ): Task {
   const frontmatter: Record<string, unknown> = {
-    vaultAgendaItem: "task",
+    calendarNotesItem: "task",
     done,
   };
 

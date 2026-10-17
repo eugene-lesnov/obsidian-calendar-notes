@@ -14,30 +14,30 @@ describe("ItemIndex", () => {
     const app = new FakeApp();
     const settings = createSettings();
     app.addFile("Notes/2026-08-12 - Note.md", {
-      vaultAgendaItem: "note",
+      calendarNotesItem: "note",
       date: "2026-08-12",
     });
     app.addFile("Active/2026-08-10 - Zebra.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-10",
       done: false,
     });
     app.addFile("Active/2026-08-10 - Alpha.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-10",
       done: false,
     });
     app.addFile("Active/Unscheduled.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       done: false,
     });
     app.addFile("Completed/2026-08-11 - Done.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-11",
       done: true,
     });
     app.addFile("Outside/Ignored.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       done: false,
     });
     const index = new ItemIndex(app as unknown as App, () => settings);
@@ -68,7 +68,7 @@ describe("ItemIndex", () => {
     const app = new FakeApp();
     const settings = createSettings();
     const file = app.addFile("Active/2026-08-12 - Task.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-12",
       done: false,
     });
@@ -89,7 +89,7 @@ describe("ItemIndex", () => {
     const app = new FakeApp();
     const settings = createSettings();
     const file = app.addFile("Active/Task.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       done: false,
     });
     const index = new ItemIndex(app as unknown as App, () => settings);

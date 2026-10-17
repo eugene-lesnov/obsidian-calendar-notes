@@ -1,7 +1,7 @@
 import type { App, TFile } from "obsidian";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { VaultAgendaSettings } from "../src/core/types";
+import type { CalendarNotesSettings } from "../src/core/types";
 import type { Task } from "../src/data/item";
 import {
   completeRepeatingOccurrence,
@@ -15,7 +15,7 @@ import {
 } from "../src/data/itemMutations";
 import { FakeApp } from "./obsidian";
 
-const settings: VaultAgendaSettings = {
+const settings: CalendarNotesSettings = {
   dateFormat: "YYYY-MM-DD",
   weekStart: "monday",
   syncTaskDateWithFilename: false,
@@ -39,7 +39,7 @@ const settings: VaultAgendaSettings = {
 
 function addSourceTask(app: FakeApp): Task {
   const file = app.addFile("Completed/2026-08-10 - Task.md", {
-    vaultAgendaItem: "task",
+    calendarNotesItem: "task",
     date: "2026-08-10",
     done: true,
     completed: "2026-08-12",
@@ -61,7 +61,7 @@ function addSourceTask(app: FakeApp): Task {
 
 function addExpectedOccurrence(app: FakeApp): void {
   app.addFile("Active/2026-08-13 - Task.md", {
-    vaultAgendaItem: "task",
+    calendarNotesItem: "task",
     date: "2026-08-13",
     done: false,
     repeat: "daily",
@@ -107,7 +107,7 @@ describe("completeRepeatingOccurrence", () => {
     const app = new FakeApp();
     const source = addSourceTask(app);
     app.addFile("Active/2026-08-13 - Task.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-14",
       done: false,
       repeat: "daily",
@@ -174,7 +174,7 @@ describe("item mutations", () => {
     const app = new FakeApp();
     app.addFile(
       "Templates/Note.md",
-      { tag: "template", date: "wrong", vaultAgendaItem: "task" },
+      { tag: "template", date: "wrong", calendarNotesItem: "task" },
       "---\n{}\n---\nTemplate body\n",
     );
     const configured = {
@@ -187,7 +187,7 @@ describe("item mutations", () => {
     expect(file.path).toBe("Notes/2026-08-12 - Note.md");
     expect(frontmatter).toMatchObject({
       tag: "template",
-      vaultAgendaItem: "note",
+      calendarNotesItem: "note",
       date: "2026-08-12",
     });
     expect(frontmatter).not.toHaveProperty("done");
@@ -205,7 +205,7 @@ describe("item mutations", () => {
 
     expect(file.path).toBe("Active/Task (2).md");
     expect(app.frontmatter.get(file)).toMatchObject({
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       done: false,
     });
     expect(app.frontmatter.get(file)).not.toHaveProperty("date");
@@ -340,7 +340,7 @@ describe("item mutations", () => {
   it("reconciles note date from a renamed filename", async () => {
     const app = new FakeApp();
     const file = app.addFile("Notes/2026-08-13 - Note.md", {
-      vaultAgendaItem: "note",
+      calendarNotesItem: "note",
       date: "2026-08-12",
     });
 
@@ -352,7 +352,7 @@ describe("item mutations", () => {
   it("reconciles note filename from changed frontmatter", async () => {
     const app = new FakeApp();
     const file = app.addFile("Notes/2026-08-13 - Note.md", {
-      vaultAgendaItem: "note",
+      calendarNotesItem: "note",
       date: "2026-08-12",
     });
 
@@ -370,7 +370,7 @@ describe("item mutations", () => {
     const app = new FakeApp();
     const configured = { ...settings, syncTaskDateWithFilename: true };
     const file = app.addFile("Active/2026-08-13 - Task.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-12",
       done: false,
     });
@@ -390,7 +390,7 @@ describe("item mutations", () => {
     const app = new FakeApp();
     const configured = { ...settings, syncTaskDateWithFilename: true };
     const file = app.addFile('Active/2026-08-12 - Task "Owner".md', {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-13",
       done: false,
     });
@@ -413,7 +413,7 @@ describe("item mutations", () => {
       syncTaskDateWithFilename: true,
     };
     const file = app.addFile('Active/32.08.2026 - Task "Owner".md', {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "31.08.2026",
       done: false,
     });
@@ -433,7 +433,7 @@ describe("item mutations", () => {
     const app = new FakeApp();
     const configured = { ...settings, syncTaskDateWithFilename: true };
     const file = app.addFile('Active/2026-08-12 - Task "Owner".md', {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       done: false,
     });
 
@@ -451,7 +451,7 @@ describe("item mutations", () => {
   it("uses a unique name during frontmatter reconciliation conflicts", async () => {
     const app = new FakeApp();
     const file = app.addFile("Notes/2026-08-13 - Note.md", {
-      vaultAgendaItem: "note",
+      calendarNotesItem: "note",
       date: "2026-08-12",
     });
     app.addFile("Notes/2026-08-12 - Note.md", {});

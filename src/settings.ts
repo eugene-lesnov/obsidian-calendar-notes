@@ -34,7 +34,7 @@ import {
   planTaskFilenameMigration,
   rollbackTaskFilenameMigration,
 } from "./data/taskFilenameMigration";
-import type VaultAgendaPlugin from "./main";
+import type CalendarNotesPlugin from "./main";
 import { DateFormatMigrationModal } from "./view/DateFormatMigrationModal";
 import { FolderSuggest } from "./view/FolderSuggest";
 import { MarkdownFileSuggest } from "./view/MarkdownFileSuggest";
@@ -75,7 +75,7 @@ class ConfirmTaskListDeleteModal extends Modal {
   }
 }
 
-export class VaultAgendaSettingTab extends PluginSettingTab {
+export class CalendarNotesSettingTab extends PluginSettingTab {
   private readonly pendingMoveTaskListIds = new Set<string>();
 
   private readonly saveAndReindex = debounce(
@@ -89,7 +89,7 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
     true,
   );
 
-  constructor(app: App, private plugin: VaultAgendaPlugin) {
+  constructor(app: App, private plugin: CalendarNotesPlugin) {
     super(app, plugin);
   }
 
@@ -216,7 +216,7 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
           await this.plugin.saveSettingsAndReindex();
         } catch (rollbackSettingsError) {
           console.error(
-            "Failed to restore Vault Agenda settings after task filename migration error.",
+            "Failed to restore Calendar Notes settings after task filename migration error.",
             rollbackSettingsError,
           );
           this.plugin.itemIndex.rebuild();
@@ -247,10 +247,10 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
     taskList: TaskList,
     index: number,
   ): void {
-    const group = containerEl.createDiv({ cls: "vault-agenda-task-list-settings-group" });
+    const group = containerEl.createDiv({ cls: "calendar-notes-task-list-settings-group" });
     const heading = new Setting(group);
-    heading.settingEl.addClass("vault-agenda-task-list-settings-header");
-    const nameFeedback = group.createDiv({ cls: "vault-agenda-task-list-name-feedback" });
+    heading.settingEl.addClass("calendar-notes-task-list-settings-header");
+    const nameFeedback = group.createDiv({ cls: "calendar-notes-task-list-name-feedback" });
 
     const updateDuplicateNameWarning = (): void => {
       const normalizedName = taskList.name.trim().toLocaleLowerCase();
@@ -292,7 +292,7 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
         }
       });
       text.inputEl.setAttribute("aria-label", strings.taskListNameLabel);
-      text.inputEl.addClass("vault-agenda-task-list-name-input");
+      text.inputEl.addClass("calendar-notes-task-list-name-input");
     });
     heading.addExtraButton((button) => button
       .setIcon("arrow-up")
@@ -320,7 +320,7 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
       }),
       onCommit: (value) => this.commitActiveFolder(taskList, value),
     });
-    activeFolderSetting.settingEl.addClass("vault-agenda-task-list-setting");
+    activeFolderSetting.settingEl.addClass("calendar-notes-task-list-setting");
 
     const completionSetting = new Setting(group)
       .setName(strings.taskListCompletionLabel)
@@ -361,7 +361,7 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
           this.saveAndReindex();
           this.display();
         }));
-    completionSetting.settingEl.addClass("vault-agenda-task-list-setting");
+    completionSetting.settingEl.addClass("calendar-notes-task-list-setting");
 
     if (
       taskList.completionBehavior.type === "move"
@@ -563,13 +563,13 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
       .setName(strings.dateFormatLabel)
       .setDesc(strings.dateFormatDescription);
 
-    setting.settingEl.addClass("vault-agenda-date-format-setting");
+    setting.settingEl.addClass("calendar-notes-date-format-setting");
 
-    const detailsEl = setting.settingEl.createDiv({ cls: "vault-agenda-format-details" });
-    const feedbackEl = detailsEl.createDiv({ cls: "vault-agenda-format-preview" });
+    const detailsEl = setting.settingEl.createDiv({ cls: "calendar-notes-format-details" });
+    const feedbackEl = detailsEl.createDiv({ cls: "calendar-notes-format-preview" });
 
     detailsEl.createDiv({
-      cls: "vault-agenda-format-warning",
+      cls: "calendar-notes-format-warning",
       text: strings.dateFormatWarning,
     });
 
@@ -577,7 +577,7 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
     let applyButton: ButtonComponent | null = null;
 
     const updateFeedback = (format: string, valid: boolean): void => {
-      feedbackEl.toggleClass("vault-agenda-format-error", !valid);
+      feedbackEl.toggleClass("calendar-notes-format-error", !valid);
       feedbackEl.setText(
         valid
           ? formatLocalizedString(strings.dateFormatPreview, { date: this.previewDate(format) })
@@ -663,7 +663,7 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
         try {
           await this.plugin.saveSettingsAndReindex();
         } catch (rollbackSettingsError) {
-          console.error("Failed to restore Vault Agenda settings after migration error.", rollbackSettingsError);
+          console.error("Failed to restore Calendar Notes settings after migration error.", rollbackSettingsError);
           this.plugin.itemIndex.rebuild();
         }
 
@@ -704,7 +704,7 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
           }),
       );
 
-    setting.settingEl.addClass("vault-agenda-week-start-setting");
+    setting.settingEl.addClass("calendar-notes-week-start-setting");
   }
 
   private addFolderSetting(
@@ -741,7 +741,7 @@ export class VaultAgendaSettingTab extends PluginSettingTab {
       onCommit: (value: string) => Promise<void>;
     },
   ): void {
-    const feedback = setting.descEl.createDiv({ cls: "vault-agenda-folder-feedback" });
+    const feedback = setting.descEl.createDiv({ cls: "calendar-notes-folder-feedback" });
 
     setting.addText((text: TextComponent) => {
       let committedValue = options.value;

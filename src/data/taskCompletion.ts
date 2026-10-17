@@ -2,7 +2,7 @@ import { App, TFile, normalizePath } from "obsidian";
 
 import { getTodayDateId } from "../core/dateUtils";
 import strings from "../core/localization";
-import type { VaultAgendaSettings, TaskList } from "../core/types";
+import type { CalendarNotesSettings, TaskList } from "../core/types";
 import type { Task } from "./item";
 import { normalizeDateId } from "./item";
 import { MARKDOWN_SUFFIX, ensureFolderOrThrow, makeUniquePath } from "./fileNames";
@@ -17,7 +17,7 @@ export function isTaskCompletionTransitioning(file: TFile): boolean {
 }
 
 export function needsTaskCompletionReconciliation(
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   task: Task,
 ): boolean {
   const taskList = getTaskList(settings, task.taskListId);
@@ -74,7 +74,7 @@ async function moveTaskForCompletion(
     ? makeUniquePath(app, targetFolder, baseName)
     : directTargetPath;
 
-  await ensureFolderOrThrow(app, targetFolder, strings.createAgendaTaskFolderError);
+  await ensureFolderOrThrow(app, targetFolder, strings.createCalendarTaskFolderError);
   const originalPath = file.path;
   await app.fileManager.renameFile(file, targetPath);
 
@@ -101,7 +101,7 @@ async function rollbackMove(
 
 export async function setTaskCompleted(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   item: Task,
   completed: boolean,
   options: { stopRepeat?: boolean } = {},
@@ -168,7 +168,7 @@ export async function setTaskCompleted(
 
 export async function applyExternalTaskCompletion(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   current: Task,
 ): Promise<void> {
   if (isTaskCompletionTransitioning(current.file)) {

@@ -8,17 +8,17 @@ import {
 } from "obsidian";
 
 import {
-  COMMAND_TOGGLE_AGENDA,
+  COMMAND_TOGGLE_CALENDAR_NOTES,
   HOVER_LINK_SOURCE,
   RIBBON_ICON,
-  VIEW_TYPE_AGENDA,
+  VIEW_TYPE_CALENDAR_NOTES,
   createDefaultSettings,
 } from "./core/constants";
 import { getTodayDateId } from "./core/dateUtils";
 import strings, { formatLocalizedString, getLocales, setLocale } from "./core/localization";
 import type {
   NewTaskListConfig,
-  VaultAgendaSettings,
+  CalendarNotesSettings,
   TaskList,
   TaskOrder,
 } from "./core/types";
@@ -42,8 +42,8 @@ import {
   setTaskCompleted,
 } from "./data/taskCompletion";
 import { initializeManualOrder } from "./data/taskOrdering";
-import { VaultAgendaSettingTab } from "./settings";
-import { AgendaView } from "./view/AgendaView";
+import { CalendarNotesSettingTab } from "./settings";
+import { CalendarNotesView } from "./view/CalendarNotesView";
 import { TaskListSetupModal } from "./view/TaskListSetupModal";
 import { TaskListPickerModal } from "./view/TaskListPickerModal";
 
@@ -88,7 +88,7 @@ function isTaskList(value: unknown): value is TaskList {
     );
 }
 
-function normalizeSettings(savedSettings: Partial<VaultAgendaSettings>): VaultAgendaSettings {
+function normalizeSettings(savedSettings: Partial<CalendarNotesSettings>): CalendarNotesSettings {
   const defaults = createDefaultSettings();
   const settings = Object.assign({}, defaults, savedSettings);
 
@@ -133,8 +133,8 @@ function normalizeSettings(savedSettings: Partial<VaultAgendaSettings>): VaultAg
   return settings;
 }
 
-export default class VaultAgendaPlugin extends Plugin {
-  settings!: VaultAgendaSettings;
+export default class CalendarNotesPlugin extends Plugin {
+  settings!: CalendarNotesSettings;
   itemIndex!: ItemIndex;
   isMigrating = false;
 
@@ -157,19 +157,19 @@ export default class VaultAgendaPlugin extends Plugin {
 
     this.itemIndex = new ItemIndex(this.app, () => this.settings);
 
-    this.registerView(VIEW_TYPE_AGENDA, (leaf) => new AgendaView(leaf, this));
+    this.registerView(VIEW_TYPE_CALENDAR_NOTES, (leaf) => new CalendarNotesView(leaf, this));
 
     this.registerHoverLinkSource(HOVER_LINK_SOURCE, {
-      display: strings.agendaViewTitle,
+      display: strings.calendarNotesViewTitle,
       defaultMod: true,
     });
 
-    this.addRibbonIcon(RIBBON_ICON, strings.agendaRibbonLabel, () => {
+    this.addRibbonIcon(RIBBON_ICON, strings.calendarNotesRibbonLabel, () => {
       void this.toggleView();
     });
 
     this.registerCommands();
-    this.addSettingTab(new VaultAgendaSettingTab(this.app, this));
+    this.addSettingTab(new CalendarNotesSettingTab(this.app, this));
 
     this.registerInterval(
       window.setInterval(() => this.checkDateChange(), DATE_CHANGE_CHECK_MS),
@@ -191,8 +191,8 @@ export default class VaultAgendaPlugin extends Plugin {
 
   private registerCommands(): void {
     this.addCommand({
-      id: COMMAND_TOGGLE_AGENDA,
-      name: strings.toggleAgendaCommandLabel,
+      id: COMMAND_TOGGLE_CALENDAR_NOTES,
+      name: strings.toggleCalendarNotesCommandLabel,
       callback: () => {
         void this.toggleView();
       },
@@ -459,7 +459,7 @@ export default class VaultAgendaPlugin extends Plugin {
     void this.itemReconciliationQueue.enqueue(file, trigger, previousDateId)
       .then(() => this.reportedReconcileFailures.delete(path))
       .catch((error) => {
-        console.error("Failed to synchronize Vault Agenda item name and date.", error);
+        console.error("Failed to synchronize Calendar Notes item name and date.", error);
         this.notifyReconcileFailure(path);
       });
   }
@@ -506,7 +506,7 @@ export default class VaultAgendaPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    const savedSettings = ((await this.loadData()) ?? {}) as Partial<VaultAgendaSettings>;
+    const savedSettings = ((await this.loadData()) ?? {}) as Partial<CalendarNotesSettings>;
 
     this.settings = normalizeSettings(savedSettings);
   }
@@ -625,7 +625,7 @@ export default class VaultAgendaPlugin extends Plugin {
   }
 
   async toggleView(): Promise<void> {
-    const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_AGENDA);
+    const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_CALENDAR_NOTES);
 
     if (leaves.length === 0) {
       await this.activateView();
@@ -644,7 +644,7 @@ export default class VaultAgendaPlugin extends Plugin {
 
   async activateView(): Promise<void> {
     const { workspace } = this.app;
-    const existing = workspace.getLeavesOfType(VIEW_TYPE_AGENDA);
+    const existing = workspace.getLeavesOfType(VIEW_TYPE_CALENDAR_NOTES);
 
     if (existing.length > 0) {
       await workspace.revealLeaf(existing[0]);
@@ -657,7 +657,7 @@ export default class VaultAgendaPlugin extends Plugin {
       return;
     }
 
-    await leaf.setViewState({ type: VIEW_TYPE_AGENDA, active: true });
+    await leaf.setViewState({ type: VIEW_TYPE_CALENDAR_NOTES, active: true });
     await workspace.revealLeaf(leaf);
   }
 
@@ -665,9 +665,9 @@ export default class VaultAgendaPlugin extends Plugin {
     this.forEachView((view) => view.render());
   }
 
-  private forEachView(callback: (view: AgendaView) => void): void {
-    this.app.workspace.getLeavesOfType(VIEW_TYPE_AGENDA).forEach((leaf) => {
-      if (leaf.view instanceof AgendaView) {
+  private forEachView(callback: (view: CalendarNotesView) => void): void {
+    this.app.workspace.getLeavesOfType(VIEW_TYPE_CALENDAR_NOTES).forEach((leaf) => {
+      if (leaf.view instanceof CalendarNotesView) {
         callback(leaf.view);
       }
     });

@@ -90,7 +90,7 @@ describe("item classification", () => {
     const app = new FakeApp();
     const settings = createSettings();
     const file = app.addFile("Notes/2026-08-12 - Meeting.md", {
-      vaultAgendaItem: "note",
+      calendarNotesItem: "note",
       date: "2026-08-12",
     });
 
@@ -107,16 +107,16 @@ describe("item classification", () => {
   it("reports invalid marked items and ignores unrelated files", () => {
     const app = new FakeApp();
     const settings = createSettings();
-    const missingDate = app.addFile("Notes/Note.md", { vaultAgendaItem: "note" });
+    const missingDate = app.addFile("Notes/Note.md", { calendarNotesItem: "note" });
     const invalidDone = app.addFile("Active/Task.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       done: "false",
     });
     const unrelated = app.addFile("Elsewhere/Task.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       done: false,
     });
-    const text = app.addFile("Notes/Text.txt", { vaultAgendaItem: "note", date: "2026-08-12" });
+    const text = app.addFile("Notes/Text.txt", { calendarNotesItem: "note", date: "2026-08-12" });
 
     expect(classifyItemFileDetailed(app as unknown as App, asFile(missingDate), settings).type)
       .toBe("invalid");
@@ -132,13 +132,13 @@ describe("item classification", () => {
     const app = new FakeApp();
     const settings = createSettings();
     const active = app.addFile("Active/2026-08-12 - Task.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-12",
       done: false,
       repeat: "weekly",
     });
     const completed = app.addFile("Completed/Task.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       done: true,
       completed: "2026-08-11",
       repeat: "daily",

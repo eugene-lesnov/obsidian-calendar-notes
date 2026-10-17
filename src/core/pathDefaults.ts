@@ -1,7 +1,7 @@
-export const VAULT_AGENDA_ROOT_FOLDER = "Vault Agenda";
+export const CALENDAR_NOTES_ROOT_FOLDER = "Calendar Notes";
 
 export function buildDefaultNotesFolder(notesFolderName: string): string {
-  return `${VAULT_AGENDA_ROOT_FOLDER}/${notesFolderName}`;
+  return `${CALENDAR_NOTES_ROOT_FOLDER}/${notesFolderName}`;
 }
 
 export function buildDefaultTemplatePath(

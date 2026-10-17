@@ -1,9 +1,9 @@
 import { App, TFile } from "obsidian";
 
-import { MARKDOWN_EXTENSION } from "../core/constants";
+import { ITEM_MARKER_FIELD, MARKDOWN_EXTENSION } from "../core/constants";
 import { formatDateId, momentFormatToPattern, parseDateByPattern } from "../core/dateUtils";
 import type {
-  VaultAgendaSettings,
+  CalendarNotesSettings,
   RepeatFrequency,
   RepeatRule,
   TaskLocation,
@@ -11,12 +11,11 @@ import type {
 import { findTaskScope, isFileInsideFolder } from "./itemScopes";
 import { parseItemName } from "./itemName";
 
-const ITEM_MARKER_FIELD = "vaultAgendaItem";
 const DATE_ID_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const ITEM_KINDS: readonly ItemKind[] = ["note", "task"];
 const REPEAT_FREQUENCIES: readonly RepeatFrequency[] = ["daily", "weekly", "monthly", "yearly"];
 
-export type AgendaNote = {
+export type CalendarNote = {
   kind: "note";
   file: TFile;
   title: string;
@@ -35,7 +34,7 @@ export type Task = {
   taskLocation: TaskLocation;
 };
 
-export type Item = AgendaNote | Task;
+export type Item = CalendarNote | Task;
 export type ItemKind = Item["kind"];
 
 export type ItemClassificationResult =
@@ -63,7 +62,7 @@ function parseIsoDateId(value: string): string | null {
   return isRealDate(year, month, day) ? formatDateId(year, month, day) : null;
 }
 
-export function normalizeDateId(value: unknown, settings: VaultAgendaSettings): string | null {
+export function normalizeDateId(value: unknown, settings: CalendarNotesSettings): string | null {
   if (value instanceof Date) {
     if (Number.isNaN(value.getTime())) {
       return null;
@@ -120,7 +119,7 @@ function normalizeKind(value: unknown): ItemKind | null {
 export function classifyItemFile(
   app: App,
   file: TFile,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
 ): Item | null {
   const result = classifyItemFileDetailed(app, file, settings);
 
@@ -130,7 +129,7 @@ export function classifyItemFile(
 export function classifyItemFileDetailed(
   app: App,
   file: TFile,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
 ): ItemClassificationResult {
   if (file.extension !== MARKDOWN_EXTENSION) {
     return { type: "unrelated" };
@@ -156,7 +155,7 @@ export function classifyItemFileDetailed(
     }
 
     if (!dateId) {
-      return { type: "invalid", reason: "Vault Agenda note requires a valid date." };
+      return { type: "invalid", reason: "Calendar Notes note requires a valid date." };
     }
 
     return {

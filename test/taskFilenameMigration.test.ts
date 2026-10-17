@@ -14,7 +14,7 @@ describe("task filename migration", () => {
     const app = new FakeApp();
     const settings = createSettings();
     app.addFile("Active/2025-01-01 - History.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-12",
       done: false,
     });
@@ -30,7 +30,7 @@ describe("task filename migration", () => {
     const app = new FakeApp();
     const settings = createSettings();
     const file = app.addFile('Active/Task "Owner".md', {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-12",
       done: false,
     });
@@ -52,7 +52,7 @@ describe("task filename migration", () => {
     const app = new FakeApp();
     const settings = createSettings();
     const file = app.addFile("Active/Task.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-12",
       done: false,
     });
@@ -74,12 +74,12 @@ describe("task filename migration", () => {
     const app = new FakeApp();
     const settings = createSettings({ syncTaskDateWithFilename: true });
     app.addFile("Active/2026-08-12 - Synchronized.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-12",
       done: false,
     });
     app.addFile("Active/2025-01-01 - History.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-12",
       done: false,
     });
@@ -94,7 +94,7 @@ describe("task filename migration", () => {
     const app = new FakeApp();
     const settings = createSettings();
     const file = app.addFile("Active/Task.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-12",
       done: false,
     });
@@ -117,12 +117,12 @@ describe("task filename migration", () => {
     const app = new FakeApp();
     const settings = createSettings();
     const first = app.addFile("Active/First.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-12",
       done: false,
     });
     const second = app.addFile("Active/Second.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-13",
       done: false,
     });

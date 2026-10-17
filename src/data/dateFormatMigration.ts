@@ -1,6 +1,6 @@
 import { App, TFile, normalizePath } from "obsidian";
 
-import type { VaultAgendaSettings } from "../core/types";
+import type { CalendarNotesSettings } from "../core/types";
 import { classifyItemFile, normalizeDateId } from "./item";
 import { MARKDOWN_SUFFIX } from "./fileNames";
 import { joinPath } from "./folders";
@@ -47,8 +47,8 @@ function valueSignature(value: unknown): string {
 function resolveTargetPath(
   file: TFile,
   dateId: string,
-  settings: VaultAgendaSettings,
-  nextSettings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
+  nextSettings: CalendarNotesSettings,
 ): string | null {
   const parsed = parseItemName(file.basename, settings);
   const nextName = buildItemNameFromExistingTitle(nextSettings, dateId, parsed.title);
@@ -62,8 +62,8 @@ function buildEntry(
   file: TFile,
   dateId: string | undefined,
   frontmatter: Record<string, unknown>,
-  settings: VaultAgendaSettings,
-  nextSettings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
+  nextSettings: CalendarNotesSettings,
   renameFile: boolean,
 ): DateFormatMigrationEntry | null {
   const date = dateId ? buildDayIdentifier(dateId, nextSettings) : null;
@@ -95,10 +95,10 @@ function buildEntry(
 
 export function planDateFormatMigration(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   nextFormat: string,
 ): DateFormatMigrationPlan {
-  const nextSettings: VaultAgendaSettings = { ...settings, dateFormat: nextFormat };
+  const nextSettings: CalendarNotesSettings = { ...settings, dateFormat: nextFormat };
   const entries: DateFormatMigrationEntry[] = [];
   let renameCount = 0;
   let sample: DateFormatMigrationSample | null = null;
@@ -150,7 +150,7 @@ export function planDateFormatMigration(
 
 async function applyEntry(app: App, entry: DateFormatMigrationEntry): Promise<boolean> {
   if (entry.file.path !== entry.originalPath) {
-    throw new Error(`Vault Agenda item moved during date migration: ${entry.originalPath}`);
+    throw new Error(`Calendar Notes item moved during date migration: ${entry.originalPath}`);
   }
 
   if (entry.targetPath && app.vault.getAbstractFileByPath(entry.targetPath)) {
@@ -165,7 +165,7 @@ async function applyEntry(app: App, entry: DateFormatMigrationEntry): Promise<bo
           valueSignature(frontmatter.date) !== entry.originalDateSignature
           || valueSignature(frontmatter.completed) !== entry.originalCompletedSignature
         ) {
-          throw new Error(`Vault Agenda item changed during date migration: ${entry.originalPath}`);
+          throw new Error(`Calendar Notes item changed during date migration: ${entry.originalPath}`);
         }
 
         if (entry.date) {
@@ -193,7 +193,7 @@ async function applyEntry(app: App, entry: DateFormatMigrationEntry): Promise<bo
     try {
       await app.fileManager.renameFile(entry.file, entry.originalPath);
     } catch (rollbackError) {
-      console.error("Failed to roll back Vault Agenda item rename after migration error.", rollbackError);
+      console.error("Failed to roll back Calendar Notes item rename after migration error.", rollbackError);
     }
 
     throw error;
@@ -223,7 +223,7 @@ export async function applyDateFormatMigration(
 
       applied.push(entry);
     } catch (error) {
-      console.error("Failed to migrate Vault Agenda item to the new date format.", error);
+      console.error("Failed to migrate Calendar Notes item to the new date format.", error);
       failures.push(entry.file.path);
       break;
     }
@@ -267,7 +267,7 @@ export async function rollbackDateFormatMigration(
         await app.fileManager.renameFile(entry.file, entry.originalPath);
       }
     } catch (error) {
-      console.error("Failed to roll back Vault Agenda date migration.", error);
+      console.error("Failed to roll back Calendar Notes date migration.", error);
       failures.push(entry.file.path);
     }
   }

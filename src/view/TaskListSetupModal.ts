@@ -102,7 +102,7 @@ export class TaskListSetupModal extends Modal {
     renderCompletedFolder();
 
     const details = this.contentEl.createEl("details", {
-      cls: "vault-agenda-task-list-setup-details",
+      cls: "calendar-notes-task-list-setup-details",
     });
     details.createEl("summary", { text: strings.taskListSetupAdvancedLabel });
 
@@ -191,7 +191,7 @@ export class TaskListSetupModal extends Modal {
           });
       });
 
-    const feedback = this.contentEl.createDiv({ cls: "vault-agenda-folder-feedback" });
+    const feedback = this.contentEl.createDiv({ cls: "calendar-notes-folder-feedback" });
     let submitting = false;
     const submit = async (): Promise<void> => {
       if (submitting) {
@@ -265,7 +265,7 @@ export class TaskListSetupModal extends Modal {
     focus = false,
   ): void {
     const setting = new Setting(container).setName(name).setDesc(description);
-    const feedback = setting.descEl.createDiv({ cls: "vault-agenda-folder-feedback" });
+    const feedback = setting.descEl.createDiv({ cls: "calendar-notes-folder-feedback" });
 
     const showStatus = (value: string): void => {
       const path = normalizeFolderPath(value.trim());

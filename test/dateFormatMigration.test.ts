@@ -14,7 +14,7 @@ describe("date format migration", () => {
     const app = new FakeApp();
     const settings = createSettings();
     app.addFile("Notes/2026-08-12 - Note.md", {
-      vaultAgendaItem: "note",
+      calendarNotesItem: "note",
       date: "2026-08-12",
     });
 
@@ -26,11 +26,11 @@ describe("date format migration", () => {
     const app = new FakeApp();
     const settings = createSettings();
     const note = app.addFile("Notes/2026-08-12 - Note.md", {
-      vaultAgendaItem: "note",
+      calendarNotesItem: "note",
       date: "2026-08-12",
     });
     const task = app.addFile("Active/2026-08-10 - Task.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-10",
       done: true,
       completed: "2026-08-11",
@@ -60,7 +60,7 @@ describe("date format migration", () => {
     const app = new FakeApp();
     const settings = createSettings();
     app.addFile("Active/Custom task.md", {
-      vaultAgendaItem: "task",
+      calendarNotesItem: "task",
       date: "2026-08-10",
       done: false,
     });
@@ -80,11 +80,11 @@ describe("date format migration", () => {
     const app = new FakeApp();
     const settings = createSettings();
     const first = app.addFile("Notes/2026-08-10 - First.md", {
-      vaultAgendaItem: "note",
+      calendarNotesItem: "note",
       date: "2026-08-10",
     });
     app.addFile("Notes/2026-08-11 - Second.md", {
-      vaultAgendaItem: "note",
+      calendarNotesItem: "note",
       date: "2026-08-11",
     });
     const plan = planDateFormatMigration(
@@ -107,7 +107,7 @@ describe("date format migration", () => {
     const app = new FakeApp();
     const settings = createSettings();
     const note = app.addFile("Notes/2026-08-12 - Note.md", {
-      vaultAgendaItem: "note",
+      calendarNotesItem: "note",
       date: "2026-08-12",
     });
     const plan = planDateFormatMigration(
@@ -129,7 +129,7 @@ describe("date format migration", () => {
     const app = new FakeApp();
     const settings = createSettings();
     const note = app.addFile("Notes/2026-08-12 - Note.md", {
-      vaultAgendaItem: "note",
+      calendarNotesItem: "note",
       date: "2026-08-12",
     });
     const plan = planDateFormatMigration(
@@ -148,7 +148,7 @@ describe("date format migration", () => {
     const app = new FakeApp();
     const settings = createSettings();
     app.addFile("Notes/2026-08-12 - Note.md", {
-      vaultAgendaItem: "note",
+      calendarNotesItem: "note",
       date: "2026-08-12",
     });
     const plan = planDateFormatMigration(

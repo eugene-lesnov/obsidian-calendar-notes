@@ -6,7 +6,7 @@ import type { TaskListColor } from "../core/types";
 import type { Item, Task } from "../data/item";
 
 const COLLAPSED_OVERDUE_TASK_COUNT = 3;
-const ITEM_TITLE_TOOLTIP_CLASS = "vault-agenda-item-title-tooltip";
+const ITEM_TITLE_TOOLTIP_CLASS = "calendar-notes-item-title-tooltip";
 
 function removeItemTitleTooltip(): void {
   document.querySelectorAll(`.${ITEM_TITLE_TOOLTIP_CLASS}`).forEach((tooltip) => {
@@ -64,12 +64,12 @@ function renderSectionHeader(
   addTitle: string,
   onAdd: () => void,
 ): void {
-  const header = section.createDiv({ cls: "vault-agenda-section-header" });
+  const header = section.createDiv({ cls: "calendar-notes-section-header" });
 
-  header.createDiv({ cls: "vault-agenda-section-title", text: label });
+  header.createDiv({ cls: "calendar-notes-section-title", text: label });
 
   const addButton = header.createEl("button", {
-    cls: "vault-agenda-icon-button vault-agenda-add-button",
+    cls: "calendar-notes-icon-button calendar-notes-add-button",
   });
 
   addButton.setAttribute("aria-label", addTitle);
@@ -79,7 +79,7 @@ function renderSectionHeader(
 
 function renderCheckbox(item: HTMLElement, entry: Task, callbacks: ItemCallbacks): void {
   const checkbox = item.createEl("input", {
-    cls: "vault-agenda-task-checkbox",
+    cls: "calendar-notes-task-checkbox",
     type: "checkbox",
   });
 
@@ -99,7 +99,7 @@ export function renderTaskRepeatMeta(
   }
 
   const meta = body.createDiv({
-    cls: "vault-agenda-task-repeat-meta",
+    cls: "calendar-notes-task-repeat-meta",
     text: occurrence?.text ?? formatLocalizedString(strings.taskRepeatMetaLabel, {
       repeat: getRepeatLabel(task.repeat.frequency),
     }),
@@ -131,7 +131,7 @@ function renderTaskRepeatIcon(container: HTMLElement, task: Task): string | null
   const label = formatLocalizedString(strings.taskRepeatMetaLabel, {
     repeat: getRepeatLabel(task.repeat.frequency),
   });
-  const icon = container.createSpan({ cls: "vault-agenda-task-repeat-icon" });
+  const icon = container.createSpan({ cls: "calendar-notes-task-repeat-icon" });
 
   icon.setAttribute("aria-hidden", "true");
   setIcon(icon, "repeat-2");
@@ -148,14 +148,14 @@ function renderItemRow(
   callbacks: ItemCallbacks,
   datePrefix: string,
 ): void {
-  const item = list.createEl("li", { cls: "vault-agenda-item-row" });
+  const item = list.createEl("li", { cls: "calendar-notes-item-row" });
 
   if (entry.kind === "task") {
     const color = callbacks.getTaskListColor(entry.taskListId);
 
     if (color !== null) {
       item.addClass("is-list-colored");
-      item.style.setProperty("--vault-agenda-task-list-color", color);
+      item.style.setProperty("--calendar-notes-task-list-color", color);
     }
   }
 
@@ -165,18 +165,18 @@ function renderItemRow(
     renderCheckbox(item, entry, callbacks);
   }
 
-  const body = item.createDiv({ cls: "vault-agenda-item-body" });
-  const titleRow = body.createDiv({ cls: "vault-agenda-item-title-row" });
+  const body = item.createDiv({ cls: "calendar-notes-item-body" });
+  const titleRow = body.createDiv({ cls: "calendar-notes-item-title-row" });
   const title = titleRow.createEl("button", {
-    cls: "vault-agenda-item vault-agenda-item-title",
+    cls: "calendar-notes-item calendar-notes-item-title",
   });
 
   if (datePrefix) {
-    title.createSpan({ cls: "vault-agenda-task-date-prefix", text: datePrefix });
+    title.createSpan({ cls: "calendar-notes-task-date-prefix", text: datePrefix });
   }
 
   const titleText = title.createSpan({
-    cls: "vault-agenda-item-title-text",
+    cls: "calendar-notes-item-title-text",
     text: entry.title,
   });
   const repeatLabel = entry.kind === "task" ? renderTaskRepeatIcon(title, entry) : null;
@@ -187,7 +187,7 @@ function renderItemRow(
   registerHoverPreview(app, hoverParent, title, entry.file);
 
   const menuButton = item.createEl("button", {
-    cls: "vault-agenda-icon-button vault-agenda-item-menu-button",
+    cls: "calendar-notes-icon-button calendar-notes-item-menu-button",
   });
 
   menuButton.setAttribute("aria-label", strings.itemActionsLabel);
@@ -209,13 +209,13 @@ function renderItemList(
 ): void {
   if (items.length === 0) {
     if (emptyLabel) {
-      section.createDiv({ cls: "vault-agenda-empty-label", text: emptyLabel });
+      section.createDiv({ cls: "calendar-notes-empty-label", text: emptyLabel });
     }
 
     return;
   }
 
-  const list = section.createEl("ul", { cls: "vault-agenda-item-list" });
+  const list = section.createEl("ul", { cls: "calendar-notes-item-list" });
 
   items.forEach((entry) => {
     renderItemRow(
@@ -237,11 +237,11 @@ export function renderOverdueSection(
     return;
   }
 
-  const root = container.createDiv({ cls: "vault-agenda-overdue-section" });
-  const header = root.createDiv({ cls: "vault-agenda-section-header" });
+  const root = container.createDiv({ cls: "calendar-notes-overdue-section" });
+  const header = root.createDiv({ cls: "calendar-notes-section-header" });
 
   header.createDiv({
-    cls: "vault-agenda-section-title vault-agenda-overdue-title",
+    cls: "calendar-notes-section-title calendar-notes-overdue-title",
     text: formatLocalizedString(strings.overdueTasksLabel, {
       count: params.total,
     }),
@@ -256,7 +256,7 @@ export function renderOverdueSection(
       ? strings.hideOverdueTasksLabel
       : strings.showAllOverdueTasksLabel;
     const toggle = header.createEl("button", {
-      cls: "vault-agenda-icon-button vault-agenda-overdue-toggle",
+      cls: "calendar-notes-icon-button calendar-notes-overdue-toggle",
     });
 
     toggle.setAttribute("aria-label", toggleLabel);
@@ -276,16 +276,16 @@ export function renderOverdueSection(
 }
 
 export function renderDaySection(container: HTMLElement, params: DaySectionParams): void {
-  const root = container.createDiv({ cls: "vault-agenda-selected-day" });
+  const root = container.createDiv({ cls: "calendar-notes-selected-day" });
 
   root.createDiv({
-    cls: "vault-agenda-selected-day-title",
+    cls: "calendar-notes-selected-day-title",
     text: formatLocalizedString(strings.selectedDayLabel, {
       date: params.formatDayLabel(params.dateId),
     }),
   });
 
-  const tasksSection = root.createDiv({ cls: "vault-agenda-day-section" });
+  const tasksSection = root.createDiv({ cls: "calendar-notes-day-section" });
 
   renderSectionHeader(
     tasksSection,
@@ -304,7 +304,7 @@ export function renderDaySection(container: HTMLElement, params: DaySectionParam
     null,
   );
 
-  const notesSection = root.createDiv({ cls: "vault-agenda-day-section" });
+  const notesSection = root.createDiv({ cls: "calendar-notes-day-section" });
 
   renderSectionHeader(
     notesSection,

@@ -17,7 +17,7 @@ const TASK_ORDER_OPTIONS: Array<{ order: TaskOrder; label: () => string }> = [
   { order: "date-desc", label: () => strings.taskOrderDateDescLabel },
   { order: "manual", label: () => strings.taskOrderManualLabel },
 ];
-const TASK_PATH_DRAG_TYPE = "application/x-vault-agenda-task-path";
+const TASK_PATH_DRAG_TYPE = "application/x-calendar-notes-task-path";
 const activeDropTargets = new WeakMap<HTMLElement, HTMLElement>();
 const DRAG_SCROLL_EDGE = 48;
 const DRAG_SCROLL_STEP = 12;
@@ -151,13 +151,13 @@ function renderTask(
   task: Task,
   params: TaskListsSectionParams,
 ): void {
-  const item = list.createEl("li", { cls: "vault-agenda-item-row" });
+  const item = list.createEl("li", { cls: "calendar-notes-item-row" });
 
   if (taskList.order === "manual") {
     item.addClass("is-manually-ordered");
     item.dataset.taskPath = task.file.path;
 
-    const dragHandle = item.createSpan({ cls: "vault-agenda-task-drag-handle" });
+    const dragHandle = item.createSpan({ cls: "calendar-notes-task-drag-handle" });
     dragHandle.draggable = true;
     dragHandle.setAttribute("aria-hidden", "true");
     setIcon(dragHandle, "grip-vertical");
@@ -270,7 +270,7 @@ function renderTask(
       scrollDuringDrag(scrollContainer, event.clientY);
 
       const target = document.elementFromPoint(event.clientX, event.clientY)
-        ?.closest<HTMLElement>(".vault-agenda-item-row[data-task-path]");
+        ?.closest<HTMLElement>(".calendar-notes-item-row[data-task-path]");
 
       if (!target || !list.contains(target) || target === item) {
         pointerDropTarget = null;
@@ -296,19 +296,19 @@ function renderTask(
 
   const displayTitle = task.file.basename;
   const checkbox = item.createEl("input", {
-    cls: "vault-agenda-task-checkbox",
+    cls: "calendar-notes-task-checkbox",
     type: "checkbox",
   });
   checkbox.setAttribute("aria-label", displayTitle);
   checkbox.addEventListener("change", () => params.onToggleTaskCompleted(task, checkbox.checked));
 
-  const body = item.createDiv({ cls: "vault-agenda-item-body" });
-  const titleRow = body.createDiv({ cls: "vault-agenda-item-title-row" });
+  const body = item.createDiv({ cls: "calendar-notes-item-body" });
+  const titleRow = body.createDiv({ cls: "calendar-notes-item-title-row" });
   const title = titleRow.createEl("button", {
-    cls: "vault-agenda-item vault-agenda-item-title",
+    cls: "calendar-notes-item calendar-notes-item-title",
   });
 
-  title.createSpan({ cls: "vault-agenda-item-title-text", text: displayTitle });
+  title.createSpan({ cls: "calendar-notes-item-title-text", text: displayTitle });
 
   title.setAttribute("aria-label", displayTitle);
   registerItemTitleTooltip(title, displayTitle);
@@ -329,7 +329,7 @@ function renderTask(
   );
 
   const menuButton = item.createEl("button", {
-    cls: "vault-agenda-icon-button vault-agenda-item-menu-button",
+    cls: "calendar-notes-icon-button calendar-notes-item-menu-button",
   });
   menuButton.setAttribute("aria-label", strings.itemActionsLabel);
   setIcon(menuButton, "more-vertical");
@@ -357,12 +357,12 @@ export function renderTaskListsSection(
   params: TaskListsSectionParams,
 ): void {
   if (params.taskLists.length === 0) {
-    const root = container.createDiv({ cls: "vault-agenda-task-lists" });
+    const root = container.createDiv({ cls: "calendar-notes-task-lists" });
     root.createDiv({
-      cls: "vault-agenda-section-title vault-agenda-task-lists-title",
+      cls: "calendar-notes-section-title calendar-notes-task-lists-title",
       text: strings.taskListsSectionLabel,
     });
-    const empty = root.createDiv({ cls: "vault-agenda-task-lists-empty" });
+    const empty = root.createDiv({ cls: "calendar-notes-task-lists-empty" });
     empty.createDiv({ text: strings.taskListsEmptyDescription });
     const setupButton = empty.createEl("button", {
       cls: "mod-cta",
@@ -372,13 +372,13 @@ export function renderTaskListsSection(
     return;
   }
 
-  const root = container.createDiv({ cls: "vault-agenda-task-lists" });
+  const root = container.createDiv({ cls: "calendar-notes-task-lists" });
   const sectionToggle = root.createEl("button", {
-    cls: "vault-agenda-section-title vault-agenda-task-lists-title",
+    cls: "calendar-notes-section-title calendar-notes-task-lists-title",
   });
   sectionToggle.setAttribute("aria-expanded", String(params.expanded));
   const sectionToggleIcon = sectionToggle.createSpan({
-    cls: "vault-agenda-task-lists-title-icon",
+    cls: "calendar-notes-task-lists-title-icon",
   });
   setIcon(sectionToggleIcon, params.expanded ? "chevron-down" : "chevron-right");
   sectionToggle.createSpan({ text: strings.taskListsSectionLabel });
@@ -391,33 +391,33 @@ export function renderTaskListsSection(
   params.taskLists.forEach((taskList) => {
     const tasks = params.getTasks(taskList.id);
     const expanded = params.isExpanded(taskList.id);
-    const section = root.createDiv({ cls: "vault-agenda-task-list" });
+    const section = root.createDiv({ cls: "calendar-notes-task-list" });
 
     if (taskList.color !== null) {
-      section.style.setProperty("--vault-agenda-task-list-color", taskList.color);
+      section.style.setProperty("--calendar-notes-task-list-color", taskList.color);
     }
 
-    const header = section.createDiv({ cls: "vault-agenda-section-header" });
+    const header = section.createDiv({ cls: "calendar-notes-section-header" });
     const toggle = header.createEl("button", {
-      cls: "vault-agenda-task-list-toggle",
+      cls: "calendar-notes-task-list-toggle",
     });
-    const icon = toggle.createSpan({ cls: "vault-agenda-task-list-toggle-icon" });
+    const icon = toggle.createSpan({ cls: "calendar-notes-task-list-toggle-icon" });
     toggle.setAttribute("aria-expanded", String(expanded));
     setIcon(icon, expanded ? "chevron-down" : "chevron-right");
 
     if (taskList.color !== null) {
-      toggle.createSpan({ cls: "vault-agenda-task-list-color-marker" });
+      toggle.createSpan({ cls: "calendar-notes-task-list-color-marker" });
     }
 
     toggle.createSpan({ text: taskList.name });
     toggle.createSpan({
-      cls: "vault-agenda-task-list-count",
+      cls: "calendar-notes-task-list-count",
       text: `(${tasks.length})`,
     });
     toggle.addEventListener("click", () => params.onToggleTaskListExpanded(taskList.id));
 
     const orderButton = header.createEl("button", {
-      cls: "vault-agenda-icon-button vault-agenda-task-order-button",
+      cls: "calendar-notes-icon-button calendar-notes-task-order-button",
     });
     const orderLabel = `${strings.taskOrderLabel}: ${getTaskOrderLabel(taskList.order)}`;
     orderButton.setAttribute("aria-label", orderLabel);
@@ -428,7 +428,7 @@ export function renderTaskListsSection(
     });
 
     const addButton = header.createEl("button", {
-      cls: "vault-agenda-icon-button",
+      cls: "calendar-notes-icon-button",
     });
     addButton.setAttribute("aria-label", strings.createTaskButtonTitle);
     setIcon(addButton, "plus");
@@ -439,11 +439,11 @@ export function renderTaskListsSection(
     }
 
     if (tasks.length === 0) {
-      section.createDiv({ cls: "vault-agenda-empty-label", text: strings.emptyTasksLabel });
+      section.createDiv({ cls: "calendar-notes-empty-label", text: strings.emptyTasksLabel });
       return;
     }
 
-    const list = section.createEl("ul", { cls: "vault-agenda-item-list" });
+    const list = section.createEl("ul", { cls: "calendar-notes-item-list" });
     list.toggleClass("is-manually-ordered", taskList.order === "manual");
     tasks.forEach((task) => renderTask(list, taskList, task, params));
   });

@@ -1,14 +1,15 @@
 import { App, Notice, TFile, normalizePath, stringifyYaml } from "obsidian";
 
+import { ITEM_MARKER_FIELD } from "../core/constants";
 import { getTodayDateId } from "../core/dateUtils";
 import strings, { formatLocalizedString } from "../core/localization";
 import type {
-  VaultAgendaSettings,
+  CalendarNotesSettings,
   RepeatRule,
   TaskList,
 } from "../core/types";
 import { getNextRepeatDateId } from "../tasks/repeat";
-import type { AgendaNote, Item, ItemKind, Task } from "./item";
+import type { CalendarNote, Item, ItemKind, Task } from "./item";
 import { classifyItemFile, normalizeDateId } from "./item";
 import {
   MARKDOWN_SUFFIX,
@@ -23,7 +24,7 @@ import { buildDayIdentifier, readTemplateParts } from "./templates";
 
 export type ReconcileTrigger = "frontmatter" | "name";
 
-const RESERVED_FIELDS = ["vaultAgendaItem", "date", "done", "completed", "repeat"];
+const RESERVED_FIELDS = [ITEM_MARKER_FIELD, "date", "done", "completed", "repeat"];
 
 type TemplateResult = {
   body: string;
@@ -34,17 +35,17 @@ const EMPTY_TEMPLATE: TemplateResult = { body: "", fields: {} };
 
 function folderErrorFor(kind: ItemKind): string {
   return kind === "task"
-    ? strings.createAgendaTaskFolderError
-    : strings.createAgendaNoteFolderError;
+    ? strings.createCalendarTaskFolderError
+    : strings.createCalendarNoteFolderError;
 }
 
 function templateErrorFor(kind: ItemKind): string {
   return kind === "task"
-    ? strings.createAgendaTaskTemplateReadError
-    : strings.createAgendaNoteTemplateReadError;
+    ? strings.createCalendarTaskTemplateReadError
+    : strings.createCalendarNoteTemplateReadError;
 }
 
-function noteNameFor(settings: VaultAgendaSettings): string {
+function noteNameFor(settings: CalendarNotesSettings): string {
   return sanitizeFileName(settings.newNoteName) || sanitizeFileName(strings.newNoteDefaultTitle);
 }
 
@@ -74,7 +75,7 @@ async function readTemplateBody(
 
     return parts ? { body: parts.body, fields: parts.frontmatter } : notifyFailure();
   } catch (error) {
-    console.warn("Failed to read Vault Agenda item template.", error);
+    console.warn("Failed to read Calendar Notes item template.", error);
 
     return notifyFailure();
   }
@@ -82,7 +83,7 @@ async function readTemplateBody(
 
 function buildFrontmatter(
   kind: ItemKind,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   templateFields: Record<string, unknown>,
   dateId?: string,
 ): Record<string, unknown> {
@@ -90,7 +91,7 @@ function buildFrontmatter(
     Object.entries(templateFields).filter(([key]) => !RESERVED_FIELDS.includes(key)),
   );
 
-  frontmatter.vaultAgendaItem = kind;
+  frontmatter[ITEM_MARKER_FIELD] = kind;
 
   if (dateId) {
     frontmatter.date = buildDayIdentifier(dateId, settings);
@@ -112,7 +113,7 @@ function buildContent(frontmatter: Record<string, unknown>, body: string): strin
 
 export async function createNote(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   dateId: string,
 ): Promise<TFile> {
   const folderPath = joinPath(settings.notesFolder);
@@ -127,7 +128,7 @@ export async function createNote(
 
 export async function createTask(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   taskList: TaskList,
   dateId?: string,
 ): Promise<TFile> {
@@ -146,7 +147,7 @@ export async function createTask(
 
 export async function createDatedItem(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   kind: ItemKind,
   dateId: string,
 ): Promise<TFile> {
@@ -165,7 +166,7 @@ export async function createDatedItem(
 
 export async function setItemDate(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   item: Item,
   dateId: string,
 ): Promise<void> {
@@ -182,7 +183,7 @@ export async function setItemDate(
 
 export async function unscheduleTask(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   item: Task,
 ): Promise<void> {
   await app.fileManager.processFrontMatter(item.file, (frontmatter: Record<string, unknown>) => {
@@ -197,7 +198,7 @@ export async function unscheduleTask(
 
 export async function reconcileItemName(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   file: TFile,
   trigger: ReconcileTrigger,
   previousDateId?: string,
@@ -219,9 +220,9 @@ export async function reconcileItemName(
 
 async function reconcileNoteName(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   file: TFile,
-  item: AgendaNote,
+  item: CalendarNote,
   trigger: ReconcileTrigger,
 ): Promise<void> {
   const parsed = parseItemName(file.basename, settings);
@@ -241,7 +242,7 @@ async function reconcileNoteName(
 
 async function reconcileTaskName(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   file: TFile,
   item: Task,
   trigger: ReconcileTrigger,
@@ -272,7 +273,7 @@ async function reconcileTaskName(
 
 async function renameItemFile(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   file: TFile,
   dateId: string | null,
   title: string,
@@ -294,7 +295,7 @@ async function renameItemFile(
 
 export async function setTaskRepeat(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   item: Task,
   rule: RepeatRule | null,
   initialDateId?: string,
@@ -324,7 +325,7 @@ export async function setTaskRepeat(
 
 async function createOccurrence(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   taskList: TaskList,
   path: string,
   dateId: string,
@@ -338,7 +339,7 @@ async function createOccurrence(
 
 export async function completeRepeatingOccurrence(
   app: App,
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   item: Task,
 ): Promise<void> {
   if (!item.repeat || !item.dateId) {
@@ -362,7 +363,7 @@ export async function completeRepeatingOccurrence(
 
   const nextDateId = getNextRepeatDateId(item.dateId, item.repeat, getTodayDateId());
   const folderPath = joinPath(taskList.activeFolder);
-  await ensureFolderOrThrow(app, folderPath, strings.createAgendaTaskFolderError);
+  await ensureFolderOrThrow(app, folderPath, strings.createCalendarTaskFolderError);
   const title = parseItemName(item.file.basename, settings).title;
   const nextName = buildItemNameFromExistingTitle(settings, nextDateId, title);
   const targetPath = normalizePath(joinPath(folderPath, `${nextName}${MARKDOWN_SUFFIX}`));

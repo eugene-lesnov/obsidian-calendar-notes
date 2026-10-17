@@ -39,7 +39,7 @@ export type DateParts = {
   day: number;
 };
 
-export type VaultAgendaSettings = {
+export type CalendarNotesSettings = {
   dateFormat: string;
   weekStart: WeekStart;
   syncTaskDateWithFilename: boolean;

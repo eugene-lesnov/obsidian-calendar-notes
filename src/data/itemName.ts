@@ -6,7 +6,7 @@ import {
   momentFormatToPattern,
   parseDateId,
 } from "../core/dateUtils";
-import type { VaultAgendaSettings } from "../core/types";
+import type { CalendarNotesSettings } from "../core/types";
 import { replaceForbiddenChars, sanitizeFileName } from "./fileNames";
 
 const NAME_SEPARATOR = " - ";
@@ -36,18 +36,18 @@ function resolveDateId(year: number, month: number, day: number): string | null 
   return formatDateId(fullYear, month - 1, day);
 }
 
-function buildDateText(settings: VaultAgendaSettings, dateId: string): string {
+function buildDateText(settings: CalendarNotesSettings, dateId: string): string {
   return replaceForbiddenChars(
     formatDateByPattern(parseDateId(dateId), momentFormatToPattern(settings.dateFormat)),
   );
 }
 
-export function buildItemName(settings: VaultAgendaSettings, dateId: string, title: string): string {
+export function buildItemName(settings: CalendarNotesSettings, dateId: string, title: string): string {
   return sanitizeFileName(`${buildDateText(settings, dateId)}${NAME_SEPARATOR}${title}`);
 }
 
 export function buildItemNameFromExistingTitle(
-  settings: VaultAgendaSettings,
+  settings: CalendarNotesSettings,
   dateId: string,
   title: string,
 ): string {
@@ -70,7 +70,7 @@ function buildNameMatcher(dateFormat: string): NameMatcher | null {
   };
 }
 
-export function parseItemName(basename: string, settings: VaultAgendaSettings): ParsedName {
+export function parseItemName(basename: string, settings: CalendarNotesSettings): ParsedName {
   const matcher = buildNameMatcher(settings.dateFormat);
 
   if (!matcher) {

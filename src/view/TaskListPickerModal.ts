@@ -12,7 +12,7 @@ export class TaskListPickerModal extends SuggestModal<TaskList> {
     private readonly onResult: (taskList: TaskList | null) => void,
   ) {
     super(app);
-    this.modalEl.addClass("vault-agenda-task-list-picker-modal");
+    this.modalEl.addClass("calendar-notes-task-list-picker-modal");
     this.setPlaceholder(strings.selectTaskListPlaceholder);
   }
 

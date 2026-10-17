@@ -25,7 +25,7 @@ describe("item menu", () => {
     showItemMenu(app as unknown as App, {} as MouseEvent, task, callbacks);
 
     const menu = Menu.instances[0];
-    const repeatItems = menu.items.filter((item) => item.section === "vault-agenda-repeat");
+    const repeatItems = menu.items.filter((item) => item.section === "calendar-notes-repeat");
 
     expect(repeatItems.map((item) => item.title)).toEqual([
       strings.taskRepeatNoneLabel,

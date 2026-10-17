@@ -22,7 +22,7 @@ export class DatePickerModal extends Modal {
 
   onOpen(): void {
     this.setTitle(strings.changeDateModalTitle);
-    this.modalEl.addClass("vault-agenda-date-picker-modal");
+    this.modalEl.addClass("calendar-notes-date-picker-modal");
 
     const submit = (): void => {
       const dateId = this.parseValue();
@@ -37,12 +37,12 @@ export class DatePickerModal extends Modal {
     };
 
     const field = this.contentEl.createEl("label", {
-      cls: "vault-agenda-date-picker-field",
+      cls: "calendar-notes-date-picker-field",
     });
     field.createSpan({ text: strings.changeDateModalDescription });
 
     const input = field.createEl("input", {
-      cls: "vault-agenda-date-picker-input",
+      cls: "calendar-notes-date-picker-input",
       attr: { type: "date" },
     });
     input.value = this.value;

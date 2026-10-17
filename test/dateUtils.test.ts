@@ -97,7 +97,7 @@ describe("item names and defaults", () => {
   });
 
   it("builds default vault paths", () => {
-    expect(buildDefaultNotesFolder("Notes")).toBe("Vault Agenda/Notes");
+    expect(buildDefaultNotesFolder("Notes")).toBe("Calendar Notes/Notes");
     expect(buildDefaultTemplatePath("Templates", "Task")).toBe("Templates/Task.md");
   });
 });

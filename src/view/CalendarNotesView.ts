@@ -8,7 +8,7 @@ import {
   debounce,
 } from "obsidian";
 
-import { RIBBON_ICON, VIEW_TYPE_AGENDA } from "../core/constants";
+import { RIBBON_ICON, VIEW_TYPE_CALENDAR_NOTES } from "../core/constants";
 import {
   formatDateByPattern,
   getTodayDateId,
@@ -27,7 +27,7 @@ import {
 } from "../data/itemMutations";
 import { setTaskCompleted } from "../data/taskCompletion";
 import { initializeManualOrder, orderTasks } from "../data/taskOrdering";
-import type VaultAgendaPlugin from "../main";
+import type CalendarNotesPlugin from "../main";
 import { renderDaySection, renderOverdueSection } from "./daySection";
 import { DatePickerModal } from "./DatePickerModal";
 import { ConfirmUnscheduleModal } from "./ConfirmUnscheduleModal";
@@ -37,7 +37,7 @@ import { renderTaskListsSection } from "./taskListsSection";
 
 const RENDER_DEBOUNCE_MS = 250;
 
-export class AgendaView extends ItemView {
+export class CalendarNotesView extends ItemView {
   navigation = false;
   hoverPopover: HoverPopover | null = null;
 
@@ -49,7 +49,7 @@ export class AgendaView extends ItemView {
 
   readonly scheduleRender = debounce(() => this.render(), RENDER_DEBOUNCE_MS, false);
 
-  constructor(leaf: WorkspaceLeaf, private readonly plugin: VaultAgendaPlugin) {
+  constructor(leaf: WorkspaceLeaf, private readonly plugin: CalendarNotesPlugin) {
     super(leaf);
 
     const todayDateId = getTodayDateId();
@@ -62,11 +62,11 @@ export class AgendaView extends ItemView {
   }
 
   getViewType(): string {
-    return VIEW_TYPE_AGENDA;
+    return VIEW_TYPE_CALENDAR_NOTES;
   }
 
   getDisplayText(): string {
-    return strings.agendaViewTitle;
+    return strings.calendarNotesViewTitle;
   }
 
   getIcon(): string {
@@ -88,7 +88,7 @@ export class AgendaView extends ItemView {
     this.syncExpandedTaskLists();
 
     root.empty();
-    root.addClass("vault-agenda-root");
+    root.addClass("calendar-notes-root");
 
     renderMonthGrid(root, {
       year: this.year,

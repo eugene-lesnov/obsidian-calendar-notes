@@ -5,9 +5,9 @@ import strings from "../core/localization";
 import type { RepeatFrequency } from "../core/types";
 import type { Item } from "../data/item";
 
-const DATE_MENU_SECTION = "vault-agenda-date";
-const REPEAT_MENU_SECTION = "vault-agenda-repeat";
-const ORDER_MENU_SECTION = "vault-agenda-order";
+const DATE_MENU_SECTION = "calendar-notes-date";
+const REPEAT_MENU_SECTION = "calendar-notes-repeat";
+const ORDER_MENU_SECTION = "calendar-notes-order";
 
 const REPEAT_OPTIONS: Array<{ frequency: RepeatFrequency | null; label: () => string }> = [
   { frequency: null, label: () => strings.taskRepeatNoneLabel },
